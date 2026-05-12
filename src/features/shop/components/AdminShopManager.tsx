@@ -21,7 +21,6 @@ type FormState = {
   name: string;
   description: string;
   category: "avatar" | "frame" | "badge";
-  effectValue: string;
   pricePoints: string;
   currentImageUrl: string;
 };
@@ -30,7 +29,6 @@ const EMPTY_FORM: FormState = {
   name: "",
   description: "",
   category: "avatar",
-  effectValue: "",
   pricePoints: "0",
   currentImageUrl: "",
 };
@@ -51,7 +49,6 @@ export function AdminShopManager({ items }: { items: ShopItemRow[] }) {
       fd.set("name", form.name);
       fd.set("description", form.description);
       fd.set("category", form.category);
-      fd.set("effectValue", form.effectValue);
       fd.set("pricePoints", form.pricePoints);
       fd.set("currentImageUrl", form.currentImageUrl);
       if (file) fd.set("image", file);
@@ -83,7 +80,6 @@ export function AdminShopManager({ items }: { items: ShopItemRow[] }) {
       name: item.name,
       description: item.description ?? "",
       category: item.category,
-      effectValue: item.effect_value,
       pricePoints: String(item.price_points),
       currentImageUrl: item.image_url,
     });
@@ -129,11 +125,7 @@ export function AdminShopManager({ items }: { items: ShopItemRow[] }) {
           </div>
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">효과값 (avatar URL / frame 색상 / badge 문자열)</label>
-          <Input value={form.effectValue} onChange={(e) => setForm((p) => ({ ...p, effectValue: e.target.value }))} required />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">상품 이미지 업로드</label>
+          <label className="text-xs text-muted-foreground">상품 이미지 업로드 (장착 이미지로도 사용)</label>
           <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
           {form.currentImageUrl ? <p className="text-xs text-muted-foreground">현재 이미지가 저장되어 있습니다.</p> : null}
         </div>

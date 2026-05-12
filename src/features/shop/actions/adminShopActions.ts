@@ -15,7 +15,6 @@ const upsertSchema = z.object({
   name: z.string().trim().min(1).max(120),
   description: z.string().trim().max(500).optional(),
   category: categorySchema,
-  effectValue: z.string().trim().min(1).max(500),
   pricePoints: z.coerce.number().int().min(0).max(100000),
   currentImageUrl: z.string().url().optional(),
 });
@@ -49,7 +48,6 @@ export async function upsertShopItem(formData: FormData): Promise<ActionResult> 
     name: formData.get("name")?.toString(),
     description: formData.get("description")?.toString(),
     category: formData.get("category")?.toString(),
-    effectValue: formData.get("effectValue")?.toString(),
     pricePoints: formData.get("pricePoints")?.toString(),
     currentImageUrl: formData.get("currentImageUrl")?.toString() || undefined,
   });
@@ -80,7 +78,7 @@ export async function upsertShopItem(formData: FormData): Promise<ActionResult> 
       description: normalizeDescription(parsed.data.description),
       category: parsed.data.category,
       image_url: imageUrl,
-      effect_value: parsed.data.effectValue,
+      effect_value: imageUrl,
       price_points: parsed.data.pricePoints,
       is_active: true,
     };

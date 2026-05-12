@@ -10,7 +10,7 @@ import type { TeamManagementMember } from "@/features/team/queries/getTeamManage
 import { parseKstYmdAtNoon } from "@/lib/date-kst";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastPromise } from "@/lib/app-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LayeredProfileAvatar } from "@/components/profile/layered-profile-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -26,12 +26,6 @@ type DraftRoles = {
   rolePriority2: string;
   rolePriority3: string;
 };
-
-function initials(name: string) {
-  const t = name.trim();
-  if (!t) return "?";
-  return t.slice(0, 2);
-}
 
 function birthdayLabel(ymd: string | null): string {
   if (!ymd) return "아직 비밀이에요";
@@ -183,10 +177,13 @@ export function TeamManagementSection({ members, isLeader, currentUserId }: Team
             <Card key={member.id} className="overflow-hidden border-border/70">
               <CardContent className="space-y-4 p-5 pt-5">
                 <div className="flex items-start gap-3">
-                  <Avatar className="size-14 shrink-0 border border-border/60">
-                    {member.avatar_url ? <AvatarImage src={member.avatar_url} alt="" className="object-cover" /> : null}
-                    <AvatarFallback className="text-sm font-semibold">{initials(member.username)}</AvatarFallback>
-                  </Avatar>
+                  <LayeredProfileAvatar
+                    size="sm"
+                    avatarUrl={member.avatar_url}
+                    frameUrl={member.active_border_color}
+                    badgeUrl={member.active_badge}
+                    fallbackLabel={member.username}
+                  />
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="truncate text-base font-semibold tracking-tight text-foreground">{member.username}</p>
                     <p className="text-xs text-muted-foreground">

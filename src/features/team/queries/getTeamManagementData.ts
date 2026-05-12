@@ -9,6 +9,8 @@ type ProfileLite = {
   username: string;
   role: "leader" | "admin" | "member";
   avatar_url: string | null;
+  active_border_color: string | null;
+  active_badge: string | null;
   role_priority_1: TeamRoleCode | null;
   role_priority_2: TeamRoleCode | null;
   role_priority_3: TeamRoleCode | null;
@@ -22,6 +24,8 @@ export type TeamManagementMember = {
   username: string;
   role: "leader" | "admin" | "member";
   avatar_url: string | null;
+  active_border_color: string | null;
+  active_badge: string | null;
   role_priority_1: TeamRoleCode | null;
   role_priority_2: TeamRoleCode | null;
   role_priority_3: TeamRoleCode | null;
@@ -43,6 +47,8 @@ function mapProfileToMember(p: ProfileLite): TeamManagementMember {
     username: p.username,
     role: p.role,
     avatar_url: p.avatar_url,
+    active_border_color: p.active_border_color,
+    active_badge: p.active_badge,
     role_priority_1: p.role_priority_1,
     role_priority_2: p.role_priority_2,
     role_priority_3: p.role_priority_3,
@@ -77,7 +83,7 @@ export async function getTeamManagementData(): Promise<TeamManagementData> {
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select(
-      "id, username, role, avatar_url, role_priority_1, role_priority_2, role_priority_3, birthday, mbti, favorite_song",
+      "id, username, role, avatar_url, active_border_color, active_badge, role_priority_1, role_priority_2, role_priority_3, birthday, mbti, favorite_song",
     )
     .order("role", { ascending: true })
     .order("username", { ascending: true });
@@ -119,6 +125,8 @@ export async function getTeamManagementData(): Promise<TeamManagementData> {
         username: authUser.user_metadata?.username?.toString() ?? "이름 미설정",
         role: "member",
         avatar_url: null,
+        active_border_color: null,
+        active_badge: null,
         role_priority_1: null,
         role_priority_2: null,
         role_priority_3: null,

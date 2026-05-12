@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Loader2, UserRound } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -9,7 +9,7 @@ import { updateProfile } from "@/features/profile/actions/profileActions";
 import type { MyProfileRow } from "@/features/profile/queries/getMyProfile";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastPromise } from "@/lib/app-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LayeredProfileAvatar } from "@/components/profile/layered-profile-avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -62,19 +62,20 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
     <div className="space-y-8">
       <section className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         <div className="relative">
-          <Avatar className="size-28 border-2 border-border/60 sm:size-32" style={{ borderColor: profile.active_border_color ?? undefined }}>
-            {profile.avatar_url ? <AvatarImage src={profile.avatar_url} alt="" className="object-cover" /> : null}
-            <AvatarFallback className="bg-muted text-lg font-semibold">
-              <UserRound className="size-10 text-muted-foreground" aria-hidden />
-            </AvatarFallback>
-          </Avatar>
+          <LayeredProfileAvatar
+            size="lg"
+            avatarUrl={profile.avatar_url}
+            frameUrl={profile.active_border_color}
+            badgeUrl={profile.active_badge}
+            fallbackLabel={profile.username}
+          />
         </div>
         <div className="flex flex-1 flex-col gap-2 text-center sm:text-left">
           <p className="text-lg font-semibold tracking-tight">{profile.username}</p>
           <p className="text-sm text-muted-foreground">권한: <span className="font-medium text-foreground">{roleLabel(profile.role)}</span></p>
           <p className="text-sm text-muted-foreground">포지션: {roleText || "미정"}</p>
           <p className="text-sm text-muted-foreground">포인트: <span className="font-medium text-foreground">{profile.points}P</span></p>
-          {profile.active_badge ? <p className="text-sm text-muted-foreground">적용 뱃지: <span className="font-medium text-foreground">{profile.active_badge}</span></p> : null}
+          <p className="text-sm text-muted-foreground">장착 상태: 아바타 · 프레임 · 배지 레이어 미리보기</p>
           <p className="text-xs text-muted-foreground">프로필 아바타/프레임은 포인트 상점에서 구매한 아이템으로만 변경됩니다.</p>
         </div>
       </section>
