@@ -21,8 +21,7 @@ export function AppBottomNav({ className }: AppBottomNavProps) {
   return (
     <nav
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg",
-        "shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.45)]",
+        "fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background pb-[env(safe-area-inset-bottom)]",
         className,
       )}
       aria-label="주요 메뉴"
@@ -44,9 +43,9 @@ export function AppBottomNav({ className }: AppBottomNavProps) {
             >
               <span
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-lg transition-[background,box-shadow,color]",
+                  "flex h-10 w-10 items-center justify-center rounded-lg transition-[background,color]",
                   active
-                    ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                    ? "bg-primary/10 text-primary ring-1 ring-border/60"
                     : "bg-transparent",
                 )}
               >

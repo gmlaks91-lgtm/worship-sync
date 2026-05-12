@@ -54,7 +54,7 @@ export function CommentSection({ postId, comments, currentUserId, className }: C
         )}
       </ul>
 
-      <div className="flex gap-3 rounded-lg border border-border/60 bg-muted/15 p-3 shadow-inner">
+      <div className="flex gap-3 rounded-lg border border-border/60 bg-muted/15 p-3">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}

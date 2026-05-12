@@ -31,8 +31,7 @@ export async function AppHeader({ className }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md",
-        "shadow-[0_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)]",
+        "sticky top-0 z-40 border-b border-border/60 bg-background",
         className,
       )}
     >

@@ -85,7 +85,7 @@ export function CommentItem({ comment, currentUserId }: CommentItemProps) {
 
   return (
     <li className="flex gap-2.5">
-      <Avatar className="mt-0.5 size-7 border border-border/60 shadow-sm">
+      <Avatar className="mt-0.5 size-7 border border-border/60">
         <AvatarFallback className="text-[9px] font-semibold">
           {initials(comment.author_username)}
         </AvatarFallback>

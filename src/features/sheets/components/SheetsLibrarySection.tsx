@@ -40,7 +40,7 @@ export function SheetsLibrarySection({ songs, sheetMap, listError }: SheetsLibra
         <Button
           type="button"
           size="default"
-          className="h-11 w-full gap-2 shadow-sm sm:h-10 sm:w-auto sm:min-w-[11rem]"
+          className="h-11 w-full gap-2 sm:h-10 sm:w-auto sm:min-w-[11rem]"
           onClick={() => {
             setLibraryDialogKey((k) => k + 1);
             setLibraryModalOpen(true);
@@ -58,7 +58,7 @@ export function SheetsLibrarySection({ songs, sheetMap, listError }: SheetsLibra
       ) : null}
 
       {!listError && songs.length === 0 ? (
-        <Card className="border-dashed border-border/80 bg-muted/15 shadow-sm">
+        <Card className="border-dashed border-border/80 bg-muted/15">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">등록된 곡이 없습니다</CardTitle>
             <CardDescription>
@@ -75,12 +75,12 @@ export function SheetsLibrarySection({ songs, sheetMap, listError }: SheetsLibra
             const latest = sheetMap[song.id];
             return (
               <li key={song.id}>
-                <Card className="overflow-hidden border-border/55 shadow-sm transition-shadow hover:shadow-md">
+                <Card className="overflow-hidden border-border/55 transition-colors hover:border-border">
                   <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6">
                     <div className="flex min-w-0 flex-1 items-start gap-3">
                       <div
                         className={cn(
-                          "flex size-11 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-muted/30 shadow-inner",
+                          "flex size-11 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-muted/30",
                         )}
                         aria-hidden
                       >
@@ -98,7 +98,7 @@ export function SheetsLibrarySection({ songs, sheetMap, listError }: SheetsLibra
                             {format(new Date(latest.created_at), "PPP p", { locale: ko })}
                           </p>
                         ) : (
-                          <p className="text-xs text-amber-700/90 dark:text-amber-200/90">
+                          <p className="text-xs text-amber-800/90">
                             아직 올라온 악보가 없습니다. 아래에서 추가해 보세요.
                           </p>
                         )}
@@ -125,7 +125,7 @@ export function SheetsLibrarySection({ songs, sheetMap, listError }: SheetsLibra
                         href={`/sheets/${song.id}`}
                         className={cn(
                           buttonVariants({ variant: "default" }),
-                          "h-10 w-full justify-center gap-1 px-4 shadow-sm sm:w-auto",
+                          "h-10 w-full justify-center gap-1 px-4 sm:w-auto",
                         )}
                       >
                         뷰어로 보기

@@ -36,7 +36,7 @@ export function TeamPlaylistSection({ playlistId, canEdit, embedUrl }: TeamPlayl
   };
 
   return (
-    <Card className="border-border/70 shadow-sm ring-1 ring-border/30">
+    <Card className="border-border/70">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">추천 플레이리스트</CardTitle>
         <CardDescription>팀이 함께 들을 유튜브 플레이리스트입니다.</CardDescription>

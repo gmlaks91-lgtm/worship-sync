@@ -36,7 +36,7 @@ export function LastWorshipVideoSection({ videoUrl, embedUrl, canEdit }: LastWor
   };
 
   return (
-    <Card className="border-border/70 shadow-sm ring-1 ring-border/30">
+    <Card className="border-border/70">
       <CardHeader>
         <CardTitle className="text-base font-semibold">지난주 예배 영상</CardTitle>
         <CardDescription>팀원들이 바로 시청할 수 있는 주간 예배 영상입니다.</CardDescription>

@@ -85,7 +85,7 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
       <section className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         <div className="relative">
           <button type="button" onClick={onPickAvatar} disabled={pendingAvatar} className={cn("group relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring", "disabled:opacity-60")} aria-label="프로필 이미지 변경">
-            <Avatar className="size-28 border-2 border-border/60 shadow-sm sm:size-32">
+            <Avatar className="size-28 border-2 border-border/60 sm:size-32">
               {profile.avatar_url ? <AvatarImage src={profile.avatar_url} alt="" className="object-cover" /> : null}
               <AvatarFallback className="bg-muted text-lg font-semibold"><UserRound className="size-10 text-muted-foreground" aria-hidden /></AvatarFallback>
             </Avatar>
@@ -105,7 +105,7 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
         </div>
       </section>
 
-      <section className="space-y-4 rounded-lg border border-border/60 bg-card/70 p-5 shadow-sm sm:p-6">
+      <section className="space-y-4 rounded-lg border border-border/60 bg-card/70 p-5 sm:p-6">
         <h2 className="text-sm font-medium text-foreground">프로필 수정</h2>
         <p className="text-xs text-muted-foreground">표시 이름과 포지션을 수정할 수 있습니다.</p>
         <Dialog open={openEdit} onOpenChange={setOpenEdit}>

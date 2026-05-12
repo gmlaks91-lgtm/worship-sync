@@ -52,12 +52,11 @@ export function CreatePostForm({ category }: CreatePostFormProps) {
   return (
     <div
       className={cn(
-        "rounded-lg border border-border/60 bg-gradient-to-b from-card via-card to-muted/[0.12] p-1.5 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04] transition-[box-shadow] duration-300 dark:shadow-[0_12px_40px_-20px_rgba(0,0,0,0.5)]",
-        "dark:shadow-[0_12px_40px_-16px_rgba(0,0,0,0.65)] dark:ring-white/[0.06]",
-        expanded && "shadow-[0_16px_48px_-18px_rgba(0,0,0,0.4)] ring-primary/15 dark:ring-primary/20",
+        "rounded-lg border border-border/60 bg-card p-1.5 transition-colors duration-200",
+        expanded && "border-primary/25",
       )}
     >
-      <div className="rounded-[0.9rem] bg-background/40 p-3 sm:p-4">
+      <div className="rounded-[0.9rem] bg-background p-3 sm:p-4">
         <label className="sr-only" htmlFor={`create-post-${category}`}>
           새 글 작성
         </label>

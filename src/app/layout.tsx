@@ -37,10 +37,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f2ef" },
-    { media: "(prefers-color-scheme: dark)", color: "#2d2b28" },
-  ],
+  themeColor: "#fafafa",
 };
 
 export default function RootLayout({
@@ -49,11 +46,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ko"
-      suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
       </body>

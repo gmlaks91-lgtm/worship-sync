@@ -107,7 +107,7 @@ export function LoginForm({ className }: { className?: string }) {
   });
 
   return (
-    <Card className={cn("w-full max-w-xl border-border/80 shadow-lg ring-1 ring-border/50", className)}>
+    <Card className={cn("w-full max-w-xl border-border/80", className)}>
       <CardHeader className="gap-3 text-center">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">아하바 찬양팀</p>
         <CardTitle className="text-2xl font-semibold tracking-tight">Ahava에 오신 것을 환영합니다</CardTitle>
@@ -128,7 +128,7 @@ export function LoginForm({ className }: { className?: string }) {
             className={cn(
               "rounded-md px-3 py-2 text-sm font-medium transition-colors",
               mode === "signin"
-                ? "bg-background text-foreground shadow-sm"
+                ? "bg-background text-foreground"
                 : "text-muted-foreground hover:text-foreground",
             )}
             onClick={() => setMode("signin")}
@@ -140,7 +140,7 @@ export function LoginForm({ className }: { className?: string }) {
             className={cn(
               "rounded-md px-3 py-2 text-sm font-medium transition-colors",
               mode === "signup"
-                ? "bg-background text-foreground shadow-sm"
+                ? "bg-background text-foreground"
                 : "text-muted-foreground hover:text-foreground",
             )}
             onClick={() => setMode("signup")}

@@ -14,8 +14,8 @@ import { YouTubePlayer } from "@/features/setlist/components/YouTubePlayer";
 import { WeeklySongRow } from "@/features/setlist/components/WeeklySongRow";
 import { weekRangeLineKst, weekSetlistHeadingKst } from "@/features/setlist/lib/week-label-kst";
 import type { PrepSetlistWithSheets } from "@/features/setlist/types";
+import { shiftWeekSundayYmd, weeklyDashboardHref } from "@/features/setlist/weekly";
 import type { TeamMemberRow } from "@/features/team/queries/getTeamMembers";
-import { addDaysYmdKst } from "@/lib/date-kst";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
@@ -81,8 +81,8 @@ export function WeeklySetlistHero({
 
   const weekTitle = weekSetlistHeadingKst(weekSundayYmd);
   const weekRange = weekRangeLineKst(weekSundayYmd);
-  const prevWeekHref = `/?sunday=${addDaysYmdKst(weekSundayYmd, -7)}`;
-  const nextWeekHref = `/?sunday=${addDaysYmdKst(weekSundayYmd, 7)}`;
+  const prevWeekHref = weeklyDashboardHref(shiftWeekSundayYmd(weekSundayYmd, -1));
+  const nextWeekHref = weeklyDashboardHref(shiftWeekSundayYmd(weekSundayYmd, 1));
 
   const goWeek = (href: string) => {
     startNav(() => {
@@ -151,7 +151,7 @@ export function WeeklySetlistHero({
               <AddSetlistTriggerButton
                 variant="outline"
                 size="sm"
-                className="h-10 shrink-0 self-center border-neutral-300 text-neutral-800 shadow-none sm:self-auto"
+                className="h-10 shrink-0 self-center border-neutral-300 text-neutral-800 sm:self-auto"
                 teamMembers={teamMembers.map((m) => ({ id: m.id, username: m.username }))}
                 recentSongWarningByVideoId={recentSongWarningByVideoId}
               />

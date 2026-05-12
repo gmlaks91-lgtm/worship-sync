@@ -42,7 +42,7 @@ export function YouTubePlayer({ className }: YouTubePlayerProps) {
   return (
     <div
       className={cn(
-        "fixed left-0 right-0 z-[45] border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)] backdrop-blur-md",
+        "fixed left-0 right-0 z-[45] border-t border-border/70 bg-background pb-[env(safe-area-inset-bottom)]",
         "bottom-[calc(4.25rem+env(safe-area-inset-bottom))] sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))]",
         className,
       )}

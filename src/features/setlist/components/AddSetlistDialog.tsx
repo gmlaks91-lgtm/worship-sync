@@ -242,7 +242,7 @@ export function AddSetlistDialog({
               </div>
               <ul className="flex flex-col gap-3">
                 {fields.map((field, index) => (
-                  <li key={field.id} className="rounded-lg border border-border/60 bg-card/50 p-4 shadow-sm">
+                  <li key={field.id} className="rounded-lg border border-border/60 bg-card/50 p-4">
                     <div className="space-y-2">
                       <Input
                         placeholder="곡 제목"
@@ -285,7 +285,7 @@ export function AddSetlistDialog({
                       const weeks = videoId ? recentSongWarningByVideoId[videoId] : undefined;
                       if (weeks === undefined) return null;
                       return (
-                        <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                        <p className="mt-1 text-xs text-amber-800">
                           ⚠️ 최근({weeks}주 전) 불렀던 곡입니다.
                         </p>
                       );
@@ -366,7 +366,7 @@ export function AddSetlistTriggerButton({
         type="button"
         variant={variant}
         size={size}
-        className={cn("gap-1.5 shadow-sm", className)}
+        className={cn("gap-1.5", className)}
         onClick={() => setOpen(true)}
       >
         <Plus className="size-4" />

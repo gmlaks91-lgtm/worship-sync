@@ -27,7 +27,7 @@ export function SheetViewerScaffold({
 }: SheetViewerScaffoldProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <header className="flex shrink-0 items-start gap-2 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur-md sm:px-4">
+      <header className="flex shrink-0 items-start gap-2 border-b border-border/70 bg-background px-3 py-3 sm:px-4">
         {mode === "dialog" ? (
           <Button type="button" variant="ghost" size="icon-sm" className="shrink-0" onClick={onClose} aria-label="닫기">
             <X className="size-4" />

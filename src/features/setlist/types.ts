@@ -5,6 +5,8 @@ import type {
 } from "@/features/setlist/queries/getSetlists";
 import type { SheetSummary } from "@/features/sheets/types";
 
+export type { WeekSundayYmd } from "@/features/setlist/weekly/types";
+
 export type SetlistSongWithSheet = SetlistSongRow & { sheet: SheetSummary | null };
 
 export type PrepSetlistWithSheets = Omit<PrepSetlistRow, "songs"> & {

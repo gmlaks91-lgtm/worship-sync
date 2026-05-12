@@ -50,7 +50,7 @@ export function FaithCheckBoard({
   };
 
   return (
-    <Card className="border-border/70 shadow-sm ring-1 ring-border/30">
+    <Card className="border-border/70">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">신앙 점검표 · 내 포인트 {points}P</CardTitle>
       </CardHeader>

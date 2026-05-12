@@ -32,7 +32,7 @@ export function SheetViewerDialog({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "fixed inset-0 left-0 top-0 z-50 flex h-[100dvh] w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 bg-background p-0 shadow-none sm:max-w-none",
+          "fixed inset-0 left-0 top-0 z-50 flex h-[100dvh] w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 bg-background p-0 sm:max-w-none",
           "data-open:zoom-in-100 data-closed:zoom-out-100",
         )}
       >

@@ -22,9 +22,9 @@ const KIND_LABEL: Record<ScheduleKind, string> = {
 };
 
 const KIND_BADGE_CLASS: Record<ScheduleKind, string> = {
-  practice: "border-sky-500/35 bg-sky-500/10 text-sky-950 dark:text-sky-50",
-  worship: "border-violet-500/35 bg-violet-500/10 text-violet-950 dark:text-violet-50",
-  social: "border-orange-500/35 bg-orange-500/10 text-orange-950 dark:text-orange-50",
+  practice: "border-sky-500/35 bg-sky-500/10 text-sky-950",
+  worship: "border-violet-500/35 bg-violet-500/10 text-violet-950",
+  social: "border-orange-500/35 bg-orange-500/10 text-orange-950",
 };
 
 function formatWhen(iso: string) {
@@ -76,7 +76,7 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
           href="/schedule"
           className={cn(
             buttonVariants({ variant: "outline", size: "sm" }),
-            "mt-2 inline-flex w-full gap-1 shadow-sm sm:mt-0 sm:w-auto",
+            "mt-2 inline-flex w-full gap-1 sm:mt-0 sm:w-auto",
           )}
         >
           일정 전체
@@ -91,7 +91,7 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-border/70 shadow-sm ring-1 ring-border/30">
+        <Card className="border-border/70">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <CalendarRange className="size-4 text-muted-foreground" aria-hidden />
@@ -146,7 +146,7 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
         </Card>
 
         <div className="flex flex-col gap-6">
-          <Card className="border-border/70 shadow-sm ring-1 ring-border/30">
+          <Card className="border-border/70">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ListMusic className="size-4 text-muted-foreground" aria-hidden />
@@ -186,7 +186,7 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 shadow-sm ring-1 ring-border/30">
+          <Card className="border-border/70">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Music2 className="size-4 text-muted-foreground" aria-hidden />

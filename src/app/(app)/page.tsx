@@ -2,12 +2,12 @@
 import { getPersonalDashboardData } from "@/features/dashboard/queries/getPersonalDashboardData";
 import { WeeklySetlistHero } from "@/features/setlist/components/WeeklySetlistHero";
 import { getRecentSongWarningByVideoId } from "@/features/setlist/queries/getSongUsageStats";
-import { getPrepSetlistForWeekSunday } from "@/features/setlist/queries/getSetlists";
 import type { PrepSetlistWithSheets } from "@/features/setlist/types";
+import { fetchWeeklyPrepSetlist } from "@/features/setlist/weekly/fetch-weekly-prep-setlist";
+import { resolveDashboardWeekSunday } from "@/features/setlist/weekly/navigation";
 import { LastWorshipVideoSection } from "@/features/team-settings/components/LastWorshipVideoSection";
 import { getLatestSheetsBySongIds } from "@/features/sheets/queries/getSheets";
 import type { TeamMemberRow } from "@/features/team/queries/getTeamMembers";
-import { isYmdKst, nextOrSameSundayYmdKst, sundayOfKstWeekContaining, todayYmdKst } from "@/lib/date-kst";
 import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -37,13 +37,10 @@ export default async function AhavaDashboardPage({
     teamMembers = (members ?? []) as TeamMemberRow[];
   }
 
-  const today = todayYmdKst();
-  const defaultSunday = nextOrSameSundayYmdKst(today);
-  const rawSunday = isYmdKst(sp.sunday) ? sp.sunday : defaultSunday;
-  const weekSundayYmd = sundayOfKstWeekContaining(rawSunday);
+  const weekSundayYmd = resolveDashboardWeekSunday(sp.sunday);
 
   const [{ setlist, error: setlistError }, dashboardData] = await Promise.all([
-    getPrepSetlistForWeekSunday(weekSundayYmd),
+    fetchWeeklyPrepSetlist(weekSundayYmd),
     getPersonalDashboardData(),
   ]);
   const recentSongWarningByVideoId = canManageSetlists ? await getRecentSongWarningByVideoId() : {};

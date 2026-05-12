@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -48,75 +46,39 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* 라이트: 웜 그레이 베이스 + 인디고 포인트 */
 :root {
-  --background: oklch(0.965 0.009 88);
-  --foreground: oklch(0.24 0.028 265);
-  --card: oklch(0.993 0.006 92);
-  --card-foreground: oklch(0.24 0.028 265);
-  --popover: oklch(0.995 0.005 92);
-  --popover-foreground: oklch(0.24 0.028 265);
-  --primary: oklch(0.46 0.17 264);
+  --background: oklch(0.995 0.004 95);
+  --foreground: oklch(0.22 0.028 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.028 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.028 265);
+  --primary: oklch(0.44 0.16 264);
   --primary-foreground: oklch(0.99 0.006 264);
-  --secondary: oklch(0.935 0.014 90);
+  --secondary: oklch(0.96 0.01 95);
   --secondary-foreground: oklch(0.28 0.035 265);
-  --muted: oklch(0.93 0.012 90);
-  --muted-foreground: oklch(0.47 0.028 265);
-  --accent: oklch(0.92 0.02 92);
+  --muted: oklch(0.955 0.012 95);
+  --muted-foreground: oklch(0.45 0.024 265);
+  --accent: oklch(0.94 0.014 95);
   --accent-foreground: oklch(0.26 0.04 265);
   --destructive: oklch(0.54 0.21 25);
-  --border: oklch(0.875 0.014 90);
-  --input: oklch(0.875 0.014 90);
-  --ring: oklch(0.52 0.15 264);
+  --border: oklch(0.9 0.012 95);
+  --input: oklch(0.9 0.012 95);
+  --ring: oklch(0.5 0.14 264);
   --chart-1: oklch(0.54 0.16 264);
   --chart-2: oklch(0.48 0.13 264);
   --chart-3: oklch(0.42 0.14 264);
   --chart-4: oklch(0.38 0.11 264);
   --chart-5: oklch(0.32 0.09 264);
   --radius: 0.5rem;
-  --sidebar: oklch(0.978 0.008 92);
-  --sidebar-foreground: oklch(0.24 0.028 265);
-  --sidebar-primary: oklch(0.46 0.17 264);
+  --sidebar: oklch(0.99 0.004 95);
+  --sidebar-foreground: oklch(0.22 0.028 265);
+  --sidebar-primary: oklch(0.44 0.16 264);
   --sidebar-primary-foreground: oklch(0.99 0.006 264);
-  --sidebar-accent: oklch(0.925 0.016 90);
+  --sidebar-accent: oklch(0.955 0.012 95);
   --sidebar-accent-foreground: oklch(0.26 0.04 265);
-  --sidebar-border: oklch(0.875 0.014 90);
-  --sidebar-ring: oklch(0.52 0.15 264);
-}
-
-/* 다크: 웜 차콜 베이스 + 밝은 인디고 포인트 */
-.dark {
-  --background: oklch(0.22 0.014 88);
-  --foreground: oklch(0.965 0.012 92);
-  --card: oklch(0.27 0.016 90);
-  --card-foreground: oklch(0.965 0.012 92);
-  --popover: oklch(0.29 0.016 90);
-  --popover-foreground: oklch(0.965 0.012 92);
-  --primary: oklch(0.63 0.16 264);
-  --primary-foreground: oklch(0.18 0.045 264);
-  --secondary: oklch(0.32 0.018 90);
-  --secondary-foreground: oklch(0.94 0.012 92);
-  --muted: oklch(0.3 0.016 90);
-  --muted-foreground: oklch(0.7 0.028 92);
-  --accent: oklch(0.33 0.02 90);
-  --accent-foreground: oklch(0.965 0.012 92);
-  --destructive: oklch(0.64 0.19 22);
-  --border: oklch(0.92 0.015 92 / 14%);
-  --input: oklch(0.92 0.015 92 / 18%);
-  --ring: oklch(0.58 0.15 264);
-  --chart-1: oklch(0.63 0.16 264);
-  --chart-2: oklch(0.56 0.14 264);
-  --chart-3: oklch(0.5 0.12 264);
-  --chart-4: oklch(0.44 0.1 264);
-  --chart-5: oklch(0.38 0.09 264);
-  --sidebar: oklch(0.24 0.015 88);
-  --sidebar-foreground: oklch(0.965 0.012 92);
-  --sidebar-primary: oklch(0.63 0.16 264);
-  --sidebar-primary-foreground: oklch(0.18 0.045 264);
-  --sidebar-accent: oklch(0.32 0.018 90);
-  --sidebar-accent-foreground: oklch(0.965 0.012 92);
-  --sidebar-border: oklch(0.92 0.015 92 / 14%);
-  --sidebar-ring: oklch(0.58 0.15 264);
+  --sidebar-border: oklch(0.9 0.012 95);
+  --sidebar-ring: oklch(0.5 0.14 264);
 }
 
 @layer base {
@@ -124,7 +86,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
   html {
     @apply font-sans;

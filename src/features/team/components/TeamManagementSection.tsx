@@ -123,7 +123,7 @@ export function TeamManagementSection({ members, isLeader, currentUserId }: Team
   return (
     <div className="space-y-5">
       {isLeader ? (
-        <Card className="border-border/70 shadow-sm ring-1 ring-border/30">
+        <Card className="border-border/70">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">리더 관리 요약</CardTitle>
           </CardHeader>

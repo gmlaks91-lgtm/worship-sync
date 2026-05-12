@@ -48,9 +48,9 @@ const KIND_LABEL: Record<ScheduleKind, string> = {
 };
 
 const KIND_BADGE_CLASS: Record<ScheduleKind, string> = {
-  practice: "border-sky-500/35 bg-sky-500/10 text-sky-950 dark:text-sky-50",
-  worship: "border-violet-500/35 bg-violet-500/10 text-violet-950 dark:text-violet-50",
-  social: "border-orange-500/35 bg-orange-500/10 text-orange-950 dark:text-orange-50",
+  practice: "border-sky-500/35 bg-sky-500/10 text-sky-950",
+  worship: "border-violet-500/35 bg-violet-500/10 text-violet-950",
+  social: "border-orange-500/35 bg-orange-500/10 text-orange-950",
 };
 
 function initials(name: string) {
@@ -167,8 +167,8 @@ function MyResponsePicker({
           const active = local === key;
           const palette =
             key === "attending"
-              ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-900 dark:text-emerald-50"
-              : "border-red-500/45 bg-red-500/10 text-red-950 dark:text-red-50";
+              ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-900"
+              : "border-red-500/45 bg-red-500/10 text-red-950";
           return (
             <Button
               key={key}
@@ -214,7 +214,7 @@ function TeamStrip({
   } as const;
 
   return (
-    <div className={cn("rounded-lg border border-border/60 p-4 shadow-sm", toneMap[tone])}>
+    <div className={cn("rounded-lg border border-border/60 p-4", toneMap[tone])}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
         <Badge variant="secondary" className="h-5 rounded-full px-1.5 text-[10px]">
@@ -302,7 +302,7 @@ function ScheduleEventCard({
   };
 
   return (
-    <Card className="border-border/70 shadow-sm ring-1 ring-border/35">
+    <Card className="border-border/70">
       <CardHeader className="gap-2 border-b border-border/50 pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
@@ -408,7 +408,7 @@ function AddScheduleDialog({ disabled }: { disabled?: boolean }) {
         if (!v) reset();
       }}
     >
-      <DialogTrigger render={<Button type="button" className="gap-2 shadow-sm" disabled={disabled} />}>
+      <DialogTrigger render={<Button type="button" className="gap-2" disabled={disabled} />}>
         <CalendarPlus className="size-4" aria-hidden />
         일정 추가
       </DialogTrigger>
@@ -493,7 +493,7 @@ export function SchedulesSection({
         </div>
       ) : null}
 
-      <Card className="border-border/70 shadow-sm ring-1 ring-border/35">
+      <Card className="border-border/70">
         <CardHeader>
           <CardTitle className="text-base">캘린더</CardTitle>
           <CardDescription>이번 주와 다음 주 일정 응답에 집중해 주세요.</CardDescription>
@@ -505,7 +505,7 @@ export function SchedulesSection({
             onSelect={(date) => date && setSelectedDate(date)}
             locale={ko}
             modifiers={{ hasEvent: highlightedDates }}
-            modifiersClassNames={{ hasEvent: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-200" }}
+            modifiersClassNames={{ hasEvent: "bg-indigo-500/10 text-indigo-700" }}
           />
         </CardContent>
       </Card>

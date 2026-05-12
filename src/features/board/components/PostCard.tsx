@@ -68,12 +68,11 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   return (
     <article
       className={cn(
-        "rounded-lg border border-border/60 bg-card/90 px-5 py-7 shadow-sm backdrop-blur-sm sm:px-6",
-        "dark:bg-card/55 dark:shadow-[0_12px_40px_-24px_rgba(0,0,0,0.55)]",
+        "rounded-lg border border-border/60 bg-card px-5 py-7 sm:px-6",
       )}
     >
       <div className="flex gap-4">
-        <Avatar className="mt-0.5 size-10 border border-border/70 shadow-sm">
+        <Avatar className="mt-0.5 size-10 border border-border/70">
           <AvatarFallback className="text-xs font-semibold">
             {initials(post.author_username)}
           </AvatarFallback>

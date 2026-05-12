@@ -38,8 +38,8 @@ export function SongListCard({ song, className }: SongListCardProps) {
     <Card
       size="sm"
       className={cn(
-        "border-border/60 shadow-sm transition-[box-shadow,ring] duration-200",
-        isPlaying && "ring-2 ring-primary/40 shadow-md",
+        "border-border/60 transition-[ring] duration-200",
+        isPlaying && "ring-2 ring-primary/40",
         className,
       )}
     >

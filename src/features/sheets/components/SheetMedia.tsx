@@ -13,9 +13,6 @@ type SheetMediaProps = {
   className?: string;
 };
 
-/**
- * 다중 악보 URL을 캐러셀로 표시합니다.
- */
 export function SheetMedia({ fileUrls, className }: SheetMediaProps) {
   const [index, setIndex] = useState(0);
   const [viewMode, setViewMode] = useState<"carousel" | "stack">("stack");
@@ -40,7 +37,7 @@ export function SheetMedia({ fileUrls, className }: SheetMediaProps) {
     return (
       <div className={cn("flex h-full w-full flex-col", className)}>
         {total > 1 ? (
-          <div className="sticky top-0 z-10 flex justify-end gap-1 border-b border-border/60 bg-background/90 px-2 py-2 backdrop-blur">
+          <div className="sticky top-0 z-10 flex justify-end gap-1 border-b border-border/60 bg-background px-2 py-2">
             <Button type="button" variant="secondary" size="sm" onClick={() => setViewMode("stack")}>
               세로 보기
             </Button>
@@ -89,7 +86,7 @@ export function SheetMedia({ fileUrls, className }: SheetMediaProps) {
     return (
       <div className={cn("relative flex h-full w-full flex-col", className)}>
         {total > 1 ? (
-          <div className="sticky top-0 z-10 flex justify-end gap-1 border-b border-border/60 bg-background/90 px-2 py-2 backdrop-blur">
+          <div className="sticky top-0 z-10 flex justify-end gap-1 border-b border-border/60 bg-background px-2 py-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => setViewMode("stack")}>
               세로 보기
             </Button>
@@ -105,7 +102,7 @@ export function SheetMedia({ fileUrls, className }: SheetMediaProps) {
         />
         {total > 1 ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
-            <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/90 px-2 py-1 shadow-sm">
+            <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-2 py-1">
               <Button
                 type="button"
                 variant="ghost"
@@ -138,12 +135,12 @@ export function SheetMedia({ fileUrls, className }: SheetMediaProps) {
     return (
       <div
         className={cn(
-          "relative min-h-0 w-full flex-1 bg-gradient-to-b from-muted/40 to-background",
+          "relative min-h-0 w-full flex-1 bg-muted/15",
           className,
         )}
       >
         {total > 1 ? (
-          <div className="pointer-events-auto absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/90 p-1 shadow-sm">
+          <div className="pointer-events-auto absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-border/70 bg-background p-1">
             <Button type="button" variant="ghost" size="sm" onClick={() => setViewMode("stack")}>
               세로 보기
             </Button>
@@ -162,7 +159,7 @@ export function SheetMedia({ fileUrls, className }: SheetMediaProps) {
         />
         {total > 1 ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
-            <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/90 px-2 py-1 shadow-sm">
+            <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-2 py-1">
               <Button
                 type="button"
                 variant="ghost"

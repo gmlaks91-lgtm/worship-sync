@@ -21,7 +21,7 @@ export function AppHeaderActions({
         <AddSetlistTriggerButton
           variant="outline"
           size="sm"
-          className="border-border/80 shadow-sm"
+          className="border-border/80"
           teamMembers={teamMembers}
           recentSongWarningByVideoId={recentSongWarningByVideoId}
         />
