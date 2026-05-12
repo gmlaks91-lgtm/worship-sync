@@ -14,8 +14,7 @@ const APP_NAV_ITEMS_ALL: Array<AppNavItem & { hidden?: boolean }> = [
   { href: "/prayer", label: "기도나눔", icon: HandHeart },
   // 임시 숨김: 경건생활 기능
   { href: "/faith", label: "신앙", icon: HeartPulse, hidden: true },
-  // 임시 숨김: 상점 기능
-  { href: "/shop", label: "상점", icon: ShoppingBag, hidden: true },
+  { href: "/shop", label: "상점", icon: ShoppingBag },
   { href: "/team", label: "팀", icon: Users },
   { href: "/board", label: "게시판", icon: MessagesSquare },
   { href: "/more", label: "마이페이지", icon: MoreHorizontal },

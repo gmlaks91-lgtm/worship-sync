@@ -11,7 +11,9 @@ export default async function ShopPage() {
       <header className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ahaba</p>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">포인트 상점</h1>
-        <p className="text-sm text-muted-foreground">보유 포인트: {data.points}P</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          상점에서 아이템을 구매하고, 내 보관함에서 장착해 프로필 아바타와 프레임, 배지를 꾸며 보세요.
+        </p>
       </header>
 
       {data.error ? (
@@ -21,17 +23,17 @@ export default async function ShopPage() {
       ) : null}
 
       {!data.userId ? (
-        <div className="rounded-lg border border-border/60 bg-muted/25 px-6 py-10 text-center text-sm text-muted-foreground">
-          로그인 후 이용할 수 있습니다.
+        <div className="rounded-lg border border-border/60 bg-muted/25 px-6 py-4 text-center text-sm text-muted-foreground">
+          로그인하면 구매/장착이 활성화됩니다. 지금은 더미 데이터로 화면만 미리 볼 수 있어요.
         </div>
-      ) : (
-        <ShopItemsGrid
-          items={data.items}
-          ownedItemIds={data.ownedItemIds}
-          appliedItemIds={data.appliedItemIds}
-          points={data.points}
-        />
-      )}
+      ) : null}
+
+      <ShopItemsGrid
+        items={data.items}
+        ownedItemIds={data.ownedItemIds}
+        appliedItemIds={data.appliedItemIds}
+        points={data.points}
+      />
     </div>
   );
 }

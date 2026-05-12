@@ -1,11 +1,11 @@
 ﻿"use client";
 
-import { Loader2, PencilLine, UserRound } from "lucide-react";
+import { Loader2, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
-import { updateAvatar, updateProfile } from "@/features/profile/actions/profileActions";
+import { updateProfile } from "@/features/profile/actions/profileActions";
 import type { MyProfileRow } from "@/features/profile/queries/getMyProfile";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastPromise } from "@/lib/app-toast";
@@ -34,8 +34,6 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
   const [role2, setRole2] = useState(profile.role_priority_2 ?? "");
   const [role3, setRole3] = useState(profile.role_priority_3 ?? "");
   const [pendingSave, startSaveTransition] = useTransition();
-  const [pendingAvatar, startAvatarTransition] = useTransition();
-  const fileRef = useRef<HTMLInputElement>(null);
   const roleText = formatRolePriorities(profile.role_priority_1, profile.role_priority_2, profile.role_priority_3);
 
   const onSaveProfile = () => {
@@ -58,43 +56,16 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
     });
   };
 
-  const onPickAvatar = () => fileRef.current?.click();
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    const fd = new FormData();
-    fd.set("file", file);
-    startAvatarTransition(async () => {
-      try {
-        await toastPromise(
-          updateAvatar(fd).then((res) => {
-            if (!res.ok) throw new Error(res.message);
-          }),
-          "이미지를 업로드하는 중입니다...",
-        ).unwrap();
-        router.refresh();
-      } catch {
-        /* handled */
-      }
-    });
-  };
-
   return (
     <div className="space-y-8">
       <section className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         <div className="relative">
-          <button type="button" onClick={onPickAvatar} disabled={pendingAvatar} className={cn("group relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring", "disabled:opacity-60")} aria-label="프로필 이미지 변경">
-            <Avatar className="size-28 border-2 border-border/60 sm:size-32">
-              {profile.avatar_url ? <AvatarImage src={profile.avatar_url} alt="" className="object-cover" /> : null}
-              <AvatarFallback className="bg-muted text-lg font-semibold"><UserRound className="size-10 text-muted-foreground" aria-hidden /></AvatarFallback>
-            </Avatar>
-            <span className={cn("absolute inset-0 flex items-center justify-center rounded-full bg-foreground/45 text-primary-foreground opacity-0 transition-opacity", "group-hover:opacity-100 group-focus-visible:opacity-100")}>
-              {pendingAvatar ? <Loader2 className="size-8 animate-spin" aria-hidden /> : <PencilLine className="size-8" aria-hidden />}
-            </span>
-          </button>
-          <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="sr-only" onChange={onFileChange} />
+          <Avatar className="size-28 border-2 border-border/60 sm:size-32" style={{ borderColor: profile.active_border_color ?? undefined }}>
+            {profile.avatar_url ? <AvatarImage src={profile.avatar_url} alt="" className="object-cover" /> : null}
+            <AvatarFallback className="bg-muted text-lg font-semibold">
+              <UserRound className="size-10 text-muted-foreground" aria-hidden />
+            </AvatarFallback>
+          </Avatar>
         </div>
         <div className="flex flex-1 flex-col gap-2 text-center sm:text-left">
           <p className="text-lg font-semibold tracking-tight">{profile.username}</p>
@@ -102,18 +73,23 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
           <p className="text-sm text-muted-foreground">포지션: {roleText || "미정"}</p>
           <p className="text-sm text-muted-foreground">포인트: <span className="font-medium text-foreground">{profile.points}P</span></p>
           {profile.active_badge ? <p className="text-sm text-muted-foreground">적용 뱃지: <span className="font-medium text-foreground">{profile.active_badge}</span></p> : null}
-          <p className="text-xs text-muted-foreground">프로필 이미지를 눌러 PNG/JPG/WebP/GIF를 업로드할 수 있습니다. (최대 5MB)</p>
+          <p className="text-xs text-muted-foreground">프로필 아바타/프레임은 포인트 상점에서 구매한 아이템으로만 변경됩니다.</p>
         </div>
       </section>
 
-      <section className="space-y-3 rounded-lg border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-violet-500/5 p-5 sm:p-6">
+      <section className="space-y-3 rounded-lg border border-primary/15 bg-primary/5 p-5 sm:p-6">
         <h2 className="text-sm font-medium text-foreground">내 프로필 설정</h2>
         <p className="text-xs leading-relaxed text-muted-foreground">
           팀 라인업 카드에 보이는 생일·MBTI·가장 좋아하는 곡을 입력하고 꾸밀 수 있어요.
         </p>
-        <Link href="/profile" className={cn(buttonVariants({ size: "sm" }), "inline-flex w-full justify-center sm:w-auto")}>
-          생일 · MBTI · 곡 수정하기
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/profile" className={cn(buttonVariants({ size: "sm" }), "inline-flex w-full justify-center sm:w-auto")}>
+            생일 · MBTI · 곡 수정하기
+          </Link>
+          <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex w-full justify-center sm:w-auto")}>
+            상점에서 아이템 장착하기
+          </Link>
+        </div>
       </section>
 
       <section className="space-y-4 rounded-lg border border-border/60 bg-card/70 p-5 sm:p-6">

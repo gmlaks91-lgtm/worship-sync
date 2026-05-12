@@ -13,8 +13,8 @@ const applySchema = z.object({ itemId: z.string().uuid() });
 
 function profileFieldForItemType(type: ShopItemType) {
   if (type === "badge") return "active_badge";
-  if (type === "border") return "active_border_color";
-  return "active_background_color";
+  if (type === "frame") return "active_border_color";
+  return "avatar_url";
 }
 
 export async function purchaseShopItem(raw: z.infer<typeof purchaseSchema>): Promise<ActionResult> {
@@ -74,7 +74,7 @@ export async function applyShopItem(raw: z.infer<typeof applySchema>): Promise<A
     if (!user) return { ok: false, message: "로그인이 필요합니다." };
 
     const [{ data: item, error: iErr }, { data: owned, error: oErr }] = await Promise.all([
-      supabase.from("shop_items").select("id,item_type,value").eq("id", parsed.data.itemId).maybeSingle(),
+      supabase.from("shop_items").select("id,category,effect_value").eq("id", parsed.data.itemId).maybeSingle(),
       supabase
         .from("user_inventory")
         .select("id")
@@ -88,7 +88,7 @@ export async function applyShopItem(raw: z.infer<typeof applySchema>): Promise<A
     const { data: sameTypeItems, error: typeErr } = await supabase
       .from("shop_items")
       .select("id")
-      .eq("item_type", item.item_type);
+      .eq("category", item.category);
     if (typeErr) return { ok: false, message: typeErr.message };
 
     const ids = (sameTypeItems ?? []).map((row) => row.id);
@@ -108,8 +108,8 @@ export async function applyShopItem(raw: z.infer<typeof applySchema>): Promise<A
       .eq("shop_item_id", item.id);
     if (applyErr) return { ok: false, message: applyErr.message };
 
-    const field = profileFieldForItemType(item.item_type as ShopItemType);
-    const { error: profileErr } = await supabase.from("profiles").update({ [field]: item.value }).eq("id", user.id);
+    const field = profileFieldForItemType(item.category as ShopItemType);
+    const { error: profileErr } = await supabase.from("profiles").update({ [field]: item.effect_value }).eq("id", user.id);
     if (profileErr) return { ok: false, message: profileErr.message };
 
     revalidatePath("/shop");

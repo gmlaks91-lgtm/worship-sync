@@ -20,7 +20,7 @@ export type ScheduleKind = "practice" | "worship" | "social";
 export type ScheduleAttendanceStatus = "attending" | "absent";
 export type PostCategory = "prayer" | "feedback" | "general";
 export type FaithCheckType = "qt" | "prayer" | "bible";
-export type ShopItemType = "border" | "badge" | "background";
+export type ShopItemType = "avatar" | "frame" | "badge";
 
 export type Database = {
   public: {
@@ -390,8 +390,9 @@ export type Database = {
           id: string;
           name: string;
           description: string | null;
-          item_type: ShopItemType;
-          value: string;
+          category: ShopItemType;
+          image_url: string;
+          effect_value: string;
           price_points: number;
           is_active: boolean;
           created_at: string;
@@ -400,8 +401,9 @@ export type Database = {
           id?: string;
           name: string;
           description?: string | null;
-          item_type: ShopItemType;
-          value: string;
+          category: ShopItemType;
+          image_url: string;
+          effect_value: string;
           price_points: number;
           is_active?: boolean;
           created_at?: string;
@@ -410,8 +412,9 @@ export type Database = {
           id?: string;
           name?: string;
           description?: string | null;
-          item_type?: ShopItemType;
-          value?: string;
+          category?: ShopItemType;
+          image_url?: string;
+          effect_value?: string;
           price_points?: number;
           is_active?: boolean;
           created_at?: string;
