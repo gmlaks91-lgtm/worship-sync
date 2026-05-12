@@ -62,7 +62,7 @@ export async function getPersonalDashboardData(): Promise<PersonalDashboardData>
     if (profileError) errors.push(profileError.message);
     if (settingsError) errors.push(settingsError.message);
 
-    canManageTeamPlaylist = profile?.role === "leader";
+    canManageTeamPlaylist = profile?.role === "leader" || profile?.role === "admin";
     teamPlaylistId = teamSettings?.playlist_id ?? null;
     lastWorshipVideoUrl = teamSettings?.last_worship_video_url ?? null;
   }

@@ -7,7 +7,7 @@ import { createClient } from "@/utils/supabase/server";
 type ProfileLite = {
   id: string;
   username: string;
-  role: "leader" | "member";
+  role: "leader" | "admin" | "member";
   avatar_url: string | null;
   role_priority_1: TeamRoleCode | null;
   role_priority_2: TeamRoleCode | null;
@@ -20,7 +20,7 @@ type ProfileLite = {
 export type TeamManagementMember = {
   id: string;
   username: string;
-  role: "leader" | "member";
+  role: "leader" | "admin" | "member";
   avatar_url: string | null;
   role_priority_1: TeamRoleCode | null;
   role_priority_2: TeamRoleCode | null;
@@ -72,7 +72,7 @@ export async function getTeamManagementData(): Promise<TeamManagementData> {
     return { isLeader: false, currentUserId: user.id, members: [], error: myProfileError.message };
   }
 
-  const isLeader = myProfile?.role === "leader";
+  const isLeader = myProfile?.role === "leader" || myProfile?.role === "admin";
 
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
@@ -132,7 +132,10 @@ export async function getTeamManagementData(): Promise<TeamManagementData> {
     const profileOnly = profileRows.filter((p) => !authIds.has(p.id)).map(mapProfileToMember);
 
     const members = [...membersFromAuth, ...profileOnly].sort((a, b) => {
-      if (a.role !== b.role) return a.role === "leader" ? -1 : 1;
+      if (a.role !== b.role) {
+        if (a.role === "leader" || a.role === "admin") return -1;
+        if (b.role === "leader" || b.role === "admin") return 1;
+      }
       return a.username.localeCompare(b.username, "ko");
     });
 

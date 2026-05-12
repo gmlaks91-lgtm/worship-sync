@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 import { loginIdToSupabaseEmail } from "@/features/auth/login-id-email";
+import { awardPointsForEvent } from "@/features/points/server/awardPoints";
 
 export async function signInWithIdAction(input: { loginId: string; password: string }) {
   const supabase = await createClient();
@@ -16,8 +17,15 @@ export async function signInWithIdAction(input: { loginId: string; password: str
     password: input.password,
   });
 
-  if (error) return { error: error.message };
-  return { error: null };
+  if (error) return { error: error.message, awardedPoints: 0 };
+
+  const reward = await awardPointsForEvent({
+    eventType: "daily_login",
+    points: 10,
+    oncePerDay: true,
+  });
+
+  return { error: null, awardedPoints: reward.awardedPoints };
 }
 
 export async function signUpWithIdAction(input: {

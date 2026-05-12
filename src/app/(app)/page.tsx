@@ -33,7 +33,7 @@ export default async function AhavaDashboardPage({
         .select("id, username, avatar_url, role, role_priority_1, role_priority_2, role_priority_3")
         .order("username", { ascending: true }),
     ]);
-    canManageSetlists = row?.role === "leader";
+    canManageSetlists = row?.role === "leader" || row?.role === "admin";
     teamMembers = (members ?? []) as TeamMemberRow[];
   }
 

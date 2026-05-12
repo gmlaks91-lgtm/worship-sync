@@ -11,7 +11,7 @@ export type Json =
   | Json[];
 
 /** DB ????? ? UI ???? ???? ???? */
-export type ProfileRole = "leader" | "member";
+export type ProfileRole = "leader" | "admin" | "member";
 export type TeamRoleCode = "L" | "M" | "S" | "D" | "A/G" | "B/G" | "E/G" | "V" | "STAFF";
 export type SetlistStatus = "prep" | "confirmed";
 export type AttendanceStatus = "attending" | "late" | "absent";

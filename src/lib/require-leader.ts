@@ -27,10 +27,10 @@ export async function requireLeader(supabase: TypedSupabase): Promise<RequireLea
   if (error) {
     return { ok: false, message: error.message };
   }
-  if (!profile || profile.role !== "leader") {
+  if (!profile || (profile.role !== "leader" && profile.role !== "admin")) {
     return {
       ok: false,
-      message: "콘티 관리 권한이 없습니다. 리더만 이용할 수 있습니다.",
+      message: "콘티 관리 권한이 없습니다. 리더/관리자만 이용할 수 있습니다.",
     };
   }
 

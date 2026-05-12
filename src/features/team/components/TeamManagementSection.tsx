@@ -85,7 +85,10 @@ export function TeamManagementSection({ members, isLeader, currentUserId }: Team
   const sortedMembers = useMemo(
     () =>
       [...members].sort((a, b) => {
-        if (a.role !== b.role) return a.role === "leader" ? -1 : 1;
+        if (a.role !== b.role) {
+          if (a.role === "leader" || a.role === "admin") return -1;
+          if (b.role === "leader" || b.role === "admin") return 1;
+        }
         return a.username.localeCompare(b.username, "ko");
       }),
     [members],
@@ -187,7 +190,7 @@ export function TeamManagementSection({ members, isLeader, currentUserId }: Team
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="truncate text-base font-semibold tracking-tight text-foreground">{member.username}</p>
                     <p className="text-xs text-muted-foreground">
-                      {member.role === "leader" ? "리더" : "팀원"}
+                      {member.role === "leader" ? "리더" : member.role === "admin" ? "관리자" : "팀원"}
                       {roleText ? (
                         <>
                           <span className="mx-1 text-border">·</span>

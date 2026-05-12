@@ -151,7 +151,7 @@ function MyResponsePicker({
         toastError(res.message);
         return;
       }
-      toastSuccess();
+      toastSuccess(res.awardedPoints ? `일정 체크 보상 +${res.awardedPoints}P` : undefined);
     });
   };
 

@@ -7,7 +7,7 @@ export type TeamMemberRow = {
   id: string;
   username: string;
   avatar_url: string | null;
-  role: "leader" | "member";
+  role: "leader" | "admin" | "member";
   created_at: string;
   role_priority_1: TeamRoleCode | null;
   role_priority_2: TeamRoleCode | null;

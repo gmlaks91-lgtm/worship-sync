@@ -47,11 +47,16 @@ export async function purchaseShopItem(raw: z.infer<typeof purchaseSchema>): Pro
     });
     if (invErr) return { ok: false, message: invErr.message };
 
-    const { error: pointErr } = await supabase.rpc("decrement_profile_points", {
+    const { data: spendData, error: pointErr } = await supabase.rpc("spend_points", {
       p_user_id: user.id,
+      p_event_type: "shop_purchase",
       p_points: item.price_points,
     });
     if (pointErr) return { ok: false, message: pointErr.message };
+    const spendRow = Array.isArray(spendData) ? spendData[0] : null;
+    if (!spendRow || Number(spendRow.spent_points ?? 0) <= 0) {
+      return { ok: false, message: String(spendRow?.message ?? "포인트 차감에 실패했습니다.") };
+    }
 
     revalidatePath("/shop");
     revalidatePath("/more");

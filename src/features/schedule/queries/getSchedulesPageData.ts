@@ -61,7 +61,7 @@ export async function getSchedulesPageData() {
       attendances: [] as ScheduleAttendanceRow[],
       profiles: [] as ProfileRow[],
       currentUserId: userId,
-      isLeader: role === "leader",
+      isLeader: role === "leader" || role === "admin",
       error: sErr.message,
     };
   }
@@ -82,7 +82,7 @@ export async function getSchedulesPageData() {
         attendances: [],
         profiles: (profilesRaw ?? []) as ProfileRow[],
         currentUserId: userId,
-        isLeader: role === "leader",
+        isLeader: role === "leader" || role === "admin",
         error: aErr.message,
       };
     }
@@ -95,7 +95,7 @@ export async function getSchedulesPageData() {
       attendances,
       profiles: [] as ProfileRow[],
       currentUserId: userId,
-      isLeader: role === "leader",
+      isLeader: role === "leader" || role === "admin",
       error: profErr.message,
     };
   }
@@ -105,7 +105,7 @@ export async function getSchedulesPageData() {
     attendances,
     profiles: (profilesRaw ?? []) as ProfileRow[],
     currentUserId: userId,
-    isLeader: role === "leader",
+    isLeader: role === "leader" || role === "admin",
     error: null as string | null,
   };
 }

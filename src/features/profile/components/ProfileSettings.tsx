@@ -15,8 +15,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-function roleLabel(role: "leader" | "member") {
-  return role === "leader" ? "리더" : "팀원";
+function roleLabel(role: "leader" | "admin" | "member") {
+  if (role === "leader") return "리더";
+  if (role === "admin") return "관리자";
+  return "팀원";
 }
 
 function formatRolePriorities(...roles: Array<string | null | undefined>) {

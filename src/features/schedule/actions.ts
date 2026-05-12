@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireLeader } from "@/lib/require-leader";
+import { awardPointsForEvent } from "@/features/points/server/awardPoints";
 import { createClient } from "@/utils/supabase/server";
 
 const scheduleKindSchema = z.enum(["practice", "worship", "social"]);
@@ -25,7 +26,7 @@ const deleteScheduleSchema = z.object({
   scheduleId: z.string().uuid(),
 });
 
-export type ActionResult = { ok: true } | { ok: false; message: string };
+export type ActionResult = { ok: true; awardedPoints?: number } | { ok: false; message: string };
 
 export async function setScheduleAttendance(
   raw: z.infer<typeof setAttendanceSchema>,
@@ -64,9 +65,14 @@ export async function setScheduleAttendance(
       return { ok: false, message: error.message };
     }
 
+    const reward = await awardPointsForEvent({
+      eventType: "schedule_check",
+      points: 10,
+    });
+
     revalidatePath("/schedule");
     revalidatePath("/");
-    return { ok: true };
+    return { ok: true, awardedPoints: reward.awardedPoints };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
     return { ok: false, message };

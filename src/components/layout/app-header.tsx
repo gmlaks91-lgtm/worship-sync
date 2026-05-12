@@ -24,7 +24,7 @@ export async function AppHeader({ className }: AppHeaderProps) {
       supabase.from("profiles").select("id, username").order("username", { ascending: true }),
     ]);
     recentSongWarningByVideoId = await getRecentSongWarningByVideoId();
-    canManageSetlists = row?.role === "leader";
+    canManageSetlists = row?.role === "leader" || row?.role === "admin";
     teamMembers = (members ?? []) as { id: string; username: string }[];
   }
 

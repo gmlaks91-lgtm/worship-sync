@@ -130,7 +130,14 @@ export function ShopItemsGrid({
         </TabsList>
 
         <TabsContent value="shop" className="mt-0">
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{items.map(itemCard)}</div>
+          {items.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 px-6 py-14 text-center">
+              <Sparkles className="mx-auto mb-2 size-5 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">등록된 상품이 없습니다. 관리자 페이지에서 상품을 추가해 주세요.</p>
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{items.map(itemCard)}</div>
+          )}
         </TabsContent>
 
         <TabsContent value="inventory" className="mt-0">

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import type { PostCategory } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
+import { awardPointsForEvent } from "@/features/points/server/awardPoints";
 
 const categorySchema = z.enum(["prayer", "feedback", "general"]);
 
@@ -32,7 +33,7 @@ const updateCommentSchema = z.object({
 
 const commentIdSchema = z.object({ commentId: z.string().uuid() });
 
-export type BoardActionResult = { ok: true } | { ok: false; message: string };
+export type BoardActionResult = { ok: true; awardedPoints?: number } | { ok: false; message: string };
 
 function formatFeedbackTitle(songTitle: string) {
   const now = new Date();
@@ -72,8 +73,13 @@ export async function createPost(
       return { ok: false, message: error.message };
     }
 
+    const reward = await awardPointsForEvent({
+      eventType: "board_post",
+      points: 10,
+    });
+
     revalidatePath("/board");
-    return { ok: true };
+    return { ok: true, awardedPoints: reward.awardedPoints };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
     return { ok: false, message };

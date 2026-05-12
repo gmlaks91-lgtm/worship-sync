@@ -79,12 +79,16 @@ export function LoginForm({ className }: { className?: string }) {
   });
 
   const onSignIn = signInForm.handleSubmit(async ({ loginId, password }) => {
-    const { error } = await signInWithIdAction({ loginId, password });
+    const { error, awardedPoints } = await signInWithIdAction({ loginId, password });
     if (error) {
       toastError(error);
       return;
     }
-    toastSuccess("로그인되었습니다.");
+    if (awardedPoints > 0) {
+      toastSuccess(`로그인 보상 +${awardedPoints}P`);
+    } else {
+      toastSuccess("로그인되었습니다.");
+    }
     router.push(next.startsWith("/") ? next : "/");
     router.refresh();
   });

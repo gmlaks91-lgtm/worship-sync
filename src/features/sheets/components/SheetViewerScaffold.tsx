@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { ArrowLeft, X } from "lucide-react";
+import { useEffect } from "react";
 
+import { rewardSheetView } from "@/features/sheets/actions/sheetRewardActions";
 import { SheetFeedbackForm } from "@/features/sheets/components/SheetFeedbackForm";
 import { SheetMedia } from "@/features/sheets/components/SheetMedia";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { toastSuccess } from "@/lib/app-toast";
 import { cn } from "@/lib/utils";
 
 type SheetViewerScaffoldProps = {
@@ -25,6 +28,19 @@ export function SheetViewerScaffold({
   mode,
   onClose,
 }: SheetViewerScaffoldProps) {
+  useEffect(() => {
+    let mounted = true;
+    void rewardSheetView().then((res) => {
+      if (!mounted) return;
+      if (res.awardedPoints > 0) {
+        toastSuccess(`악보 확인 보상 +${res.awardedPoints}P`);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="flex shrink-0 items-start gap-2 border-b border-border/70 bg-background px-3 py-3 sm:px-4">

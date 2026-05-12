@@ -32,7 +32,7 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
   let canManageSetlist = false;
   if (user) {
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-    canManageSetlist = profile?.role === "leader";
+    canManageSetlist = profile?.role === "leader" || profile?.role === "admin";
   }
 
   const { data: membersRaw } = await supabase

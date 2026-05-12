@@ -4,7 +4,7 @@ import { Loader2, SendHorizontal } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 
 import { createPost } from "@/features/board/actions";
-import { toastError, toastPromise } from "@/lib/app-toast";
+import { toastError, toastSuccess } from "@/lib/app-toast";
 import type { PostCategory } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -34,18 +34,11 @@ export function CreatePostForm({ category }: CreatePostFormProps) {
     }
     clearBlurTimer();
     startTransition(async () => {
-      try {
-        await toastPromise(
-          createPost(category, body).then((res) => {
-            if (!res.ok) throw new Error(res.message);
-          }),
-          "게시글을 올리는 중이에요…",
-        ).unwrap();
-        setText("");
-        setExpanded(false);
-      } catch {
-        /* handled */
-      }
+      const res = await createPost(category, body);
+      if (!res.ok) return toastError(res.message);
+      setText("");
+      setExpanded(false);
+      toastSuccess(res.awardedPoints ? `게시글 작성 보상 +${res.awardedPoints}P` : "게시글을 올렸습니다.");
     });
   };
 
