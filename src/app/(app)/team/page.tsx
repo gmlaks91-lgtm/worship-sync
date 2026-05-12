@@ -15,8 +15,8 @@ export default async function TeamPage() {
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">팀 라인업</h1>
         <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
           {isLeader
-            ? "리더 권한으로 전체 멤버의 가입 현황, 포지션 수정, 강제 퇴장을 관리할 수 있습니다."
-            : "전체 팀원의 포지션을 한눈에 확인하세요."}
+            ? "리더는 팀원 포지션을 수정하고, 필요 시 계정을 정리할 수 있어요. 멤버 카드의 감성 정보는 각자 마이페이지에서 채웁니다."
+            : "서로의 생일과 취향을 알아가며 한 팀으로 연습해 가요."}
         </p>
       </header>
 

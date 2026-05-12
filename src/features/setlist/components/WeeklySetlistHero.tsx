@@ -12,7 +12,7 @@ import { AddSetlistTriggerButton } from "@/features/setlist/components/AddSetlis
 import { SetlistLineupEditor } from "@/features/setlist/components/SetlistLineupEditor";
 import { YouTubePlayer } from "@/features/setlist/components/YouTubePlayer";
 import { WeeklySongRow } from "@/features/setlist/components/WeeklySongRow";
-import { weekRangeLineKst, weekSetlistHeadingKst } from "@/features/setlist/lib/week-label-kst";
+import { weekSetlistHeadingKst } from "@/features/setlist/lib/week-label-kst";
 import type { PrepSetlistWithSheets } from "@/features/setlist/types";
 import { shiftWeekSundayYmd, weeklyDashboardHref } from "@/features/setlist/weekly";
 import type { TeamMemberRow } from "@/features/team/queries/getTeamMembers";
@@ -80,7 +80,6 @@ export function WeeklySetlistHero({
   };
 
   const weekTitle = weekSetlistHeadingKst(weekSundayYmd);
-  const weekRange = weekRangeLineKst(weekSundayYmd);
   const prevWeekHref = weeklyDashboardHref(shiftWeekSundayYmd(weekSundayYmd, -1));
   const nextWeekHref = weeklyDashboardHref(shiftWeekSundayYmd(weekSundayYmd, 1));
 
@@ -128,9 +127,8 @@ export function WeeklySetlistHero({
               <ChevronLeft className="size-5" aria-hidden />
             </button>
             <div className="min-w-0 flex-1 text-center sm:px-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-neutral-400">Weekly</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-neutral-400">주일</p>
               <h1 className="mt-1 text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">{weekTitle}</h1>
-              <p className="mt-1 text-xs text-neutral-500">{weekRange}</p>
             </div>
             <button
               type="button"
@@ -169,7 +167,7 @@ export function WeeklySetlistHero({
           <div className="mt-10 flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/50 px-6 py-14 text-center">
             <p className="text-sm font-medium text-neutral-700">이 주차에 등록된 송리스트가 없습니다.</p>
             <p className="mt-2 max-w-md text-sm text-neutral-500">
-              ({weekRange}) 리더가 콘티를 추가하면 이곳에 표시됩니다.
+              ({weekTitle}) 리더가 콘티를 추가하면 이곳에 표시됩니다.
             </p>
           </div>
         ) : null}

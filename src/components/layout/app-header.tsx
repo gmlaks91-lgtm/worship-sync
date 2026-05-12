@@ -45,6 +45,7 @@ export async function AppHeader({ className }: AppHeaderProps) {
         <div className="flex items-center gap-2">
           <span className="hidden text-xs text-muted-foreground lg:inline">아하바 찬양팀</span>
           <AppHeaderActions
+            isLoggedIn={Boolean(user)}
             canManageSetlists={canManageSetlists}
             teamMembers={teamMembers}
             recentSongWarningByVideoId={recentSongWarningByVideoId}

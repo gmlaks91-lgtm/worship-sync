@@ -1,14 +1,19 @@
 "use client";
 
+import { Cake, Heart, Music2 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { hardDeleteMember, updateMemberRoles } from "@/features/team/actions/teamManagementActions";
 import type { TeamManagementMember } from "@/features/team/queries/getTeamManagementData";
+import { parseKstYmdAtNoon } from "@/lib/date-kst";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastPromise } from "@/lib/app-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 type TeamManagementSectionProps = {
   members: TeamManagementMember[];
@@ -22,17 +27,42 @@ type DraftRoles = {
   rolePriority3: string;
 };
 
-function formatDate(value: string | null) {
-  if (!value) return "정보 없음";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "정보 없음";
-  return new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+function initials(name: string) {
+  const t = name.trim();
+  if (!t) return "?";
+  return t.slice(0, 2);
 }
 
-function signupStatus(member: TeamManagementMember) {
-  if (!member.hasProfile) return "프로필 미생성";
-  if (!member.email_confirmed_at) return "가입 대기";
-  return "가입 완료";
+function birthdayLabel(ymd: string | null): string {
+  if (!ymd) return "아직 비밀이에요";
+  const head = ymd.slice(0, 10);
+  try {
+    const d = parseKstYmdAtNoon(head);
+    return new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      month: "long",
+      day: "numeric",
+    }).format(d);
+  } catch {
+    return "아직 비밀이에요";
+  }
+}
+
+function softLine(label: string, value: string, Icon: typeof Cake) {
+  const empty = value === "아직 비밀이에요" || value === "적어 주면 좋아요";
+  return (
+    <div className="rounded-xl border border-border/50 bg-muted/20 px-3.5 py-3">
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-primary">
+          <Icon className="size-4" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+          <p className={cn("text-sm font-medium leading-snug text-foreground", empty && "text-muted-foreground")}>{value}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function TeamManagementSection({ members, isLeader, currentUserId }: TeamManagementSectionProps) {
@@ -52,11 +82,14 @@ export function TeamManagementSection({ members, isLeader, currentUserId }: Team
     return next;
   });
 
-  const counts = useMemo(() => {
-    const joined = members.filter((m) => m.email_confirmed_at).length;
-    const waiting = members.filter((m) => !m.email_confirmed_at).length;
-    return { total: members.length, joined, waiting };
-  }, [members]);
+  const sortedMembers = useMemo(
+    () =>
+      [...members].sort((a, b) => {
+        if (a.role !== b.role) return a.role === "leader" ? -1 : 1;
+        return a.username.localeCompare(b.username, "ko");
+      }),
+    [members],
+  );
 
   const onRoleChange = (memberId: string, key: keyof DraftRoles, value: string) => {
     setDrafts((prev) => ({
@@ -121,63 +154,59 @@ export function TeamManagementSection({ members, isLeader, currentUserId }: Team
   };
 
   return (
-    <div className="space-y-5">
-      {isLeader ? (
-        <Card className="border-border/70">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">리더 관리 요약</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm sm:grid-cols-3">
-            <p>
-              <span className="text-muted-foreground">전체 멤버</span> · {counts.total}명
-            </p>
-            <p>
-              <span className="text-muted-foreground">가입 완료</span> · {counts.joined}명
-            </p>
-            <p>
-              <span className="text-muted-foreground">가입 대기/미완료</span> · {counts.waiting}명
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
+    <div className="space-y-6">
+      <p className="text-center text-xs text-muted-foreground">
+        <Link href="/profile" className="font-medium text-primary underline-offset-4 hover:underline">
+          내 프로필 꾸미기
+        </Link>
+        에서 생일·MBTI·좋아하는 곡을 입력하면 아래 카드가 채워져요.
+      </p>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {members.map((member) => {
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {sortedMembers.map((member) => {
           const roleText = [
             member.role_priority_1 ? teamRoleLabel(member.role_priority_1) : null,
             member.role_priority_2 ? teamRoleLabel(member.role_priority_2) : null,
             member.role_priority_3 ? teamRoleLabel(member.role_priority_3) : null,
           ]
             .filter(Boolean)
-            .join(" / ");
+            .join(" · ");
 
           const draft = drafts[member.id] ?? { rolePriority1: "", rolePriority2: "", rolePriority3: "" };
+          const mbtiLine = member.mbti?.trim() || "적어 주면 좋아요";
+          const songLine = member.favorite_song?.trim() || "적어 주면 좋아요";
 
           return (
-            <Card key={member.id} className="border-border/70">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">{member.username}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <p>
-                  <span className="text-muted-foreground">권한</span> · {member.role === "leader" ? "리더" : "팀원"}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">가입 현황</span> · {signupStatus(member)}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">가입일</span> · {formatDate(member.created_at)}
-                </p>
-                <p className="truncate">
-                  <span className="text-muted-foreground">이메일</span> · {member.email ?? "정보 없음"}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">현재 포지션</span> · {roleText || "미정"}
-                </p>
+            <Card key={member.id} className="overflow-hidden border-border/70">
+              <CardContent className="space-y-4 p-5 pt-5">
+                <div className="flex items-start gap-3">
+                  <Avatar className="size-14 shrink-0 border border-border/60">
+                    {member.avatar_url ? <AvatarImage src={member.avatar_url} alt="" className="object-cover" /> : null}
+                    <AvatarFallback className="text-sm font-semibold">{initials(member.username)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="truncate text-base font-semibold tracking-tight text-foreground">{member.username}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {member.role === "leader" ? "리더" : "팀원"}
+                      {roleText ? (
+                        <>
+                          <span className="mx-1 text-border">·</span>
+                          {roleText}
+                        </>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  {softLine("생일", birthdayLabel(member.birthday), Cake)}
+                  {softLine("MBTI", mbtiLine, Heart)}
+                  {softLine("가장 좋아하는 곡", songLine, Music2)}
+                </div>
 
                 {isLeader ? (
-                  <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
-                    <p className="text-xs font-medium text-muted-foreground">포지션 수정</p>
+                  <div className="space-y-2 border-t border-border/50 pt-4">
+                    <p className="text-xs font-medium text-muted-foreground">포지션 (리더만 수정)</p>
                     <select
                       className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
                       value={draft.rolePriority1}
@@ -218,7 +247,7 @@ export function TeamManagementSection({ members, isLeader, currentUserId }: Team
                       ))}
                     </select>
 
-                    <div className="flex gap-2 pt-1">
+                    <div className="flex flex-wrap gap-2 pt-1">
                       <Button type="button" size="sm" onClick={() => onSaveRoles(member)} disabled={pending}>
                         포지션 저장
                       </Button>

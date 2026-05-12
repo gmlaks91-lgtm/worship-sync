@@ -18,7 +18,7 @@ const APP_NAV_ITEMS_ALL: Array<AppNavItem & { hidden?: boolean }> = [
   { href: "/shop", label: "상점", icon: ShoppingBag, hidden: true },
   { href: "/team", label: "팀", icon: Users },
   { href: "/board", label: "게시판", icon: MessagesSquare },
-  { href: "/more", label: "더보기", icon: MoreHorizontal },
+  { href: "/more", label: "마이페이지", icon: MoreHorizontal },
 ];
 
 export const APP_NAV_ITEMS: AppNavItem[] = APP_NAV_ITEMS_ALL.filter((item) => !item.hidden);

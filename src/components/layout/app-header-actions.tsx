@@ -1,22 +1,35 @@
 ﻿"use client";
 
+import Link from "next/link";
+
 import { signOut } from "@/features/auth/actions";
 import { AddSetlistTriggerButton } from "@/features/setlist/components/AddSetlistDialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type AppHeaderActionsProps = {
+  isLoggedIn: boolean;
   canManageSetlists: boolean;
   teamMembers: Array<{ id: string; username: string }>;
   recentSongWarningByVideoId: Record<string, number>;
 };
 
 export function AppHeaderActions({
+  isLoggedIn,
   canManageSetlists,
   teamMembers,
   recentSongWarningByVideoId,
 }: AppHeaderActionsProps) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
+      {isLoggedIn ? (
+        <Link
+          href="/profile"
+          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground")}
+        >
+          내 프로필
+        </Link>
+      ) : null}
       {canManageSetlists ? (
         <AddSetlistTriggerButton
           variant="outline"

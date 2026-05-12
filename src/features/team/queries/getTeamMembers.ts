@@ -12,13 +12,16 @@ export type TeamMemberRow = {
   role_priority_1: TeamRoleCode | null;
   role_priority_2: TeamRoleCode | null;
   role_priority_3: TeamRoleCode | null;
+  birthday: string | null;
+  mbti: string | null;
+  favorite_song: string | null;
 };
 
 export async function getTeamMembers() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, avatar_url, role, created_at, role_priority_1, role_priority_2, role_priority_3")
+    .select("id, username, avatar_url, role, created_at, role_priority_1, role_priority_2, role_priority_3, birthday, mbti, favorite_song")
     .order("role", { ascending: true })
     .order("username", { ascending: true });
 

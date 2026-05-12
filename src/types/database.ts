@@ -39,6 +39,9 @@ export type Database = {
           active_badge: string | null;
           active_border_color: string | null;
           active_background_color: string | null;
+          birthday: string | null;
+          mbti: string | null;
+          favorite_song: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -55,6 +58,9 @@ export type Database = {
           active_badge?: string | null;
           active_border_color?: string | null;
           active_background_color?: string | null;
+          birthday?: string | null;
+          mbti?: string | null;
+          favorite_song?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -71,6 +77,9 @@ export type Database = {
           active_badge?: string | null;
           active_border_color?: string | null;
           active_background_color?: string | null;
+          birthday?: string | null;
+          mbti?: string | null;
+          favorite_song?: string | null;
           created_at?: string;
           updated_at?: string;
         };

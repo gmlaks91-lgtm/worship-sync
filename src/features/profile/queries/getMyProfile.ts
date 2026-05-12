@@ -15,6 +15,9 @@ export type MyProfileRow = {
   active_badge: string | null;
   active_border_color: string | null;
   active_background_color: string | null;
+  birthday: string | null;
+  mbti: string | null;
+  favorite_song: string | null;
   updated_at: string;
 };
 
@@ -34,7 +37,9 @@ export async function getMyProfile(): Promise<{
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, role, avatar_url, role_priority_1, role_priority_2, role_priority_3, points, active_badge, active_border_color, active_background_color, updated_at")
+      .select(
+        "id, username, role, avatar_url, role_priority_1, role_priority_2, role_priority_3, points, active_badge, active_border_color, active_background_color, birthday, mbti, favorite_song, updated_at",
+      )
       .eq("id", user.id)
       .maybeSingle();
 
@@ -58,6 +63,9 @@ export async function getMyProfile(): Promise<{
         active_badge: data.active_badge ?? null,
         active_border_color: data.active_border_color ?? null,
         active_background_color: data.active_background_color ?? null,
+        birthday: data.birthday ?? null,
+        mbti: data.mbti ?? null,
+        favorite_song: data.favorite_song ?? null,
         updated_at: data.updated_at,
       },
       error: null,

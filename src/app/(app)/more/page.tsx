@@ -16,7 +16,11 @@ export default async function MorePage() {
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ahaba</p>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">마이페이지</h1>
         <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-          내 프로필과 역할 우선순위를 관리하고 팀 라인업 화면으로 이동할 수 있습니다.
+          프로필 사진·이름·포지션과{" "}
+          <Link href="/profile" className="font-medium text-primary underline-offset-4 hover:underline">
+            생일·MBTI·좋아하는 곡
+          </Link>
+          을 관리해요.
         </p>
       </header>
 
@@ -38,6 +42,9 @@ export default async function MorePage() {
       {profile ? <ProfileSettings key={profile.updated_at} profile={profile} /> : null}
 
       <footer className="flex flex-wrap items-center gap-3 border-t border-border/50 pt-6">
+        <Link href="/profile" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
+          내 프로필 설정
+        </Link>
         <Link href="/team" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>팀 라인업</Link>
         {/* 임시 숨김: 경건생활/상점 기능 */}
         {/* <Link href="/faith" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>신앙 점검표</Link> */}

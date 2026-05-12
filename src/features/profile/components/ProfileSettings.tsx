@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { Loader2, PencilLine, UserRound } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
@@ -9,7 +10,7 @@ import type { MyProfileRow } from "@/features/profile/queries/getMyProfile";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastPromise } from "@/lib/app-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -103,6 +104,16 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
           {profile.active_badge ? <p className="text-sm text-muted-foreground">적용 뱃지: <span className="font-medium text-foreground">{profile.active_badge}</span></p> : null}
           <p className="text-xs text-muted-foreground">프로필 이미지를 눌러 PNG/JPG/WebP/GIF를 업로드할 수 있습니다. (최대 5MB)</p>
         </div>
+      </section>
+
+      <section className="space-y-3 rounded-lg border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-violet-500/5 p-5 sm:p-6">
+        <h2 className="text-sm font-medium text-foreground">내 프로필 설정</h2>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          팀 라인업 카드에 보이는 생일·MBTI·가장 좋아하는 곡을 입력하고 꾸밀 수 있어요.
+        </p>
+        <Link href="/profile" className={cn(buttonVariants({ size: "sm" }), "inline-flex w-full justify-center sm:w-auto")}>
+          생일 · MBTI · 곡 수정하기
+        </Link>
       </section>
 
       <section className="space-y-4 rounded-lg border border-border/60 bg-card/70 p-5 sm:p-6">

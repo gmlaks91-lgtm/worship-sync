@@ -1,6 +1,6 @@
 import { addDaysYmdKst, kstWeekdaySun0, parseKstYmdAtNoon } from "@/lib/date-kst";
 
-/** 해당 달에서 일요일 시작 주차 (1-based). `weekSundayYmd`는 반드시 일요일. */
+/** 해당 달에서 일요일 시작 주차 (1-based). `weekSundayYmd`는 반드시 일요일. (레거시·테스트용으로 유지) */
 export function weekOfMonthSundayStartKst(weekSundayYmd: string): number {
   const [y, mo] = weekSundayYmd.split("-").map(Number);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -13,12 +13,19 @@ export function weekOfMonthSundayStartKst(weekSundayYmd: string): number {
   return Math.floor(diffDays / 7) + 1;
 }
 
-/** 예: `5월 2주차 송리스트` */
-export function weekSetlistHeadingKst(weekSundayYmd: string): string {
+/** 해당 주의 주일(일요일) 한 줄 표기 (KST). 예: `5월 17일` */
+export function weekSundayLabelKst(weekSundayYmd: string): string {
   const d = parseKstYmdAtNoon(weekSundayYmd);
-  const monthLabel = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long" }).format(d);
-  const wm = weekOfMonthSundayStartKst(weekSundayYmd);
-  return `${monthLabel} ${wm}주차 송리스트`;
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+  }).format(d);
+}
+
+/** 주간 송리스트 상단에 표시하는 주일 한 줄 (KST). 예: `5월 17일` */
+export function weekSetlistHeadingKst(weekSundayYmd: string): string {
+  return weekSundayLabelKst(weekSundayYmd);
 }
 
 /** 보조 문구: 해당 주 일~토 (KST). */

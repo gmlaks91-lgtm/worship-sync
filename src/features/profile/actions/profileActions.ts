@@ -77,6 +77,7 @@ export async function updateProfile(raw: {
       return { ok: false, message: error.message };
     }
 
+    revalidatePath("/profile");
     revalidatePath("/more");
     revalidatePath("/team");
     revalidatePath("/", "layout");
@@ -144,6 +145,7 @@ export async function updateAvatar(formData: FormData): Promise<ProfileActionRes
       await supabase.storage.from("avatars").remove(toRemove);
     }
 
+    revalidatePath("/profile");
     revalidatePath("/more");
     revalidatePath("/team");
     revalidatePath("/", "layout");
