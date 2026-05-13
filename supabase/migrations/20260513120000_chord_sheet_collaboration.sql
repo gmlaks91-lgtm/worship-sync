@@ -85,16 +85,16 @@ set search_path = public
 as $$
   select jsonb_strip_nulls(
     jsonb_build_object(
-      'id', b.id,
-      'document_id', b.document_id,
-      'section_tag', b.section_tag,
-      'custom_label', b.custom_label,
-      'order_index', b.order_index,
-      'lyrics', b.lyrics,
-      'chords', b.chords,
-      'transpose_semitones', b.transpose_semitones,
-      'created_at', b.created_at,
-      'updated_at', b.updated_at
+      'id', (b).id,
+      'document_id', (b).document_id,
+      'section_tag', (b).section_tag,
+      'custom_label', (b).custom_label,
+      'order_index', (b).order_index,
+      'lyrics', (b).lyrics,
+      'chords', (b).chords,
+      'transpose_semitones', (b).transpose_semitones,
+      'created_at', (b).created_at,
+      'updated_at', (b).updated_at
     )
   );
 $$;
@@ -201,7 +201,7 @@ begin
     )
     values (
       old.document_id,
-      old.id,
+      null,
       'block_delete',
       public.chord_sheet_block_to_jsonb(old),
       null,

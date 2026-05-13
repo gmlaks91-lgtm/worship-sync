@@ -17,9 +17,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   // 이미지 설정도 일단 가장 기본만 남깁니다.
   images: {
     remotePatterns: [

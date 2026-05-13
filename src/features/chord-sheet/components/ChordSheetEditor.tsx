@@ -7,9 +7,11 @@ import Link from "next/link";
 import { ArrowLeft, History, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CHORD_SECTION_TAGS } from "@/features/chord-sheet/constants";
-import { DraggableBlocksList } from "@/features/chord-sheet/components/DraggableBlocksList";
+import { ArrangementBuilder } from "@/features/chord-sheet/components/ArrangementBuilder";
 import { HistoryTimeline } from "@/features/chord-sheet/components/HistoryTimeline";
+import { MasterPartsPanel } from "@/features/chord-sheet/components/MasterPartsPanel";
+import type { ChordSheetBlockRow, ChordSheetDocumentRow, ChordSheetHistoryRow } from "@/features/chord-sheet/domain";
+import { emptyLinesJson, parseArrangement, type LinesJson } from "@/features/chord-sheet/lib/lines-json";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,11 +23,7 @@ import {
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
-import type { Tables } from "@/types/database";
-
-type ChordSheetDocumentRow = Tables<"chord_sheet_documents">;
-type ChordSheetBlockRow = Tables<"chord_sheet_blocks">;
-type ChordSheetHistoryRow = Tables<"chord_sheet_history">;
+import type { Json } from "@/types/database";
 
 export type ChordSheetEditorProps = {
   songId: string;
@@ -47,6 +45,10 @@ export function ChordSheetEditor({
   const [blocks, setBlocks] = useState<ChordSheetBlockRow[]>(() =>
     [...initialBlocks].sort((a, b) => a.order_index - b.order_index),
   );
+  const arrangement = useMemo(() => parseArrangement(document.arrangement), [document.arrangement]);
+
+  const blocksById = useMemo(() => new Map(blocks.map((b) => [b.id, b])), [blocks]);
+
   const [historyEntries, setHistoryEntries] = useState<ChordSheetHistoryRow[]>([]);
   const [actorNames, setActorNames] = useState<Record<string, string>>({});
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
@@ -67,6 +69,15 @@ export function ChordSheetEditor({
       return;
     }
     setBlocks(data ?? []);
+  }, [document.id, supabase]);
+
+  const refetchDocument = useCallback(async () => {
+    const { data, error } = await supabase.from("chord_sheet_documents").select("*").eq("id", document.id).maybeSingle();
+    if (error || !data) {
+      if (error) toastError(error.message);
+      return;
+    }
+    setDocument(data);
   }, [document.id, supabase]);
 
   const flushDirty = useDebouncedCallback(async () => {
@@ -97,7 +108,14 @@ export function ChordSheetEditor({
     [flushDirty],
   );
 
-  const handleReorder = useCallback(
+  const queueLinesJson = useCallback(
+    (blockId: string, lines: LinesJson) => {
+      queuePatch(blockId, { lines_json: lines as unknown as Json });
+    },
+    [queuePatch],
+  );
+
+  const handleMasterReorder = useCallback(
     async (orderedIds: string[]) => {
       setBlocks((prev) => {
         const m = new Map(prev.map((b) => [b.id, b]));
@@ -122,15 +140,34 @@ export function ChordSheetEditor({
       dirtyRef.current = {};
       dirtyIdsRef.current.clear();
       await refetchBlocks();
+      await refetchDocument();
       setHistoryRefreshKey((k) => k + 1);
-      toastSuccess("블록 순서가 저장되었습니다.");
+      toastSuccess("마스터 파트 순서가 저장되었습니다.");
     },
-    [document.id, refetchBlocks, supabase],
+    [document.id, refetchBlocks, refetchDocument, supabase],
+  );
+
+  const handleArrangementCommit = useCallback(
+    async (nextArr: ReturnType<typeof parseArrangement>) => {
+      const { error } = await supabase.rpc("set_chord_sheet_arrangement", {
+        p_document_id: document.id,
+        p_arrangement: nextArr as unknown as Json,
+      });
+      if (error) {
+        toastError(error.message);
+        await refetchDocument();
+        return;
+      }
+      setDocument((d) => ({ ...d, arrangement: nextArr as unknown as Json }));
+      setHistoryRefreshKey((k) => k + 1);
+      toastSuccess("진행 순서가 저장되었습니다.");
+    },
+    [document.id, refetchDocument, supabase],
   );
 
   const handleDeleteBlock = useCallback(
     async (blockId: string) => {
-      if (!window.confirm("이 블록을 삭제할까요?")) return;
+      if (!window.confirm("이 마스터 파트를 삭제할까요? 진행 순서에서도 제거됩니다.")) return;
       const { error } = await supabase.from("chord_sheet_blocks").delete().eq("id", blockId);
       if (error) {
         toastError(error.message);
@@ -139,24 +176,23 @@ export function ChordSheetEditor({
       delete dirtyRef.current[blockId];
       dirtyIdsRef.current.delete(blockId);
       setBlocks((prev) => prev.filter((b) => b.id !== blockId));
+      await refetchDocument();
       setHistoryRefreshKey((k) => k + 1);
-      toastSuccess("블록이 삭제되었습니다.");
+      toastSuccess("파트가 삭제되었습니다.");
     },
-    [supabase],
+    [refetchDocument, supabase],
   );
 
   const handleAddBlock = useCallback(async () => {
     setAdding(true);
     const nextIndex = blocks.length;
-    const defaultTag = CHORD_SECTION_TAGS[0]?.value ?? "V";
     const { data, error } = await supabase
       .from("chord_sheet_blocks")
       .insert({
         document_id: document.id,
-        section_tag: defaultTag,
+        section_tag: "A",
         order_index: nextIndex,
-        lyrics: "",
-        chords: "",
+        lines_json: emptyLinesJson() as unknown as Json,
         transpose_semitones: 0,
       })
       .select("*")
@@ -168,9 +204,10 @@ export function ChordSheetEditor({
       return;
     }
     setBlocks((prev) => [...prev, data].sort((a, b) => a.order_index - b.order_index));
+    await refetchDocument();
     setHistoryRefreshKey((k) => k + 1);
-    toastSuccess("블록이 추가되었습니다.");
-  }, [blocks.length, document.id, supabase]);
+    toastSuccess("마스터 파트가 추가되었습니다.");
+  }, [blocks.length, document.id, refetchDocument, supabase]);
 
   useEffect(() => {
     let cancelled = false;
@@ -251,6 +288,7 @@ export function ChordSheetEditor({
             if (oldRow?.id) {
               setBlocks((prev) => prev.filter((b) => b.id !== oldRow.id));
             }
+            void refetchDocument();
             return;
           }
 
@@ -262,6 +300,7 @@ export function ChordSheetEditor({
               }
               return [...prev, row].sort((a, b) => a.order_index - b.order_index);
             });
+            void refetchDocument();
             return;
           }
 
@@ -281,7 +320,7 @@ export function ChordSheetEditor({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [document.id, supabase]);
+  }, [document.id, refetchDocument, supabase]);
 
   const updatedLabel = document.updated_at
     ? format(new Date(document.updated_at), "PPP p", { locale: ko })
@@ -320,15 +359,22 @@ export function ChordSheetEditor({
           >
             <ArrowLeft className="size-4" />
           </Link>
-          <div className="min-w-0 space-y-1">
+          <div className="min-w-0 space-y-2">
             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">협업 코드 악보</p>
             <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">{songTitle}</h1>
+            <ArrangementBuilder
+              documentId={document.id}
+              arrangement={arrangement}
+              blocksById={blocksById}
+              canReorder={canReorder}
+              onCommit={handleArrangementCommit}
+            />
             {updatedLabel ? (
               <p className="text-xs text-muted-foreground">문서 마지막 수정: {updatedLabel}</p>
             ) : null}
             {!canReorder ? (
               <p className="text-[11px] text-amber-800/90 dark:text-amber-200/90">
-                블록 순서 변경은 리더·관리자만 가능합니다. 가사·코드·태그는 팀원 모두 편집할 수 있어요.
+                진행 순서 편집은 리더·관리자만 가능합니다. 가사·코드는 팀원 모두 인라인으로 편집할 수 있어요.
               </p>
             ) : null}
           </div>
@@ -352,23 +398,24 @@ export function ChordSheetEditor({
 
           <Button type="button" size="sm" className="h-9 gap-1.5" onClick={() => void handleAddBlock()} disabled={adding}>
             <Plus className="size-3.5" />
-            블록 추가
+            마스터 파트 추가
           </Button>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1 space-y-4">
-          <DraggableBlocksList
+          <MasterPartsPanel
             blocks={blocks}
             canReorder={canReorder}
-            onReorder={handleReorder}
-            onPatchBlock={queuePatch}
+            onReorder={handleMasterReorder}
+            onPatchBlockMeta={queuePatch}
+            onLinesJsonChange={queueLinesJson}
             onDeleteBlock={handleDeleteBlock}
           />
           {blocks.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border/70 bg-muted/15 px-4 py-8 text-center text-sm text-muted-foreground">
-              아직 블록이 없습니다. 위의 &quot;블록 추가&quot;로 첫 섹션을 만들어 보세요.
+              마스터 파트가 없습니다. 위 버튼으로 A/B/C 등 파트를 추가한 뒤, 진행 순서를 구성하세요.
             </p>
           ) : null}
         </div>

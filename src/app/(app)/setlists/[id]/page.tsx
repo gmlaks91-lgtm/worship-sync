@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 
 import { EditSetlistDialog } from "@/features/setlist/components/EditSetlistDialog";
+import { SetlistChordSection } from "@/features/setlist/components/SetlistChordSection";
 import { StaffNotesEditor } from "@/features/setlist/components/StaffNotesEditor";
+import type { SetlistChordSongItem } from "@/features/setlist/components/SetlistViewer";
+import type { ChordSheetBlockRow } from "@/features/chord-sheet/domain";
 import { TEAM_ROLE_OPTIONS, type TeamRoleCode } from "@/lib/team-roles";
 import { createClient } from "@/utils/supabase/server";
 
@@ -59,6 +62,44 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
     }))
     .filter((row) => !!row.youtubeUrl);
 
+  const orderedSongs = (data.setlist_songs ?? [])
+    .filter((row) => row.songs?.id)
+    .sort((a, b) => a.order_index - b.order_index) as Array<{
+    order_index: number;
+    songs: { id: string; title: string; youtube_url: string | null };
+  }>;
+
+  const songIds = orderedSongs.map((r) => r.songs.id);
+
+  const { data: docs } = await supabase.from("chord_sheet_documents").select("*").in("song_id", songIds);
+
+  const docBySong = new Map((docs ?? []).map((d) => [d.song_id, d]));
+  const docIds = (docs ?? []).map((d) => d.id);
+
+  const { data: blocksRaw } =
+    docIds.length > 0
+      ? await supabase.from("chord_sheet_blocks").select("*").in("document_id", docIds)
+      : { data: [] as const };
+
+  const blocksByDoc = new Map<string, ChordSheetBlockRow[]>();
+  for (const b of blocksRaw ?? []) {
+    const list = blocksByDoc.get(b.document_id) ?? [];
+    list.push(b);
+    blocksByDoc.set(b.document_id, list);
+  }
+
+  const chordSongs: SetlistChordSongItem[] = orderedSongs.map((row) => {
+    const sid = row.songs.id;
+    const doc = docBySong.get(sid) ?? null;
+    const blocks = doc ? (blocksByDoc.get(doc.id) ?? []).sort((a, b) => a.order_index - b.order_index) : [];
+    return {
+      songId: sid,
+      title: row.songs.title,
+      document: doc,
+      blocks,
+    };
+  });
+
   return (
     <div className="flex flex-1 flex-col gap-6">
       <header className="space-y-2">
@@ -80,7 +121,9 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
         </div>
       </header>
 
-      <section className="space-y-2 rounded-lg border border-border/60 bg-card/60 p-4">
+      <SetlistChordSection setlistId={data.id} title={data.title} eventDate={data.event_date} songs={chordSongs} />
+
+      <section className="space-y-2 rounded-lg border border-border/60 bg-card/60 p-4 print:hidden">
         <h2 className="text-sm font-semibold">수록곡</h2>
         <ul className="space-y-1 text-sm">
           {(data.setlist_songs ?? [])
@@ -91,7 +134,7 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
         </ul>
       </section>
 
-      <section className="space-y-2 rounded-lg border border-border/60 bg-card/60 p-4">
+      <section className="space-y-2 rounded-lg border border-border/60 bg-card/60 p-4 print:hidden">
         <h2 className="text-sm font-semibold">라인업</h2>
         <ul className="space-y-1 text-sm">
           {(data.setlist_lineups ?? []).map((row, idx) => (
@@ -102,7 +145,9 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
         </ul>
       </section>
 
-      <StaffNotesEditor setlistId={data.id} initialValue={data.staff_notes} />
+      <div className="print:hidden">
+        <StaffNotesEditor setlistId={data.id} initialValue={data.staff_notes} />
+      </div>
     </div>
   );
 }

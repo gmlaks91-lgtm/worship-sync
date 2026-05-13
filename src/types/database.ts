@@ -23,16 +23,7 @@ export type FaithCheckType = "qt" | "prayer" | "bible";
 export type ShopItemType = "avatar" | "frame" | "badge";
 
 /** chord_sheet_blocks.section_tag — DB check 제약과 동일 */
-export type ChordSheetSectionTag =
-  | "V"
-  | "C"
-  | "T"
-  | "Intro"
-  | "Bridge"
-  | "PreChorus"
-  | "Outro"
-  | "Instrumental"
-  | "Custom";
+export type ChordSheetSectionTag = "I" | "A" | "B" | "C" | "간주" | "O";
 
 export type ChordSheetHistoryAction = "block_insert" | "block_update" | "block_delete" | "reorder";
 
@@ -236,6 +227,7 @@ export type Database = {
           id: string;
           song_id: string;
           title: string | null;
+          arrangement: Json;
           updated_at: string;
           updated_by: string | null;
         };
@@ -243,6 +235,7 @@ export type Database = {
           id?: string;
           song_id: string;
           title?: string | null;
+          arrangement?: Json;
           updated_at?: string;
           updated_by?: string | null;
         };
@@ -250,6 +243,7 @@ export type Database = {
           id?: string;
           song_id?: string;
           title?: string | null;
+          arrangement?: Json;
           updated_at?: string;
           updated_by?: string | null;
         };
@@ -262,8 +256,7 @@ export type Database = {
           section_tag: ChordSheetSectionTag;
           custom_label: string | null;
           order_index: number;
-          lyrics: string;
-          chords: string;
+          lines_json: Json;
           transpose_semitones: number;
           created_at: string;
           updated_at: string;
@@ -274,8 +267,7 @@ export type Database = {
           section_tag: ChordSheetSectionTag;
           custom_label?: string | null;
           order_index: number;
-          lyrics?: string;
-          chords?: string;
+          lines_json?: Json;
           transpose_semitones?: number;
           created_at?: string;
           updated_at?: string;
@@ -286,8 +278,7 @@ export type Database = {
           section_tag?: ChordSheetSectionTag;
           custom_label?: string | null;
           order_index?: number;
-          lyrics?: string;
-          chords?: string;
+          lines_json?: Json;
           transpose_semitones?: number;
           created_at?: string;
           updated_at?: string;
@@ -652,6 +643,13 @@ export type Database = {
         Args: {
           p_document_id: string;
           p_block_ids: string[];
+        };
+        Returns: undefined;
+      };
+      set_chord_sheet_arrangement: {
+        Args: {
+          p_document_id: string;
+          p_arrangement: Json;
         };
         Returns: undefined;
       };
