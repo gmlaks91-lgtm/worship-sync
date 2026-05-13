@@ -1,5 +1,7 @@
 ﻿import { PersonalDashboard } from "@/features/dashboard/components/PersonalDashboard";
+import { WeeklyChecklistBoard } from "@/features/dashboard/components/WeeklyChecklistBoard";
 import { getPersonalDashboardData } from "@/features/dashboard/queries/getPersonalDashboardData";
+import { getWeeklyChecklistBoardData } from "@/features/dashboard/queries/getWeeklyChecklistBoardData";
 import { WeeklySetlistHero } from "@/features/setlist/components/WeeklySetlistHero";
 import { getRecentSongWarningByVideoId } from "@/features/setlist/queries/getSongUsageStats";
 import type { PrepSetlistWithSheets } from "@/features/setlist/types";
@@ -39,9 +41,10 @@ export default async function AhavaDashboardPage({
 
   const weekSundayYmd = resolveDashboardWeekSunday(sp.sunday);
 
-  const [{ setlist, error: setlistError }, dashboardData] = await Promise.all([
+  const [{ setlist, error: setlistError }, dashboardData, weeklyChecklistData] = await Promise.all([
     fetchWeeklyPrepSetlist(weekSundayYmd),
     getPersonalDashboardData(),
+    getWeeklyChecklistBoardData(),
   ]);
   const recentSongWarningByVideoId = canManageSetlists ? await getRecentSongWarningByVideoId() : {};
   const songIds = setlist ? setlist.songs.map((s) => s.id) : [];
@@ -74,6 +77,8 @@ export default async function AhavaDashboardPage({
         embedUrl={dashboardData.lastWorshipVideoEmbedUrl}
         canEdit={dashboardData.canManageTeamPlaylist}
       />
+
+      <WeeklyChecklistBoard data={weeklyChecklistData} />
 
       <PersonalDashboard data={dashboardData} />
     </div>

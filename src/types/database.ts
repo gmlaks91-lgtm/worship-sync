@@ -546,6 +546,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      weekly_checklists: {
+        Row: {
+          id: string;
+          user_id: string;
+          week_start_date: string;
+          daily_records: Json;
+          worship_records: Json;
+          total_points: number;
+          awarded_points: number;
+          is_submitted: boolean;
+          submitted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          week_start_date: string;
+          daily_records?: Json;
+          worship_records?: Json;
+          total_points?: number;
+          awarded_points?: number;
+          is_submitted?: boolean;
+          submitted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          week_start_date?: string;
+          daily_records?: Json;
+          worship_records?: Json;
+          total_points?: number;
+          awarded_points?: number;
+          is_submitted?: boolean;
+          submitted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       prayer_requests: {
         Row: {
           id: string;
@@ -639,6 +681,13 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      calculate_weekly_checklist_points: {
+        Args: {
+          p_daily_records: Json;
+          p_worship_records: Json;
+        };
+        Returns: number;
+      };
       reorder_chord_sheet_blocks: {
         Args: {
           p_document_id: string;
@@ -652,6 +701,16 @@ export type Database = {
           p_arrangement: Json;
         };
         Returns: undefined;
+      };
+      submit_weekly_checklist: {
+        Args: {
+          p_week_start_date: string;
+        };
+        Returns: {
+          awarded_points: number;
+          total_points: number;
+          message: string;
+        }[];
       };
     };
     Enums: Record<string, never>;
