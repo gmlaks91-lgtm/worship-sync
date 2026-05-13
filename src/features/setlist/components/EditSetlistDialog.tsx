@@ -78,7 +78,7 @@ export function EditSetlistDialog({
           }).then((res) => {
             if (!res.ok) throw new Error(res.message);
           }),
-          "콘티를 수정하는 중입니다...",
+          "송리스트를 수정하는 중입니다...",
         ).unwrap();
         setOpen(false);
         router.refresh();
@@ -99,13 +99,13 @@ export function EditSetlistDialog({
       <DialogTrigger render={<Button variant="outline" size="sm" />}>수정하기</DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>콘티 수정</DialogTitle>
+          <DialogTitle>송리스트 수정</DialogTitle>
           <DialogDescription>수록곡과 라인업을 수정해 저장할 수 있습니다.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">콘티 제목</p>
+            <p className="text-xs font-medium text-muted-foreground">송리스트 제목</p>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} disabled={pending} />
           </div>
           <div className="space-y-1.5">

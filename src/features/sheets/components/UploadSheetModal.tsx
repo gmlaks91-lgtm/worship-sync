@@ -156,7 +156,7 @@ export function UploadSheetModal(props: UploadSheetModalProps) {
               <FieldLabel className="text-xs font-medium text-foreground">곡 선택</FieldLabel>
               {noSongsInDb ? (
                 <p className="rounded-lg border border-dashed border-border/70 bg-muted/20 px-3 py-3 text-xs text-muted-foreground">
-                  아직 등록된 곡이 없습니다. 홈에서 콘티를 추가해 곡을 만든 뒤 다시 시도해 주세요.
+                  아직 등록된 곡이 없습니다. 홈에서 송리스트를 추가해 곡을 만든 뒤 다시 시도해 주세요.
                 </p>
               ) : (
                 <>

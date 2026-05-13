@@ -150,13 +150,13 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ListMusic className="size-4 text-muted-foreground" aria-hidden />
-                <CardTitle className="text-base font-semibold">최근 prep 콘티</CardTitle>
+                <CardTitle className="text-base font-semibold">최근 송리스트</CardTitle>
               </div>
-              <CardDescription>준비 중인 콘티가 최신 일정 순으로 표시됩니다.</CardDescription>
+              <CardDescription>준비 중인 송리스트가 최신 일정 순으로 표시됩니다.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               {data.recentSetlists.length === 0 ? (
-                <p className="text-sm text-muted-foreground">표시할 콘티가 없습니다.</p>
+                <p className="text-sm text-muted-foreground">표시할 송리스트가 없습니다.</p>
               ) : (
                 <ul className="space-y-3">
                   {data.recentSetlists.map((list) => (

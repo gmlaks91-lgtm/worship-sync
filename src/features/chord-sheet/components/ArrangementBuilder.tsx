@@ -279,7 +279,7 @@ export function ArrangementBuilder({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">진행 순서 (콘티)</p>
+      <p className="text-xs font-medium text-muted-foreground">진행 순서 (송리스트)</p>
 
       {!isMounted ? (
         <div className="space-y-2">

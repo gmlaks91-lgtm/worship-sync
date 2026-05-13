@@ -62,7 +62,7 @@ export function SheetsLibrarySection({ songs, sheetMap, listError }: SheetsLibra
           <CardHeader className="pb-2">
             <CardTitle className="text-base">등록된 곡이 없습니다</CardTitle>
             <CardDescription>
-              홈 화면에서 리더가 콘티를 추가하면 곡이 생깁니다. 그 후 이 페이지에서 악보를 올릴 수
+              홈 화면에서 리더가 송리스트를 추가하면 곡이 생깁니다. 그 후 이 페이지에서 악보를 올릴 수
               있어요.
             </CardDescription>
           </CardHeader>

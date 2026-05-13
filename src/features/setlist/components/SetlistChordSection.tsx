@@ -17,10 +17,10 @@ export function SetlistChordSection({ setlistId, title, eventDate, songs }: Setl
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div>
-          <h2 className="text-sm font-semibold">콘티 코드 악보</h2>
+          <h2 className="text-sm font-semibold">송리스트 코드 악보</h2>
           <p className="text-xs text-muted-foreground">아래로 스크롤하여 전곡을 확인하고, PDF로 저장할 수 있어요.</p>
         </div>
-        <PdfExportButton fileName={`콘티-${safeName}`} />
+        <PdfExportButton fileName={`송리스트-${safeName}`} />
       </div>
 
       <div id={SETLIST_PRINT_ROOT_ID} className="rounded-xl border border-border/50 bg-background p-4 print:border-0 print:p-0">

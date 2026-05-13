@@ -152,7 +152,7 @@ export function AddSetlistDialog({
         createPrepSetlist(payload).then((result) => {
           if (!result.ok) throw new Error(result.message);
         }),
-        "콘티를 저장하는 중입니다...",
+        "송리스트를 저장하는 중입니다...",
       ).unwrap();
       onOpenChange(false);
       resetForm();
@@ -177,7 +177,7 @@ export function AddSetlistDialog({
       >
         <div className="border-b border-border/60 px-4 py-4 sm:px-5">
           <DialogHeader className="gap-1">
-            <DialogTitle className="text-lg">이 주의 콘티 추가</DialogTitle>
+            <DialogTitle className="text-lg">이 주의 송리스트 추가</DialogTitle>
             <DialogDescription>곡과 라인업을 함께 저장합니다.</DialogDescription>
           </DialogHeader>
         </div>
@@ -186,7 +186,7 @@ export function AddSetlistDialog({
           <FieldSet className="gap-5">
             <FieldGroup className="gap-5">
               <Field>
-                <FieldLabel htmlFor="setlist-title">콘티 제목</FieldLabel>
+                <FieldLabel htmlFor="setlist-title">송리스트 제목</FieldLabel>
                 <Input
                   id="setlist-title"
                   placeholder="예: 5월 둘째 주 주일예배"

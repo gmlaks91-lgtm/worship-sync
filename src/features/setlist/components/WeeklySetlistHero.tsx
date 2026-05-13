@@ -167,7 +167,7 @@ export function WeeklySetlistHero({
           <div className="mt-10 flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/50 px-6 py-14 text-center">
             <p className="text-sm font-medium text-neutral-700">이 주차에 등록된 송리스트가 없습니다.</p>
             <p className="mt-2 max-w-md text-sm text-neutral-500">
-              ({weekTitle}) 리더가 콘티를 추가하면 이곳에 표시됩니다.
+              ({weekTitle}) 리더가 송리스트를 추가하면 이곳에 표시됩니다.
             </p>
           </div>
         ) : null}

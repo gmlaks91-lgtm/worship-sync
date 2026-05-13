@@ -56,7 +56,7 @@ export async function createPrepSetlist(raw: CreatePrepSetlistPayload): Promise<
       .single();
 
     if (setlistError || !setlist) {
-      return { ok: false, message: setlistError?.message ?? "콘티를 생성하지 못했습니다." };
+      return { ok: false, message: setlistError?.message ?? "송리스트를 생성하지 못했습니다." };
     }
 
     const setlistId = setlist.id;

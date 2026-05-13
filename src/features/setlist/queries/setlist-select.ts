@@ -1,4 +1,4 @@
-/** setlists + setlist_songs + setlist_lineups 공통 select (prep 콘티). */
+/** setlists + setlist_songs + setlist_lineups 공통 select (송리스트). */
 export const PREP_SETLIST_NESTED_SELECT = `
   id,
   title,

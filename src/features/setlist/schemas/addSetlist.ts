@@ -41,7 +41,7 @@ export const lineupAssignSchema = z
   });
 
 export const addSetlistFormSchema = z.object({
-  title: z.string().min(1, "콘티 제목을 입력하세요"),
+  title: z.string().min(1, "송리스트 제목을 입력하세요"),
   eventDate: z.date(),
   tracks: z.array(addSetlistTrackSchema).min(1, "최소 한 곡 이상 추가하세요"),
   lineup: z.array(lineupAssignSchema),

@@ -116,7 +116,7 @@ export function LoginForm({ className }: { className?: string }) {
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">아하바 찬양팀</p>
         <CardTitle className="text-2xl font-semibold tracking-tight">Ahava에 오신 것을 환영합니다</CardTitle>
         <CardDescription className="text-sm leading-relaxed">
-          함께 예배를 준비하는 공간입니다. 로그인 후 콘티, 라인업, 악보를 편하게 관리해 보세요.
+          함께 예배를 준비하는 공간입니다. 로그인 후 송리스트, 라인업, 악보를 편하게 관리해 보세요.
         </CardDescription>
         {urlError ? (
           <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">

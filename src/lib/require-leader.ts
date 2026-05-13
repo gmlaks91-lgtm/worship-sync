@@ -8,7 +8,7 @@ export type RequireLeaderResult =
   | { ok: true; userId: string }
   | { ok: false; message: string };
 
-/** 콘티·곡·셋리스트 연동 변경에 필요한 리더 권한 확인 */
+/** 송리스트·곡·셋리스트 연동 변경에 필요한 리더 권한 확인 */
 export async function requireLeader(supabase: TypedSupabase): Promise<RequireLeaderResult> {
   const {
     data: { user },
@@ -30,7 +30,7 @@ export async function requireLeader(supabase: TypedSupabase): Promise<RequireLea
   if (!profile || (profile.role !== "leader" && profile.role !== "admin")) {
     return {
       ok: false,
-      message: "콘티 관리 권한이 없습니다. 리더/관리자만 이용할 수 있습니다.",
+      message: "송리스트 관리 권한이 없습니다. 리더/관리자만 이용할 수 있습니다.",
     };
   }
 

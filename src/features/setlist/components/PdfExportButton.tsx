@@ -68,7 +68,7 @@ export function PdfExportButton({ fileName }: PdfExportButtonProps) {
       }}
     >
       <Download className="size-3.5" />
-      콘티 PDF 다운로드
+      송리스트 PDF 다운로드
     </Button>
   );
 }
