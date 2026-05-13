@@ -2,6 +2,8 @@
 
 import { ProfileSettings } from "@/features/profile/components/ProfileSettings";
 import { getMyProfile } from "@/features/profile/queries/getMyProfile";
+import { getPointLogsPageData } from "@/features/points/queries/getPointLogsPageData";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function MorePage() {
   const { profile, error } = await getMyProfile();
+  const pointsData = await getPointLogsPageData();
 
   return (
     <div className="flex flex-col gap-10">
@@ -39,7 +42,39 @@ export default async function MorePage() {
         </div>
       ) : null}
 
-      {profile ? <ProfileSettings key={profile.updated_at} profile={profile} /> : null}
+      {profile ? (
+        <>
+          <Card className="border-border/70">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center justify-between text-base">
+                <span>포인트 관리</span>
+                <Link
+                  href="/points"
+                  className="text-xs font-normal text-muted-foreground hover:text-foreground"
+                >
+                  자세히 보기 →
+                </Link>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">현재 보유 포인트</p>
+                  <p className="text-2xl font-semibold">{pointsData.currentPoints ?? 0}P</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">이번 달 적립</p>
+                  <p className="text-lg font-medium text-green-600">
+                    +{pointsData.monthlyEarned ?? 0}P
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <ProfileSettings key={profile.updated_at} profile={profile} />
+        </>
+      ) : null}
 
       <footer className="flex flex-wrap items-center gap-3 border-t border-border/50 pt-6">
         <Link href="/profile" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
