@@ -22,6 +22,20 @@ export type PostCategory = "prayer" | "feedback" | "general";
 export type FaithCheckType = "qt" | "prayer" | "bible";
 export type ShopItemType = "avatar" | "frame" | "badge";
 
+/** chord_sheet_blocks.section_tag — DB check 제약과 동일 */
+export type ChordSheetSectionTag =
+  | "V"
+  | "C"
+  | "T"
+  | "Intro"
+  | "Bridge"
+  | "PreChorus"
+  | "Outro"
+  | "Instrumental"
+  | "Custom";
+
+export type ChordSheetHistoryAction = "block_insert" | "block_update" | "block_delete" | "reorder";
+
 export type Database = {
   public: {
     Tables: {
@@ -213,6 +227,102 @@ export type Database = {
           song_id?: string;
           image_urls?: string[];
           memo?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      chord_sheet_documents: {
+        Row: {
+          id: string;
+          song_id: string;
+          title: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          song_id: string;
+          title?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          song_id?: string;
+          title?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      chord_sheet_blocks: {
+        Row: {
+          id: string;
+          document_id: string;
+          section_tag: ChordSheetSectionTag;
+          custom_label: string | null;
+          order_index: number;
+          lyrics: string;
+          chords: string;
+          transpose_semitones: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          section_tag: ChordSheetSectionTag;
+          custom_label?: string | null;
+          order_index: number;
+          lyrics?: string;
+          chords?: string;
+          transpose_semitones?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          document_id?: string;
+          section_tag?: ChordSheetSectionTag;
+          custom_label?: string | null;
+          order_index?: number;
+          lyrics?: string;
+          chords?: string;
+          transpose_semitones?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      chord_sheet_history: {
+        Row: {
+          id: string;
+          document_id: string;
+          block_id: string | null;
+          action: ChordSheetHistoryAction;
+          snapshot_before: Json;
+          snapshot_after: Json | null;
+          actor_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          block_id?: string | null;
+          action: ChordSheetHistoryAction;
+          snapshot_before: Json;
+          snapshot_after?: Json | null;
+          actor_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          document_id?: string;
+          block_id?: string | null;
+          action?: ChordSheetHistoryAction;
+          snapshot_before?: Json;
+          snapshot_after?: Json | null;
+          actor_id?: string;
           created_at?: string;
         };
         Relationships: [];
