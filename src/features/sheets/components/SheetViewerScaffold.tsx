@@ -68,21 +68,8 @@ export function SheetViewerScaffold({
               >
                 전용 페이지로 열기
               </Link>
-              <Link
-                href={`/sheets/${songId}/edit`}
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-primary underline-offset-4 hover:underline"
-              >
-                협업 코드 악보 편집
-              </Link>
             </div>
-          ) : (
-            <Link
-              href={`/sheets/${songId}/edit`}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-primary underline-offset-4 hover:underline"
-            >
-              협업 코드 악보 편집
-            </Link>
-          )}
+          ) : null}
         </div>
       </header>
 

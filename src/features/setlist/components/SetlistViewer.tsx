@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 import { formatSectionBadge } from "@/features/chord-sheet/constants";
@@ -45,20 +44,11 @@ export function SetlistViewer({ songs }: SetlistViewerProps) {
                 ) : null
               )}
             </div>
-            <div className="flex flex-col items-end gap-2">
-              {song.document?.arrangement_position === "top_right" ? (
+            {song.document?.arrangement_position === "top_right" ? (
+              <div className="flex flex-col items-end gap-2">
                 <ArrangementBadgeRow compact document={song.document} blocksById={blocksById(song.blocks)} />
-              ) : null}
-              <Link
-                href={`/sheets/${song.songId}/edit`}
-                className={cn(
-                  "inline-flex shrink-0 items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/15",
-                )}
-              >
-                편집 모드
-                <ChevronRight className="size-3.5 opacity-80" />
-              </Link>
-            </div>
+              </div>
+            ) : null}
           </div>
 
           {song.document && song.blocks.length > 0 ? (

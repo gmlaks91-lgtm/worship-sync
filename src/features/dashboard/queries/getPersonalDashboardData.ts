@@ -1,7 +1,6 @@
 import "server-only";
 
 import { getSetlists, type PrepSetlistRow } from "@/features/setlist/queries/getSetlists";
-import { getRecentSheetsForDashboard } from "@/features/sheets/queries/getSheets";
 import { youtubePlaylistEmbedUrl } from "@/features/team-settings/lib/youtube-playlist";
 import { extractYouTubeVideoId, youtubeVideoEmbedUrl } from "@/features/team-settings/lib/youtube-video";
 import type { ScheduleAttendanceStatus, ScheduleKind } from "@/types/database";
@@ -20,7 +19,6 @@ export type PersonalDashboardData = {
     myStatus: ScheduleAttendanceStatus | null;
   }>;
   recentSetlists: PrepSetlistRow[];
-  recentSheets: Awaited<ReturnType<typeof getRecentSheetsForDashboard>>;
   lastWorshipVideoUrl: string | null;
   lastWorshipVideoEmbedUrl: string | null;
   teamPlaylistId: string | null;
@@ -39,10 +37,7 @@ export async function getPersonalDashboardData(): Promise<PersonalDashboardData>
 
   const nowIso = new Date().toISOString();
 
-  const [{ setlists, error: setlistErr }, sheets] = await Promise.all([
-    getSetlists({ limit: 3 }),
-    getRecentSheetsForDashboard(5),
-  ]);
+  const { setlists, error: setlistErr } = await getSetlists({ limit: 3 });
 
   if (setlistErr) errors.push(setlistErr);
   let teamPlaylistId: string | null = null;
@@ -110,7 +105,6 @@ export async function getPersonalDashboardData(): Promise<PersonalDashboardData>
   return {
     upcomingWithMine,
     recentSetlists: setlists,
-    recentSheets: sheets,
     lastWorshipVideoUrl,
     lastWorshipVideoEmbedUrl: lastWorshipVideoUrl
       ? (() => {

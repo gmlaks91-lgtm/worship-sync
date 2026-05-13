@@ -1,10 +1,10 @@
 "use client";
 
-import { BookText, Grip, Music2 } from "lucide-react";
+import { BookText, Grip } from "lucide-react";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export type ChordEditorMode = "lyrics" | "parts" | "chords";
+export type ChordEditorMode = "lyrics" | "parts";
 
 const MODE_ITEMS: Array<{
   value: ChordEditorMode;
@@ -13,8 +13,7 @@ const MODE_ITEMS: Array<{
   icon: typeof BookText;
 }> = [
   { value: "lyrics", label: "가사 텍스트", description: "메모장처럼 가사만 집중", icon: BookText },
-  { value: "parts", label: "파트 지정", description: "드래그로 파트 추출", icon: Grip },
-  { value: "chords", label: "코드 입력", description: "터치/클릭 위주 코드 편집", icon: Music2 },
+  { value: "parts", label: "파트 지정", description: "파트 구조와 진행 순서 설정", icon: Grip },
 ];
 
 type EditorModeTabsProps = {

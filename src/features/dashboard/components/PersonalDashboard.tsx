@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarRange, ListMusic, Music2 } from "lucide-react";
+import { ArrowRight, CalendarRange, ListMusic } from "lucide-react";
 
 import type { PersonalDashboardData } from "@/features/dashboard/queries/getPersonalDashboardData";
 import { TeamPlaylistSection } from "@/features/team-settings/components/TeamPlaylistSection";
@@ -186,45 +186,6 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
             </CardContent>
           </Card>
 
-          <Card className="border-border/70">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Music2 className="size-4 text-muted-foreground" aria-hidden />
-                <CardTitle className="text-base font-semibold">방금 올라온 악보</CardTitle>
-              </div>
-              <CardDescription>최근 업로드된 파일입니다.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {data.recentSheets.length === 0 ? (
-                <p className="text-sm text-muted-foreground">최근 악보가 없습니다.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {data.recentSheets.map((row) => (
-                    <li key={row.id}>
-                      <Link
-                        href={`/sheets/${row.song_id}`}
-                        className="block rounded-lg border border-border/60 bg-muted/15 px-4 py-3 transition-colors hover:bg-muted/30"
-                      >
-                        <p className="truncate text-sm font-medium">{row.song_title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatShortWhen(row.created_at)}
-                        </p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link
-                href="/sheets"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
-                  "w-full text-muted-foreground",
-                )}
-              >
-                악보 라이브러리
-              </Link>
-            </CardContent>
-          </Card>
 
           <TeamPlaylistSection
             playlistId={data.teamPlaylistId}

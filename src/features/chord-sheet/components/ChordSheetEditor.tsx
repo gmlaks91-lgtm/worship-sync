@@ -8,9 +8,6 @@ import { ArrowLeft, History, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArrangementBuilder } from "@/features/chord-sheet/components/ArrangementBuilder";
-import type { ChordPaletteTarget } from "@/features/chord-sheet/components/ClickableChordBlockEditor";
-import { ClickableChordBlockEditor } from "@/features/chord-sheet/components/ClickableChordBlockEditor";
-import { ClickableChordPalette } from "@/features/chord-sheet/components/ClickableChordPalette";
 import { EditorModeTabs, type ChordEditorMode } from "@/features/chord-sheet/components/EditorModeTabs";
 import { HighlightSectionBuilder } from "@/features/chord-sheet/components/HighlightSectionBuilder";
 import { HistoryTimeline } from "@/features/chord-sheet/components/HistoryTimeline";
@@ -23,8 +20,7 @@ import {
   flattenBlocksToEditableText,
   type StructureBlockInput,
 } from "@/features/chord-sheet/lib/editor-structure";
-import { buildChordSymbol, CHORD_QUALITIES, CHORD_ROOTS } from "@/features/chord-sheet/lib/chord-symbol";
-import { normalizeLinesJson, parseArrangement, removeChordAt, type LinesJson, upsertChordAt } from "@/features/chord-sheet/lib/lines-json";
+import { normalizeLinesJson, parseArrangement, type LinesJson } from "@/features/chord-sheet/lib/lines-json";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,29 +42,6 @@ export type ChordSheetEditorProps = {
   canReorder: boolean;
 };
 
-function parseInitialSymbol(
-  initialSymbol: string | undefined | null,
-): { root: string; quality: string } {
-  const fallback = { root: "C", quality: "" };
-  if (!initialSymbol?.trim()) return fallback;
-  const value = initialSymbol.trim();
-
-  for (const quality of [...CHORD_QUALITIES].sort((a, b) => b.value.length - a.value.length)) {
-    if (quality.value && value.endsWith(quality.value)) {
-      const root = value.slice(0, -quality.value.length);
-      if (CHORD_ROOTS.includes(root)) {
-        return { root, quality: quality.value };
-      }
-    }
-  }
-
-  if (CHORD_ROOTS.includes(value)) {
-    return { root: value, quality: "" };
-  }
-
-  return fallback;
-}
-
 export function ChordSheetEditor({
   songId,
   songTitle,
@@ -83,9 +56,6 @@ export function ChordSheetEditor({
   );
   const [mode, setMode] = useState<ChordEditorMode>("lyrics");
   const [lyricsDraft, setLyricsDraft] = useState(() => flattenBlocksToEditableText(initialBlocks));
-  const [selectedTarget, setSelectedTarget] = useState<ChordPaletteTarget | null>(null);
-  const [paletteRoot, setPaletteRoot] = useState("C");
-  const [paletteQuality, setPaletteQuality] = useState("");
   const [busy, setBusy] = useState(false);
   const arrangement = useMemo(() => parseArrangement(document.arrangement), [document.arrangement]);
 
@@ -159,14 +129,6 @@ export function ChordSheetEditor({
   useEffect(() => {
     setLyricsDraft(flattenBlocksToEditableText(blocks));
   }, [blocks]);
-
-  useEffect(() => {
-    if (!selectedTarget) return;
-    const exists = blocks.some((block) => block.id === selectedTarget.blockId);
-    if (!exists) {
-      setSelectedTarget(null);
-    }
-  }, [blocks, selectedTarget]);
 
   const handleArrangementCommit = useCallback(
     async (nextArr: ReturnType<typeof parseArrangement>) => {
@@ -255,7 +217,6 @@ export function ChordSheetEditor({
 
         dirtyRef.current = {};
         dirtyIdsRef.current.clear();
-        setSelectedTarget(null);
         await refetchBlocks();
         await refetchDocument();
         setHistoryRefreshKey((current) => current + 1);
@@ -266,45 +227,6 @@ export function ChordSheetEditor({
     },
     [document.id, refetchBlocks, refetchDocument, supabase],
   );
-
-  const applyChordFromPalette = useCallback(
-    (root: string, quality: string) => {
-      if (!selectedTarget) return;
-      const block = blocksById.get(selectedTarget.blockId);
-      if (!block) return;
-      const symbol = buildChordSymbol(root, quality);
-      if (!symbol) return;
-      const normalized = normalizeLinesJson(block.lines_json);
-      const next = upsertChordAt(normalized, selectedTarget.lineIndex, selectedTarget.at, symbol);
-      queueLinesJson(block.id, next);
-      setSelectedTarget((current) =>
-        current
-          ? {
-              ...current,
-              existingSymbol: symbol,
-            }
-          : current,
-      );
-    },
-    [blocksById, queueLinesJson, selectedTarget],
-  );
-
-  const handleDeleteSelectedChord = useCallback(() => {
-    if (!selectedTarget) return;
-    const block = blocksById.get(selectedTarget.blockId);
-    if (!block) return;
-    const normalized = normalizeLinesJson(block.lines_json);
-    const next = removeChordAt(normalized, selectedTarget.lineIndex, selectedTarget.at);
-    queueLinesJson(block.id, next);
-    setSelectedTarget((current) =>
-      current
-        ? {
-            ...current,
-            existingSymbol: null,
-          }
-        : current,
-    );
-  }, [blocksById, queueLinesJson, selectedTarget]);
 
   useEffect(() => {
     let cancelled = false;
@@ -424,11 +346,6 @@ export function ChordSheetEditor({
     : null;
   const arrangementPosition =
     document.arrangement_position ?? ARRANGEMENT_POSITION_OPTIONS[0]?.value ?? "below_title";
-  const selectedBlock = selectedTarget ? blocksById.get(selectedTarget.blockId) ?? null : null;
-  const targetLabel = selectedTarget
-    ? `${selectedBlock ? formatSectionBadge(selectedBlock.section_tag, selectedBlock.custom_label) : "파트"} · 줄 ${selectedTarget.lineIndex + 1}`
-    : null;
-
   const historyPanel = (
     <div className="flex max-h-[min(70vh,32rem)] flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
@@ -495,7 +412,7 @@ export function ChordSheetEditor({
 
           {!canReorder ? (
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              파트 지정과 진행 순서 편집은 리더·관리자만 가능합니다. 팀원은 가사 텍스트와 코드 입력 모드에서 작업할 수 있습니다.
+              파트 지정과 진행 순서 편집은 리더·관리자만 가능합니다. 팀원은 가사 텍스트 모드만 확인할 수 있습니다.
             </p>
           ) : null}
 
@@ -512,76 +429,34 @@ export function ChordSheetEditor({
           {mode === "parts" ? (
             <div className="space-y-4">
               {canReorder ? (
-                <HighlightSectionBuilder
-                  blocks={blocks}
-                  arrangementPosition={arrangementPosition}
-                  disabled={busy}
-                  onApplyStructure={handleApplyStructure}
-                />
-              ) : (
-                <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-8 text-center text-sm text-neutral-500">
-                  리더 또는 관리자 권한으로 파트 지정 모드를 사용할 수 있습니다.
-                </div>
-              )}
+                <>
+                  <HighlightSectionBuilder
+                    blocks={blocks}
+                    arrangementPosition={arrangementPosition}
+                    disabled={busy}
+                    onApplyStructure={handleApplyStructure}
+                  />
 
-              <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-100/80">
-                <div className="mb-4">
-                  <p className="text-base font-semibold text-neutral-900">진행 순서</p>
-                  <p className="mt-1 text-sm text-neutral-500">
-                    추출된 마스터 파트를 반복 순서로 배치하고, 표시 위치는 위 설정을 따라갑니다.
-                  </p>
-                </div>
-                <ArrangementBuilder
-                  documentId={document.id}
-                  arrangement={arrangement}
-                  blocksById={blocksById}
-                  canReorder={canReorder}
-                  onCommit={handleArrangementCommit}
-                />
-              </section>
+                  <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-100/80">
+                    <div className="mb-4">
+                      <p className="text-base font-semibold text-neutral-900">진행 순서</p>
+                      <p className="mt-1 text-sm text-neutral-500">
+                        추출된 마스터 파트를 반복 순서로 배치하고, 표시 위치는 위 설정을 따라갑니다.
+                      </p>
+                    </div>
+                    <ArrangementBuilder
+                      documentId={document.id}
+                      arrangement={arrangement}
+                      blocksById={blocksById}
+                      canReorder={canReorder}
+                      onCommit={handleArrangementCommit}
+                    />
+                  </section>
+                </>
+              ) : null}
             </div>
           ) : null}
 
-          {mode === "chords" ? (
-            blocks.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-8 text-center text-sm text-neutral-500">
-                아직 코드 입력할 파트가 없습니다. 먼저 가사 텍스트 모드에서 초안을 만들고, 파트 지정 모드에서 구조를 나눠 주세요.
-              </div>
-            ) : (
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
-                <div className="space-y-4">
-                  {blocks.map((block) => (
-                    <ClickableChordBlockEditor
-                      key={block.id}
-                      block={block}
-                      target={selectedTarget}
-                      onPickTarget={(target) => {
-                        setSelectedTarget(target);
-                        const parsed = parseInitialSymbol(target.existingSymbol);
-                        setPaletteRoot(parsed.root);
-                        setPaletteQuality(parsed.quality);
-                      }}
-                    />
-                  ))}
-                </div>
-                <ClickableChordPalette
-                  root={paletteRoot}
-                  quality={paletteQuality}
-                  currentSymbol={selectedTarget?.existingSymbol ?? null}
-                  targetLabel={targetLabel}
-                  onRootPick={(root) => {
-                    setPaletteRoot(root);
-                    applyChordFromPalette(root, paletteQuality);
-                  }}
-                  onQualityPick={(quality) => {
-                    setPaletteQuality(quality);
-                    applyChordFromPalette(paletteRoot, quality);
-                  }}
-                  onDelete={handleDeleteSelectedChord}
-                />
-              </div>
-            )
-          ) : null}
         </div>
 
         <aside className="hidden w-full shrink-0 border-l border-border/60 pl-0 lg:block lg:w-[22rem] lg:pl-6">
