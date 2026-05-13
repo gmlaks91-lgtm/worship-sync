@@ -21,9 +21,9 @@ export default async function BoardPage({
     <div className="flex flex-1 flex-col gap-8">
       <header className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">소통</p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">공지사항</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">게시판</h1>
         <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-          팀 공지사항과 중요한 소식을 확인하세요. 리더의 공지사항을 놓치지 않도록 주의해주세요.
+          팀 게시판과 중요한 소식을 확인하세요. 리더의 공지사항을 놓치지 않도록 주의해주세요.
         </p>
       </header>
 

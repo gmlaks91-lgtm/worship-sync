@@ -16,7 +16,7 @@ type BoardFeedProps = {
 };
 
 const tabs: { value: PostCategory; label: string; emoji: string; short: string }[] = [
-  { value: "prayer", label: "기도 나눔", emoji: "🙏", short: "기도" },
+  { value: "prayer", label: "공지사항", emoji: "📢", short: "공지" },
   { value: "feedback", label: "합주 피드백", emoji: "🎸", short: "피드백" },
   { value: "general", label: "자유 게시판", emoji: "💬", short: "자유" },
 ];
