@@ -61,13 +61,28 @@ export function SheetViewerScaffold({
             <p className="text-[11px] text-muted-foreground">리더 메모가 없습니다.</p>
           )}
           {mode === "dialog" ? (
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              <Link
+                href={`/sheets/${songId}`}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-primary underline-offset-4 hover:underline"
+              >
+                전용 페이지로 열기
+              </Link>
+              <Link
+                href={`/sheets/${songId}/edit`}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-primary underline-offset-4 hover:underline"
+              >
+                협업 코드 악보 편집
+              </Link>
+            </div>
+          ) : (
             <Link
-              href={`/sheets/${songId}`}
+              href={`/sheets/${songId}/edit`}
               className="inline-flex items-center gap-1 text-[11px] font-medium text-primary underline-offset-4 hover:underline"
             >
-              전용 페이지로 열기
+              협업 코드 악보 편집
             </Link>
-          ) : null}
+          )}
         </div>
       </header>
 

@@ -647,7 +647,15 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      reorder_chord_sheet_blocks: {
+        Args: {
+          p_document_id: string;
+          p_block_ids: string[];
+        };
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

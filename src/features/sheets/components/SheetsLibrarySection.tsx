@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { BookOpen, ChevronRight, FileMusic, Plus } from "lucide-react";
+import { BookOpen, ChevronRight, FileMusic, PencilLine, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -121,6 +121,16 @@ export function SheetsLibrarySection({ songs, sheetMap, listError }: SheetsLibra
                       >
                         악보 올리기
                       </Button>
+                      <Link
+                        href={`/sheets/${song.id}/edit`}
+                        className={cn(
+                          buttonVariants({ variant: "outline" }),
+                          "h-10 w-full justify-center gap-1 px-4 sm:w-auto",
+                        )}
+                      >
+                        <PencilLine className="size-4 opacity-80" aria-hidden />
+                        코드 편집
+                      </Link>
                       <Link
                         href={`/sheets/${song.id}`}
                         className={cn(
