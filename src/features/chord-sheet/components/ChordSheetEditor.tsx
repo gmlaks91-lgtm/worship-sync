@@ -4,14 +4,27 @@ import { useDebouncedCallback } from "use-debounce";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import Link from "next/link";
-import { ArrowLeft, History, Plus, RefreshCw } from "lucide-react";
+import { ArrowLeft, History, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArrangementBuilder } from "@/features/chord-sheet/components/ArrangementBuilder";
+import type { ChordPaletteTarget } from "@/features/chord-sheet/components/ClickableChordBlockEditor";
+import { ClickableChordBlockEditor } from "@/features/chord-sheet/components/ClickableChordBlockEditor";
+import { ClickableChordPalette } from "@/features/chord-sheet/components/ClickableChordPalette";
+import { EditorModeTabs, type ChordEditorMode } from "@/features/chord-sheet/components/EditorModeTabs";
+import { HighlightSectionBuilder } from "@/features/chord-sheet/components/HighlightSectionBuilder";
 import { HistoryTimeline } from "@/features/chord-sheet/components/HistoryTimeline";
-import { MasterPartsPanel } from "@/features/chord-sheet/components/MasterPartsPanel";
+import { LyricsTextModePanel } from "@/features/chord-sheet/components/LyricsTextModePanel";
+import { formatSectionBadge } from "@/features/chord-sheet/constants";
 import type { ChordSheetBlockRow, ChordSheetDocumentRow, ChordSheetHistoryRow } from "@/features/chord-sheet/domain";
-import { emptyLinesJson, parseArrangement, type LinesJson } from "@/features/chord-sheet/lib/lines-json";
+import {
+  ARRANGEMENT_POSITION_OPTIONS,
+  applyPlainTextToBlocks,
+  flattenBlocksToEditableText,
+  type StructureBlockInput,
+} from "@/features/chord-sheet/lib/editor-structure";
+import { buildChordSymbol, CHORD_QUALITIES, CHORD_ROOTS } from "@/features/chord-sheet/lib/chord-symbol";
+import { normalizeLinesJson, parseArrangement, removeChordAt, type LinesJson, upsertChordAt } from "@/features/chord-sheet/lib/lines-json";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,7 +36,7 @@ import {
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
-import type { Json } from "@/types/database";
+import type { ChordSheetArrangementPosition, Json } from "@/types/database";
 
 export type ChordSheetEditorProps = {
   songId: string;
@@ -32,6 +45,29 @@ export type ChordSheetEditorProps = {
   initialBlocks: ChordSheetBlockRow[];
   canReorder: boolean;
 };
+
+function parseInitialSymbol(
+  initialSymbol: string | undefined | null,
+): { root: string; quality: string } {
+  const fallback = { root: "C", quality: "" };
+  if (!initialSymbol?.trim()) return fallback;
+  const value = initialSymbol.trim();
+
+  for (const quality of [...CHORD_QUALITIES].sort((a, b) => b.value.length - a.value.length)) {
+    if (quality.value && value.endsWith(quality.value)) {
+      const root = value.slice(0, -quality.value.length);
+      if (CHORD_ROOTS.includes(root)) {
+        return { root, quality: quality.value };
+      }
+    }
+  }
+
+  if (CHORD_ROOTS.includes(value)) {
+    return { root: value, quality: "" };
+  }
+
+  return fallback;
+}
 
 export function ChordSheetEditor({
   songId,
@@ -45,6 +81,12 @@ export function ChordSheetEditor({
   const [blocks, setBlocks] = useState<ChordSheetBlockRow[]>(() =>
     [...initialBlocks].sort((a, b) => a.order_index - b.order_index),
   );
+  const [mode, setMode] = useState<ChordEditorMode>("lyrics");
+  const [lyricsDraft, setLyricsDraft] = useState(() => flattenBlocksToEditableText(initialBlocks));
+  const [selectedTarget, setSelectedTarget] = useState<ChordPaletteTarget | null>(null);
+  const [paletteRoot, setPaletteRoot] = useState("C");
+  const [paletteQuality, setPaletteQuality] = useState("");
+  const [busy, setBusy] = useState(false);
   const arrangement = useMemo(() => parseArrangement(document.arrangement), [document.arrangement]);
 
   const blocksById = useMemo(() => new Map(blocks.map((b) => [b.id, b])), [blocks]);
@@ -52,7 +94,6 @@ export function ChordSheetEditor({
   const [historyEntries, setHistoryEntries] = useState<ChordSheetHistoryRow[]>([]);
   const [actorNames, setActorNames] = useState<Record<string, string>>({});
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
-  const [adding, setAdding] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const dirtyRef = useRef<Record<string, Partial<ChordSheetBlockRow>>>({});
@@ -115,37 +156,17 @@ export function ChordSheetEditor({
     [queuePatch],
   );
 
-  const handleMasterReorder = useCallback(
-    async (orderedIds: string[]) => {
-      setBlocks((prev) => {
-        const m = new Map(prev.map((b) => [b.id, b]));
-        const next = orderedIds
-          .map((id) => m.get(id))
-          .filter((b): b is ChordSheetBlockRow => b != null)
-          .map((b, idx) => ({ ...b, order_index: idx }));
-        return next.length === orderedIds.length ? next : prev;
-      });
+  useEffect(() => {
+    setLyricsDraft(flattenBlocksToEditableText(blocks));
+  }, [blocks]);
 
-      const { error } = await supabase.rpc("reorder_chord_sheet_blocks", {
-        p_document_id: document.id,
-        p_block_ids: orderedIds,
-      });
-
-      if (error) {
-        toastError(error.message);
-        await refetchBlocks();
-        return;
-      }
-
-      dirtyRef.current = {};
-      dirtyIdsRef.current.clear();
-      await refetchBlocks();
-      await refetchDocument();
-      setHistoryRefreshKey((k) => k + 1);
-      toastSuccess("마스터 파트 순서가 저장되었습니다.");
-    },
-    [document.id, refetchBlocks, refetchDocument, supabase],
-  );
+  useEffect(() => {
+    if (!selectedTarget) return;
+    const exists = blocks.some((block) => block.id === selectedTarget.blockId);
+    if (!exists) {
+      setSelectedTarget(null);
+    }
+  }, [blocks, selectedTarget]);
 
   const handleArrangementCommit = useCallback(
     async (nextArr: ReturnType<typeof parseArrangement>) => {
@@ -165,49 +186,125 @@ export function ChordSheetEditor({
     [document.id, refetchDocument, supabase],
   );
 
-  const handleDeleteBlock = useCallback(
-    async (blockId: string) => {
-      if (!window.confirm("이 마스터 파트를 삭제할까요? 진행 순서에서도 제거됩니다.")) return;
-      const { error } = await supabase.from("chord_sheet_blocks").delete().eq("id", blockId);
-      if (error) {
-        toastError(error.message);
-        return;
+  const handleSaveLyrics = useCallback(async () => {
+    const nextBlocks = applyPlainTextToBlocks(blocks, lyricsDraft);
+
+    setBusy(true);
+    try {
+      if (blocks.length === 0) {
+        const first = nextBlocks[0];
+        const { error } = await supabase.from("chord_sheet_blocks").insert({
+          document_id: document.id,
+          section_tag: first?.section_tag ?? "A",
+          custom_label: first?.custom_label ?? null,
+          order_index: 0,
+          lines_json: (first?.lines_json ?? normalizeLinesJson(null)) as unknown as Json,
+          transpose_semitones: first?.transpose_semitones ?? 0,
+        });
+        if (error) {
+          toastError(error.message);
+          return;
+        }
+      } else {
+        for (const [index, block] of blocks.entries()) {
+          const next = nextBlocks[index];
+          if (!next) continue;
+          const { error } = await supabase
+            .from("chord_sheet_blocks")
+            .update({
+              section_tag: next.section_tag,
+              custom_label: next.custom_label,
+              transpose_semitones: next.transpose_semitones,
+              lines_json: next.lines_json as unknown as Json,
+            })
+            .eq("id", block.id);
+
+          if (error) {
+            toastError(error.message);
+            await refetchBlocks();
+            return;
+          }
+        }
       }
-      delete dirtyRef.current[blockId];
-      dirtyIdsRef.current.delete(blockId);
-      setBlocks((prev) => prev.filter((b) => b.id !== blockId));
+
+      dirtyRef.current = {};
+      dirtyIdsRef.current.clear();
+      await refetchBlocks();
       await refetchDocument();
-      setHistoryRefreshKey((k) => k + 1);
-      toastSuccess("파트가 삭제되었습니다.");
+      setHistoryRefreshKey((current) => current + 1);
+      toastSuccess("가사 초안이 저장되었습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }, [blocks, document.id, lyricsDraft, refetchBlocks, refetchDocument, supabase]);
+
+  const handleApplyStructure = useCallback(
+    async (nextBlocks: StructureBlockInput[], arrangementPosition: ChordSheetArrangementPosition) => {
+      setBusy(true);
+      try {
+        const { error } = await supabase.rpc("replace_chord_sheet_structure", {
+          p_document_id: document.id,
+          p_blocks: nextBlocks as unknown as Json,
+          p_arrangement_position: arrangementPosition,
+        });
+
+        if (error) {
+          toastError(error.message);
+          return;
+        }
+
+        dirtyRef.current = {};
+        dirtyIdsRef.current.clear();
+        setSelectedTarget(null);
+        await refetchBlocks();
+        await refetchDocument();
+        setHistoryRefreshKey((current) => current + 1);
+        toastSuccess("파트 구조가 다시 정리되었습니다.");
+      } finally {
+        setBusy(false);
+      }
     },
-    [refetchDocument, supabase],
+    [document.id, refetchBlocks, refetchDocument, supabase],
   );
 
-  const handleAddBlock = useCallback(async () => {
-    setAdding(true);
-    const nextIndex = blocks.length;
-    const { data, error } = await supabase
-      .from("chord_sheet_blocks")
-      .insert({
-        document_id: document.id,
-        section_tag: "A",
-        order_index: nextIndex,
-        lines_json: emptyLinesJson() as unknown as Json,
-        transpose_semitones: 0,
-      })
-      .select("*")
-      .single();
+  const applyChordFromPalette = useCallback(
+    (root: string, quality: string) => {
+      if (!selectedTarget) return;
+      const block = blocksById.get(selectedTarget.blockId);
+      if (!block) return;
+      const symbol = buildChordSymbol(root, quality);
+      if (!symbol) return;
+      const normalized = normalizeLinesJson(block.lines_json);
+      const next = upsertChordAt(normalized, selectedTarget.lineIndex, selectedTarget.at, symbol);
+      queueLinesJson(block.id, next);
+      setSelectedTarget((current) =>
+        current
+          ? {
+              ...current,
+              existingSymbol: symbol,
+            }
+          : current,
+      );
+    },
+    [blocksById, queueLinesJson, selectedTarget],
+  );
 
-    setAdding(false);
-    if (error || !data) {
-      toastError(error?.message);
-      return;
-    }
-    setBlocks((prev) => [...prev, data].sort((a, b) => a.order_index - b.order_index));
-    await refetchDocument();
-    setHistoryRefreshKey((k) => k + 1);
-    toastSuccess("마스터 파트가 추가되었습니다.");
-  }, [blocks.length, document.id, refetchDocument, supabase]);
+  const handleDeleteSelectedChord = useCallback(() => {
+    if (!selectedTarget) return;
+    const block = blocksById.get(selectedTarget.blockId);
+    if (!block) return;
+    const normalized = normalizeLinesJson(block.lines_json);
+    const next = removeChordAt(normalized, selectedTarget.lineIndex, selectedTarget.at);
+    queueLinesJson(block.id, next);
+    setSelectedTarget((current) =>
+      current
+        ? {
+            ...current,
+            existingSymbol: null,
+          }
+        : current,
+    );
+  }, [blocksById, queueLinesJson, selectedTarget]);
 
   useEffect(() => {
     let cancelled = false;
@@ -325,6 +422,12 @@ export function ChordSheetEditor({
   const updatedLabel = document.updated_at
     ? format(new Date(document.updated_at), "PPP p", { locale: ko })
     : null;
+  const arrangementPosition =
+    document.arrangement_position ?? ARRANGEMENT_POSITION_OPTIONS[0]?.value ?? "below_title";
+  const selectedBlock = selectedTarget ? blocksById.get(selectedTarget.blockId) ?? null : null;
+  const targetLabel = selectedTarget
+    ? `${selectedBlock ? formatSectionBadge(selectedBlock.section_tag, selectedBlock.custom_label) : "파트"} · 줄 ${selectedTarget.lineIndex + 1}`
+    : null;
 
   const historyPanel = (
     <div className="flex max-h-[min(70vh,32rem)] flex-col gap-3">
@@ -362,20 +465,8 @@ export function ChordSheetEditor({
           <div className="min-w-0 space-y-2">
             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">협업 코드 악보</p>
             <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">{songTitle}</h1>
-            <ArrangementBuilder
-              documentId={document.id}
-              arrangement={arrangement}
-              blocksById={blocksById}
-              canReorder={canReorder}
-              onCommit={handleArrangementCommit}
-            />
             {updatedLabel ? (
               <p className="text-xs text-muted-foreground">문서 마지막 수정: {updatedLabel}</p>
-            ) : null}
-            {!canReorder ? (
-              <p className="text-[11px] text-amber-800/90 dark:text-amber-200/90">
-                진행 순서 편집은 리더·관리자만 가능합니다. 가사·코드는 팀원 모두 인라인으로 편집할 수 있어요.
-              </p>
             ) : null}
           </div>
         </div>
@@ -395,28 +486,101 @@ export function ChordSheetEditor({
               {historyPanel}
             </DialogContent>
           </Dialog>
-
-          <Button type="button" size="sm" className="h-9 gap-1.5" onClick={() => void handleAddBlock()} disabled={adding}>
-            <Plus className="size-3.5" />
-            마스터 파트 추가
-          </Button>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1 space-y-4">
-          <MasterPartsPanel
-            blocks={blocks}
-            canReorder={canReorder}
-            onReorder={handleMasterReorder}
-            onPatchBlockMeta={queuePatch}
-            onLinesJsonChange={queueLinesJson}
-            onDeleteBlock={handleDeleteBlock}
-          />
-          {blocks.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border/70 bg-muted/15 px-4 py-8 text-center text-sm text-muted-foreground">
-              마스터 파트가 없습니다. 위 버튼으로 A/B/C 등 파트를 추가한 뒤, 진행 순서를 구성하세요.
+          <EditorModeTabs value={mode} onValueChange={setMode} />
+
+          {!canReorder ? (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              파트 지정과 진행 순서 편집은 리더·관리자만 가능합니다. 팀원은 가사 텍스트와 코드 입력 모드에서 작업할 수 있습니다.
             </p>
+          ) : null}
+
+          {mode === "lyrics" ? (
+            <LyricsTextModePanel
+              value={lyricsDraft}
+              disabled={busy}
+              pending={busy}
+              onChange={setLyricsDraft}
+              onSave={() => void handleSaveLyrics()}
+            />
+          ) : null}
+
+          {mode === "parts" ? (
+            <div className="space-y-4">
+              {canReorder ? (
+                <HighlightSectionBuilder
+                  blocks={blocks}
+                  arrangementPosition={arrangementPosition}
+                  disabled={busy}
+                  onApplyStructure={handleApplyStructure}
+                />
+              ) : (
+                <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-8 text-center text-sm text-neutral-500">
+                  리더 또는 관리자 권한으로 파트 지정 모드를 사용할 수 있습니다.
+                </div>
+              )}
+
+              <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-100/80">
+                <div className="mb-4">
+                  <p className="text-base font-semibold text-neutral-900">진행 순서</p>
+                  <p className="mt-1 text-sm text-neutral-500">
+                    추출된 마스터 파트를 반복 순서로 배치하고, 표시 위치는 위 설정을 따라갑니다.
+                  </p>
+                </div>
+                <ArrangementBuilder
+                  documentId={document.id}
+                  arrangement={arrangement}
+                  blocksById={blocksById}
+                  canReorder={canReorder}
+                  onCommit={handleArrangementCommit}
+                />
+              </section>
+            </div>
+          ) : null}
+
+          {mode === "chords" ? (
+            blocks.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-8 text-center text-sm text-neutral-500">
+                아직 코드 입력할 파트가 없습니다. 먼저 가사 텍스트 모드에서 초안을 만들고, 파트 지정 모드에서 구조를 나눠 주세요.
+              </div>
+            ) : (
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+                <div className="space-y-4">
+                  {blocks.map((block) => (
+                    <ClickableChordBlockEditor
+                      key={block.id}
+                      block={block}
+                      target={selectedTarget}
+                      onPickTarget={(target) => {
+                        setSelectedTarget(target);
+                        const parsed = parseInitialSymbol(target.existingSymbol);
+                        setPaletteRoot(parsed.root);
+                        setPaletteQuality(parsed.quality);
+                      }}
+                    />
+                  ))}
+                </div>
+                <ClickableChordPalette
+                  root={paletteRoot}
+                  quality={paletteQuality}
+                  currentSymbol={selectedTarget?.existingSymbol ?? null}
+                  targetLabel={targetLabel}
+                  onRootPick={(root) => {
+                    setPaletteRoot(root);
+                    applyChordFromPalette(root, paletteQuality);
+                  }}
+                  onQualityPick={(quality) => {
+                    setPaletteQuality(quality);
+                    applyChordFromPalette(paletteRoot, quality);
+                  }}
+                  onDelete={handleDeleteSelectedChord}
+                />
+              </div>
+            )
           ) : null}
         </div>
 

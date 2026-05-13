@@ -1,0 +1,50 @@
+"use client";
+
+import { BookText, Grip, Music2 } from "lucide-react";
+
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export type ChordEditorMode = "lyrics" | "parts" | "chords";
+
+const MODE_ITEMS: Array<{
+  value: ChordEditorMode;
+  label: string;
+  description: string;
+  icon: typeof BookText;
+}> = [
+  { value: "lyrics", label: "가사 텍스트", description: "메모장처럼 가사만 집중", icon: BookText },
+  { value: "parts", label: "파트 지정", description: "드래그로 파트 추출", icon: Grip },
+  { value: "chords", label: "코드 입력", description: "터치/클릭 위주 코드 편집", icon: Music2 },
+];
+
+type EditorModeTabsProps = {
+  value: ChordEditorMode;
+  onValueChange: (value: ChordEditorMode) => void;
+};
+
+export function EditorModeTabs({ value, onValueChange }: EditorModeTabsProps) {
+  return (
+    <Tabs value={value} onValueChange={(next) => onValueChange(next as ChordEditorMode)}>
+      <TabsList variant="default" className="grid w-full grid-cols-3 rounded-2xl bg-neutral-100 p-1">
+        {MODE_ITEMS.map((item) => {
+          const Icon = item.icon;
+          return (
+            <TabsTrigger
+              key={item.value}
+              value={item.value}
+              className="h-auto min-h-14 rounded-xl border-transparent px-3 py-3 data-active:border-neutral-200 data-active:bg-white data-active:shadow-sm"
+            >
+              <span className="flex items-center gap-2">
+                <Icon className="size-4" aria-hidden />
+                <span className="flex flex-col items-start text-left">
+                  <span className="text-sm font-semibold text-neutral-900">{item.label}</span>
+                  <span className="text-[11px] text-neutral-500">{item.description}</span>
+                </span>
+              </span>
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    </Tabs>
+  );
+}

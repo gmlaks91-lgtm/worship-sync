@@ -24,6 +24,7 @@ export type ShopItemType = "avatar" | "frame" | "badge";
 
 /** chord_sheet_blocks.section_tag — DB check 제약과 동일 */
 export type ChordSheetSectionTag = "I" | "A" | "B" | "C" | "간주" | "O";
+export type ChordSheetArrangementPosition = "below_title" | "top_right" | "after_lyrics";
 
 export type ChordSheetHistoryAction = "block_insert" | "block_update" | "block_delete" | "reorder";
 
@@ -228,6 +229,7 @@ export type Database = {
           song_id: string;
           title: string | null;
           arrangement: Json;
+          arrangement_position: ChordSheetArrangementPosition;
           updated_at: string;
           updated_by: string | null;
         };
@@ -236,6 +238,7 @@ export type Database = {
           song_id: string;
           title?: string | null;
           arrangement?: Json;
+          arrangement_position?: ChordSheetArrangementPosition;
           updated_at?: string;
           updated_by?: string | null;
         };
@@ -244,6 +247,7 @@ export type Database = {
           song_id?: string;
           title?: string | null;
           arrangement?: Json;
+          arrangement_position?: ChordSheetArrangementPosition;
           updated_at?: string;
           updated_by?: string | null;
         };
@@ -692,6 +696,14 @@ export type Database = {
         Args: {
           p_document_id: string;
           p_block_ids: string[];
+        };
+        Returns: undefined;
+      };
+      replace_chord_sheet_structure: {
+        Args: {
+          p_document_id: string;
+          p_blocks: Json;
+          p_arrangement_position?: string;
         };
         Returns: undefined;
       };

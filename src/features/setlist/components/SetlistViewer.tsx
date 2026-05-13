@@ -39,18 +39,26 @@ export function SetlistViewer({ songs }: SetlistViewerProps) {
               {!song.document ? (
                 <p className="text-sm text-muted-foreground">이 곡에는 아직 코드 악보 문서가 없습니다.</p>
               ) : (
-                <ArrangementBadgeRow document={song.document} blocksById={blocksById(song.blocks)} />
+                song.document.arrangement_position !== "after_lyrics" &&
+                song.document.arrangement_position !== "top_right" ? (
+                  <ArrangementBadgeRow document={song.document} blocksById={blocksById(song.blocks)} />
+                ) : null
               )}
             </div>
-            <Link
-              href={`/sheets/${song.songId}/edit`}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/15",
-              )}
-            >
-              편집 모드
-              <ChevronRight className="size-3.5 opacity-80" />
-            </Link>
+            <div className="flex flex-col items-end gap-2">
+              {song.document?.arrangement_position === "top_right" ? (
+                <ArrangementBadgeRow compact document={song.document} blocksById={blocksById(song.blocks)} />
+              ) : null}
+              <Link
+                href={`/sheets/${song.songId}/edit`}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/15",
+                )}
+              >
+                편집 모드
+                <ChevronRight className="size-3.5 opacity-80" />
+              </Link>
+            </div>
           </div>
 
           {song.document && song.blocks.length > 0 ? (
@@ -63,6 +71,11 @@ export function SetlistViewer({ songs }: SetlistViewerProps) {
                   <InlineChordLine linesJson={block.lines_json} readOnly />
                 </section>
               ))}
+              {song.document.arrangement_position === "after_lyrics" ? (
+                <div className="border-t border-border/40 pt-4">
+                  <ArrangementBadgeRow document={song.document} blocksById={blocksById(song.blocks)} />
+                </div>
+              ) : null}
             </div>
           ) : null}
         </article>
@@ -74,23 +87,30 @@ export function SetlistViewer({ songs }: SetlistViewerProps) {
 function ArrangementBadgeRow({
   document,
   blocksById,
+  compact,
 }: {
   document: ChordSheetDocumentRow;
   blocksById: Map<string, ChordSheetBlockRow>;
+  compact?: boolean;
 }) {
   const arr = parseArrangement(document.arrangement);
   if (arr.length === 0) {
     return <p className="text-xs text-muted-foreground">진행 순서가 비어 있습니다.</p>;
   }
   return (
-    <div className="flex flex-wrap items-center gap-1 text-xs">
+    <div className={cn("flex flex-wrap items-center gap-1 text-xs", compact && "justify-end")}>
       {arr.map((entry, idx) => {
         const b = blocksById.get(entry.block_id);
         const label = b ? formatSectionBadge(b.section_tag, b.custom_label) : "?";
         return (
           <span key={`${entry.block_id}-${idx}`} className="flex items-center gap-1">
             {idx > 0 ? <ChevronRight className="size-3 text-muted-foreground/80" aria-hidden /> : null}
-            <span className="rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 font-mono font-semibold text-foreground/90">
+            <span
+              className={cn(
+                "rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 font-mono font-semibold text-foreground/90",
+                compact && "bg-background px-1.5 text-[11px]",
+              )}
+            >
               {label}
             </span>
           </span>
