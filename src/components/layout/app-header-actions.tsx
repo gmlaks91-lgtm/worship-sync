@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { signOut } from "@/features/auth/actions";
 import { AddSetlistTriggerButton } from "@/features/setlist/components/AddSetlistDialog";
+import { PwaInstallButton } from "@/components/layout/PwaInstallButton";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ export function AppHeaderActions({
 }: AppHeaderActionsProps) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
+      <PwaInstallButton />
       {isLoggedIn ? (
         <Link
           href="/profile"

@@ -16,19 +16,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ahava",
-  description: "Ahava 찬양팀의 송리스트, 악보, 일정, 팀 라인업을 한곳에서 관리합니다.",
+  title: "Worship Sync",
+  description: "Worship Sync 모바일 앱으로 팀 일정, 악보, 일정, 포인트를 빠르게 관리하세요.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    title: "Ahava",
+    title: "Worship Sync",
     statusBarStyle: "default",
   },
   formatDetection: {
     telephone: false,
   },
   icons: {
-    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: "/icons/icon-192.png",
   },
 };
 
@@ -37,7 +42,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#fafafa",
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({
