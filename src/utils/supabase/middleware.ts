@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 
 import type { Database } from "@/types/database";
+import { normalizeSupabaseUrl } from "@/utils/supabase/url";
 
 export type SessionUpdateResult = {
   response: NextResponse;
@@ -19,8 +20,9 @@ export async function updateSession(request: NextRequest): Promise<SessionUpdate
     request,
   });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = rawUrl ? normalizeSupabaseUrl(rawUrl) : rawUrl;
 
   if (!url || !key) {
     return { response: supabaseResponse, user: null, authConfigured: false };

@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import type { Database } from "@/types/database";
+import { normalizeSupabaseUrl } from "@/utils/supabase/url";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,8 +21,9 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${safeOrigin}/login?error=missing_code`);
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = rawUrl ? normalizeSupabaseUrl(rawUrl) : rawUrl;
 
   if (!url || !key) {
     return NextResponse.redirect(`${safeOrigin}/login?error=not_configured`);

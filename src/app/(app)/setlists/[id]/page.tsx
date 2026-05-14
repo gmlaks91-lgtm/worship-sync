@@ -99,6 +99,7 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
       title: row.songs.title,
       document: doc,
       blocks,
+      imageUrls: sheetMap[sid]?.image_urls ?? [],
     };
   });
 

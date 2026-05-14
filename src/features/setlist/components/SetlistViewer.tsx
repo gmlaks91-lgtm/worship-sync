@@ -2,6 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 
+import { InteractiveSheetEditor } from "@/features/setlist/components/InteractiveSheetEditor";
 import { formatSectionBadge } from "@/features/chord-sheet/constants";
 import type { ChordSheetBlockRow, ChordSheetDocumentRow } from "@/features/chord-sheet/domain";
 import { InlineChordLine } from "@/features/chord-sheet/components/InlineChordLine";
@@ -13,6 +14,7 @@ export type SetlistChordSongItem = {
   title: string;
   document: ChordSheetDocumentRow | null;
   blocks: ChordSheetBlockRow[];
+  imageUrls: string[];
 };
 
 type SetlistViewerProps = {
@@ -50,6 +52,12 @@ export function SetlistViewer({ songs }: SetlistViewerProps) {
               </div>
             ) : null}
           </div>
+
+          {song.document && song.imageUrls.length > 0 ? (
+            <div className="mt-5">
+              <InteractiveSheetEditor title={song.title} imageUrl={song.imageUrls[0]} />
+            </div>
+          ) : null}
 
           {song.document && song.blocks.length > 0 ? (
             <div className="mt-5 space-y-8 border-t border-border/50 pt-5">

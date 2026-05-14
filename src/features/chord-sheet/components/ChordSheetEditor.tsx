@@ -1,25 +1,17 @@
 "use client";
 
-import { useDebouncedCallback } from "use-debounce";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowLeft, History, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ArrangementBuilder } from "@/features/chord-sheet/components/ArrangementBuilder";
-import { EditorModeTabs, type ChordEditorMode } from "@/features/chord-sheet/components/EditorModeTabs";
 import { HighlightSectionBuilder } from "@/features/chord-sheet/components/HighlightSectionBuilder";
 import { HistoryTimeline } from "@/features/chord-sheet/components/HistoryTimeline";
-import { LyricsTextModePanel } from "@/features/chord-sheet/components/LyricsTextModePanel";
 import { formatSectionBadge } from "@/features/chord-sheet/constants";
 import type { ChordSheetBlockRow, ChordSheetDocumentRow, ChordSheetHistoryRow } from "@/features/chord-sheet/domain";
-import {
-  ARRANGEMENT_POSITION_OPTIONS,
-  applyPlainTextToBlocks,
-  flattenBlocksToEditableText,
-  type StructureBlockInput,
-} from "@/features/chord-sheet/lib/editor-structure";
+import { ARRANGEMENT_POSITION_OPTIONS, type StructureBlockInput } from "@/features/chord-sheet/lib/editor-structure";
 import { normalizeLinesJson, parseArrangement, type LinesJson } from "@/features/chord-sheet/lib/lines-json";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -52,8 +44,6 @@ export function ChordSheetEditor({
   const [blocks, setBlocks] = useState<ChordSheetBlockRow[]>(() =>
     [...initialBlocks].sort((a, b) => a.order_index - b.order_index),
   );
-  const [mode, setMode] = useState<ChordEditorMode>("lyrics");
-  const [lyricsDraft, setLyricsDraft] = useState(() => flattenBlocksToEditableText(initialBlocks));
   const [busy, setBusy] = useState(false);
   const arrangement = useMemo(() => parseArrangement(document.arrangement), [document.arrangement]);
 
@@ -63,9 +53,6 @@ export function ChordSheetEditor({
   const [actorNames, setActorNames] = useState<Record<string, string>>({});
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(false);
-
-  const dirtyRef = useRef<Record<string, Partial<ChordSheetBlockRow>>>({});
-  const dirtyIdsRef = useRef(new Set<string>());
 
   const refetchBlocks = useCallback(async () => {
     const { data, error } = await supabase
@@ -89,45 +76,6 @@ export function ChordSheetEditor({
     setDocument(data);
   }, [document.id, supabase]);
 
-  const flushDirty = useDebouncedCallback(async () => {
-    const snapshot = { ...dirtyRef.current };
-    dirtyRef.current = {};
-    for (const [blockId, patch] of Object.entries(snapshot)) {
-      if (Object.keys(patch).length === 0) continue;
-      const { error } = await supabase.from("chord_sheet_blocks").update(patch).eq("id", blockId);
-      if (error) {
-        toastError(error.message);
-        dirtyRef.current[blockId] = { ...dirtyRef.current[blockId], ...patch };
-        continue;
-      }
-      dirtyIdsRef.current.delete(blockId);
-    }
-    setHistoryRefreshKey((k) => k + 1);
-  }, 900);
-
-  const queuePatch = useCallback(
-    (blockId: string, patch: Partial<ChordSheetBlockRow>) => {
-      setBlocks((prev) =>
-        prev.map((b) => (b.id === blockId ? ({ ...b, ...patch } as ChordSheetBlockRow) : b)),
-      );
-      dirtyRef.current[blockId] = { ...dirtyRef.current[blockId], ...patch };
-      dirtyIdsRef.current.add(blockId);
-      flushDirty();
-    },
-    [flushDirty],
-  );
-
-  const queueLinesJson = useCallback(
-    (blockId: string, lines: LinesJson) => {
-      queuePatch(blockId, { lines_json: lines as unknown as Json });
-    },
-    [queuePatch],
-  );
-
-  useEffect(() => {
-    setLyricsDraft(flattenBlocksToEditableText(blocks));
-  }, [blocks]);
-
   const handleArrangementCommit = useCallback(
     async (nextArr: ReturnType<typeof parseArrangement>) => {
       const { error } = await supabase.rpc("set_chord_sheet_arrangement", {
@@ -146,58 +94,6 @@ export function ChordSheetEditor({
     [document.id, refetchDocument, supabase],
   );
 
-  const handleSaveLyrics = useCallback(async () => {
-    const nextBlocks = applyPlainTextToBlocks(blocks, lyricsDraft);
-
-    setBusy(true);
-    try {
-      if (blocks.length === 0) {
-        const first = nextBlocks[0];
-        const { error } = await supabase.from("chord_sheet_blocks").insert({
-          document_id: document.id,
-          section_tag: first?.section_tag ?? "A",
-          custom_label: first?.custom_label ?? null,
-          order_index: 0,
-          lines_json: (first?.lines_json ?? normalizeLinesJson(null)) as unknown as Json,
-          transpose_semitones: first?.transpose_semitones ?? 0,
-        });
-        if (error) {
-          toastError(error.message);
-          return;
-        }
-      } else {
-        for (const [index, block] of blocks.entries()) {
-          const next = nextBlocks[index];
-          if (!next) continue;
-          const { error } = await supabase
-            .from("chord_sheet_blocks")
-            .update({
-              section_tag: next.section_tag,
-              custom_label: next.custom_label,
-              transpose_semitones: next.transpose_semitones,
-              lines_json: next.lines_json as unknown as Json,
-            })
-            .eq("id", block.id);
-
-          if (error) {
-            toastError(error.message);
-            await refetchBlocks();
-            return;
-          }
-        }
-      }
-
-      dirtyRef.current = {};
-      dirtyIdsRef.current.clear();
-      await refetchBlocks();
-      await refetchDocument();
-      setHistoryRefreshKey((current) => current + 1);
-      toastSuccess("가사 초안이 저장되었습니다.");
-    } finally {
-      setBusy(false);
-    }
-  }, [blocks, document.id, lyricsDraft, refetchBlocks, refetchDocument, supabase]);
-
   const handleApplyStructure = useCallback(
     async (nextBlocks: StructureBlockInput[], arrangementPosition: ChordSheetArrangementPosition) => {
       setBusy(true);
@@ -213,8 +109,6 @@ export function ChordSheetEditor({
           return;
         }
 
-        dirtyRef.current = {};
-        dirtyIdsRef.current.clear();
         await refetchBlocks();
         await refetchDocument();
         setHistoryRefreshKey((current) => current + 1);
@@ -323,9 +217,6 @@ export function ChordSheetEditor({
 
           if (payload.eventType === "UPDATE") {
             const row = payload.new as ChordSheetBlockRow;
-            if (dirtyIdsRef.current.has(row.id)) {
-              return;
-            }
             setBlocks((prev) =>
               prev.map((b) => (b.id === row.id ? row : b)).sort((a, b) => a.order_index - b.order_index),
             );
@@ -414,68 +305,52 @@ export function ChordSheetEditor({
 
       <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1 space-y-4">
-          <EditorModeTabs value={mode} onValueChange={setMode} canEditParts={canReorder} />
+        {!canReorder ? (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            진행 순서 수정은 리더·관리자만 가능합니다. 팀원은 저장된 순서만 읽기 전용으로 확인할 수 있습니다.
+          </p>
+        ) : null}
 
-          {!canReorder ? (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              진행 순서 수정은 리더·관리자만 가능합니다. 팀원은 저장된 순서만 읽기 전용으로 확인할 수 있습니다.
-            </p>
-          ) : null}
-
-          {mode === "lyrics" ? (
-            <LyricsTextModePanel
-              value={lyricsDraft}
+        {canReorder ? (
+          <>
+            <HighlightSectionBuilder
+              blocks={blocks}
+              arrangementPosition={arrangementPosition}
               disabled={busy}
-              pending={busy}
-              onChange={setLyricsDraft}
-              onSave={() => void handleSaveLyrics()}
+              onApplyStructure={handleApplyStructure}
             />
-          ) : null}
 
-          {mode === "parts" ? (
-            <div className="space-y-4">
-              {canReorder ? (
-                <>
-                  <HighlightSectionBuilder
-                    blocks={blocks}
-                    arrangementPosition={arrangementPosition}
-                    disabled={busy}
-                    onApplyStructure={handleApplyStructure}
-                  />
-
-                  <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-100/80">
-                    <div className="mb-4">
-                      <p className="text-base font-semibold text-neutral-900">진행 순서</p>
-                      <p className="mt-1 text-sm text-neutral-500">
-                        추출된 마스터 파트를 반복 순서로 배치하고, 표시 위치는 위 설정을 따라갑니다.
-                      </p>
-                    </div>
-                    <ArrangementBuilder
-                      documentId={document.id}
-                      arrangement={arrangement}
-                      blocksById={blocksById}
-                      canReorder={canReorder}
-                      onCommit={handleArrangementCommit}
-                    />
-                  </section>
-                </>
-              ) : (
-                <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-100/80">
-                  <div className="space-y-2">
-                    <p className="text-base font-semibold text-neutral-900">진행 순서</p>
-                    <p className="text-sm text-neutral-500">표시 위치: {arrangementPositionLabel}</p>
-                    <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
-                      <p className="text-sm leading-relaxed text-neutral-800">
-                        {arrangementSummaryText || "저장된 진행 순서가 없습니다."}
-                      </p>
-                    </div>
-                  </div>
-                </section>
-              )}
+            <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-100/80">
+              <div className="mb-4">
+                <p className="text-base font-semibold text-neutral-900">진행 순서</p>
+                <p className="mt-1 text-sm text-neutral-500">
+                  추출된 마스터 파트를 반복 순서로 배치하고, 표시 위치는 위 설정을 따라갑니다.
+                </p>
+              </div>
+              <ArrangementBuilder
+                documentId={document.id}
+                arrangement={arrangement}
+                blocksById={blocksById}
+                canReorder={canReorder}
+                onCommit={handleArrangementCommit}
+              />
+            </section>
+          </>
+        ) : (
+          <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-100/80">
+            <div className="space-y-2">
+              <p className="text-base font-semibold text-neutral-900">진행 순서</p>
+              <p className="text-sm text-neutral-500">표시 위치: {arrangementPositionLabel}</p>
+              <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
+                <p className="text-sm leading-relaxed text-neutral-800">
+                  {arrangementSummaryText || "저장된 진행 순서가 없습니다."}
+                </p>
+              </div>
             </div>
-          ) : null}
+          </section>
+        )}
 
-        </div>
+      </div>
 
         <aside className="hidden w-full shrink-0 border-l border-border/60 pl-0 lg:block lg:w-[22rem] lg:pl-6">
           <div className="sticky top-4 space-y-3">
