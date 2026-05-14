@@ -6,10 +6,8 @@ import {
   mapSetlistQueryRows,
   type SetlistQueryRow,
 } from "@/features/setlist/queries/getSetlists";
-import { getLatestSheetsBySongIds } from "@/features/sheets/queries/getSheets";
 import { createClient } from "@/utils/supabase/server";
 
-import type { PrepSetlistWithSheets } from "@/features/setlist/types";
 import type { WeeklyPrepSetlistLoad, WeekSundayYmd } from "./types";
 
 /**
@@ -34,26 +32,14 @@ export async function fetchWeeklyPrepSetlist(weekSundayYmd: WeekSundayYmd): Prom
       return { setlist: null, error: setlistError.message };
     }
 
-    const rows = (setlistsRaw ?? []) as SetlistQueryRow[];
+    const rows = (setlistsRaw ?? []) as unknown as SetlistQueryRow[];
     const setlist = mapSetlistQueryRows(rows)[0] ?? null;
 
     if (!setlist) {
       return { setlist: null, error: null };
     }
 
-    const sheetMap = await getLatestSheetsBySongIds(
-      setlist.songs.map((song) => song.id),
-    );
-
-    const setlistWithSheets: PrepSetlistWithSheets = {
-      ...setlist,
-      songs: setlist.songs.map((song) => ({
-        ...song,
-        sheet: sheetMap[song.id] ?? null,
-      })),
-    };
-
-    return { setlist: setlistWithSheets, error: null };
+    return { setlist, error: null };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류";
     return { setlist: null, error: message };

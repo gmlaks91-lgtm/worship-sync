@@ -5,6 +5,7 @@ import { SetlistChordSection } from "@/features/setlist/components/SetlistChordS
 import { StaffNotesEditor } from "@/features/setlist/components/StaffNotesEditor";
 import type { SetlistChordSongItem } from "@/features/setlist/components/SetlistViewer";
 import type { ChordSheetBlockRow } from "@/features/chord-sheet/domain";
+import { getLatestSheetsBySongIds } from "@/features/sheets/queries/getSheets";
 import { TEAM_ROLE_OPTIONS, type TeamRoleCode } from "@/lib/team-roles";
 import { createClient } from "@/utils/supabase/server";
 
@@ -70,6 +71,7 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
   }>;
 
   const songIds = orderedSongs.map((r) => r.songs.id);
+  const sheetMap = await getLatestSheetsBySongIds(songIds);
 
   const { data: docs } = await supabase.from("chord_sheet_documents").select("*").in("song_id", songIds);
 
@@ -100,6 +102,12 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
     };
   });
 
+  const pdfSongs = orderedSongs.map((row) => ({
+    songId: row.songs.id,
+    title: row.songs.title,
+    imageUrls: sheetMap[row.songs.id]?.image_urls ?? [],
+  }));
+
   return (
     <div className="flex flex-1 flex-col gap-6">
       <header className="space-y-2">
@@ -121,7 +129,13 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
         </div>
       </header>
 
-      <SetlistChordSection setlistId={data.id} title={data.title} eventDate={data.event_date} songs={chordSongs} />
+      <SetlistChordSection
+        setlistId={data.id}
+        title={data.title}
+        eventDate={data.event_date}
+        songs={chordSongs}
+        pdfSongs={pdfSongs}
+      />
 
       <section className="space-y-2 rounded-lg border border-border/60 bg-card/60 p-4 print:hidden">
         <h2 className="text-sm font-semibold">수록곡</h2>

@@ -35,7 +35,6 @@ import { createClient } from "@/utils/supabase/client";
 import type { ChordSheetArrangementPosition, Json } from "@/types/database";
 
 export type ChordSheetEditorProps = {
-  songId: string;
   songTitle: string;
   document: ChordSheetDocumentRow;
   initialBlocks: ChordSheetBlockRow[];
@@ -43,7 +42,6 @@ export type ChordSheetEditorProps = {
 };
 
 export function ChordSheetEditor({
-  songId,
   songTitle,
   document: initialDocument,
   initialBlocks,
@@ -346,6 +344,14 @@ export function ChordSheetEditor({
     : null;
   const arrangementPosition =
     document.arrangement_position ?? ARRANGEMENT_POSITION_OPTIONS[0]?.value ?? "below_title";
+  const arrangementPositionLabel =
+    ARRANGEMENT_POSITION_OPTIONS.find((option) => option.value === arrangementPosition)?.label ?? "제목 아래";
+  const arrangementSummaryText = arrangement
+    .map((entry) => {
+      const block = blocksById.get(entry.block_id);
+      return block ? formatSectionBadge(block.section_tag, block.custom_label) : "?";
+    })
+    .join(" -> ");
   const historyPanel = (
     <div className="flex max-h-[min(70vh,32rem)] flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
@@ -373,9 +379,9 @@ export function ChordSheetEditor({
       <header className="flex flex-col gap-3 border-b border-border/70 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-2">
           <Link
-            href={`/sheets/${songId}`}
+            href="/"
             className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "shrink-0")}
-            aria-label="이미지 악보로"
+            aria-label="홈으로"
           >
             <ArrowLeft className="size-4" />
           </Link>
@@ -408,11 +414,11 @@ export function ChordSheetEditor({
 
       <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1 space-y-4">
-          <EditorModeTabs value={mode} onValueChange={setMode} />
+          <EditorModeTabs value={mode} onValueChange={setMode} canEditParts={canReorder} />
 
           {!canReorder ? (
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              파트 지정과 진행 순서 편집은 리더·관리자만 가능합니다. 팀원은 가사 텍스트 모드만 확인할 수 있습니다.
+              진행 순서 수정은 리더·관리자만 가능합니다. 팀원은 저장된 순서만 읽기 전용으로 확인할 수 있습니다.
             </p>
           ) : null}
 
@@ -453,7 +459,19 @@ export function ChordSheetEditor({
                     />
                   </section>
                 </>
-              ) : null}
+              ) : (
+                <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-neutral-100/80">
+                  <div className="space-y-2">
+                    <p className="text-base font-semibold text-neutral-900">진행 순서</p>
+                    <p className="text-sm text-neutral-500">표시 위치: {arrangementPositionLabel}</p>
+                    <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
+                      <p className="text-sm leading-relaxed text-neutral-800">
+                        {arrangementSummaryText || "저장된 진행 순서가 없습니다."}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              )}
             </div>
           ) : null}
 

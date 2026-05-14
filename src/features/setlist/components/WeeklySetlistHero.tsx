@@ -13,7 +13,7 @@ import { SetlistLineupEditor } from "@/features/setlist/components/SetlistLineup
 import { YouTubePlayer } from "@/features/setlist/components/YouTubePlayer";
 import { WeeklySongRow } from "@/features/setlist/components/WeeklySongRow";
 import { weekSetlistHeadingKst } from "@/features/setlist/lib/week-label-kst";
-import type { PrepSetlistWithSheets } from "@/features/setlist/types";
+import type { PrepSetlistRow } from "@/features/setlist/queries/getSetlists";
 import { shiftWeekSundayYmd, weeklyDashboardHref } from "@/features/setlist/weekly";
 import type { TeamMemberRow } from "@/features/team/queries/getTeamMembers";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
@@ -34,7 +34,7 @@ function groupLineupItems(items: Array<{ role_code: string; member_name: string 
 
 type WeeklySetlistHeroProps = {
   weekSundayYmd: string;
-  setlist: PrepSetlistWithSheets | null;
+  setlist: PrepSetlistRow | null;
   error: string | null;
   canManageSetlists: boolean;
   teamMembers: TeamMemberRow[];
@@ -143,7 +143,7 @@ export function WeeklySetlistHero({
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="max-w-xl text-center text-sm leading-relaxed text-neutral-500 sm:text-left">
-              주간 단위로 송리스트를 넘겨 보며, 곡과 악보를 이 화면에서 바로 다듬을 수 있어요.
+              주간 단위로 송리스트를 넘겨 보며, 곡 정보와 예배 준비 흐름을 이 화면에서 빠르게 확인할 수 있어요.
             </p>
             {canManageSetlists ? (
               <AddSetlistTriggerButton

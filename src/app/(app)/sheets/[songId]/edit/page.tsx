@@ -1,9 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ChordSheetEditor } from "@/features/chord-sheet/components/ChordSheetEditor";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -65,13 +62,7 @@ export default async function ChordSheetEditPage({ params }: { params: Promise<{
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <div className="flex items-center justify-end">
-        <Link href="/sheets" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-xs")}>
-          악보 라이브러리
-        </Link>
-      </div>
       <ChordSheetEditor
-        songId={songId}
         songTitle={song.title}
         document={document}
         initialBlocks={blocks ?? []}

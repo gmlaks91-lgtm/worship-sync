@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ChevronDown, ChevronUp, FileMusic, Loader2, Play, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Play, Trash2 } from "lucide-react";
 
-import type { SetlistSongWithSheet } from "@/features/setlist/types";
+import type { SetlistSongRow } from "@/features/setlist/queries/getSetlists";
 import { useSetlistStore } from "@/features/setlist/store/useSetlistStore";
 import { getYoutubeThumbnailUrl, getYoutubeVideoId } from "@/features/setlist/utils/youtube";
 import {
@@ -13,15 +13,13 @@ import {
   removeTrackFromPrepSetlist,
   updateSongInPrepSetlist,
 } from "@/features/setlist/actions/weeklySetlistActions";
-import { uploadSheetFromClient } from "@/features/sheets/lib/upload-sheet-images-stable";
-import { SheetViewerDialog } from "@/features/sheets/components/SheetViewerDialog";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 type WeeklySongRowProps = {
   setlistId: string;
-  song: SetlistSongWithSheet;
+  song: SetlistSongRow;
   index: number;
   total: number;
   canManage: boolean;
@@ -32,9 +30,6 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
   const playSong = useSetlistStore((s) => s.playSong);
   const currentId = useSetlistStore((s) => s.current?.songId);
   const [pending, start] = useTransition();
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadBusy, setUploadBusy] = useState(false);
 
   const [title, setTitle] = useState(song.title);
   const [youtubeUrl, setYoutubeUrl] = useState(song.youtube_url ?? "");
@@ -42,7 +37,6 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
   const videoId = getYoutubeVideoId(song.youtube_url);
   const thumb = videoId ? getYoutubeThumbnailUrl(videoId) : null;
   const isPlaying = currentId === song.id;
-  const sheet = song.sheet;
 
   const saveMeta = () => {
     start(async () => {
@@ -83,23 +77,6 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
       }
       router.refresh();
     });
-  };
-
-  const onUploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const list = e.target.files;
-    if (!list?.length) return;
-    setUploadBusy(true);
-    try {
-      await uploadSheetFromClient(song.id, list, null);
-      toastSuccess(`악보 ${list.length}장을 등록했습니다.`);
-      e.target.value = "";
-      setUploadOpen(false);
-      router.refresh();
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "업로드에 실패했습니다.");
-    } finally {
-      setUploadBusy(false);
-    }
   };
 
   return (
@@ -147,55 +124,9 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
             )}
           </div>
 
-          {sheet?.image_urls?.length ? (
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {sheet.image_urls.map((url, i) => (
-                <button
-                  key={`${url}-${i}`}
-                  type="button"
-                  onClick={() => setSheetOpen(true)}
-                  className="relative h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50"
-                >
-                  <Image src={url} alt="" fill className="object-cover" sizes="48px" />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-neutral-400">등록된 악보 이미지가 없습니다.</p>
-          )}
-
-          {sheet ? (
-            <SheetViewerDialog
-              open={sheetOpen}
-              onOpenChange={setSheetOpen}
-              songId={song.id}
-              songTitle={song.title}
-              fileUrls={sheet.image_urls}
-              memo={sheet.memo}
-            />
-          ) : null}
-
-          {uploadOpen ? (
-            <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
-              <p className="mb-2 text-xs font-medium text-neutral-600">악보 이미지 (여러 장 선택 가능 · 순서대로 저장)</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Input
-                  type="file"
-                  multiple
-                  accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-                  disabled={uploadBusy}
-                  className="max-w-xs border-neutral-200 bg-white text-sm file:mr-2"
-                  onChange={onUploadFiles}
-                />
-                {uploadBusy ? (
-                  <span className="inline-flex items-center gap-2 text-xs text-neutral-500">
-                    <Loader2 className="size-4 animate-spin" aria-hidden />
-                    업로드 중…
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
+          <p className="text-xs text-neutral-400">
+            기존 악보 리스트/업로드 UI는 정리되었습니다. 악보 모음 PDF와 새 인터랙티브 에디터 흐름으로 통합될 예정입니다.
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2 lg:w-48 lg:flex-col">
@@ -215,23 +146,8 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
             <Play className="mr-1.5 size-4" aria-hidden />
             재생
           </Button>
-          {sheet ? (
-            <Button type="button" variant="outline" size="sm" className="flex-1 border-neutral-200 lg:flex-none" onClick={() => setSheetOpen(true)}>
-              <FileMusic className="mr-1.5 size-4" aria-hidden />
-              악보
-            </Button>
-          ) : null}
           {canManage ? (
             <>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="flex-1 border-neutral-200 lg:flex-none"
-                onClick={() => setUploadOpen((v) => !v)}
-              >
-                {uploadOpen ? "업로드 닫기" : "악보 올리기"}
-              </Button>
               <Button type="button" variant="outline" size="sm" disabled={pending} onClick={saveMeta}>
                 저장
               </Button>

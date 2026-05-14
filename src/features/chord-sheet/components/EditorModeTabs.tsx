@@ -19,13 +19,20 @@ const MODE_ITEMS: Array<{
 type EditorModeTabsProps = {
   value: ChordEditorMode;
   onValueChange: (value: ChordEditorMode) => void;
+  canEditParts?: boolean;
 };
 
-export function EditorModeTabs({ value, onValueChange }: EditorModeTabsProps) {
+export function EditorModeTabs({ value, onValueChange, canEditParts = true }: EditorModeTabsProps) {
+  const items = MODE_ITEMS.map((item) =>
+    item.value === "parts" && !canEditParts
+      ? { ...item, label: "진행 순서", description: "저장된 순서를 읽기 전용으로 확인" }
+      : item,
+  );
+
   return (
     <Tabs value={value} onValueChange={(next) => onValueChange(next as ChordEditorMode)}>
       <TabsList variant="default" className="grid w-full grid-cols-3 rounded-2xl bg-neutral-100 p-1">
-        {MODE_ITEMS.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon;
           return (
             <TabsTrigger

@@ -1,6 +1,6 @@
 "use client";
 
-import { PdfExportButton, SETLIST_PRINT_ROOT_ID } from "@/features/setlist/components/PdfExportButton";
+import { PdfExportButton } from "@/features/setlist/components/PdfExportButton";
 import { SetlistViewer, type SetlistChordSongItem } from "@/features/setlist/components/SetlistViewer";
 
 type SetlistChordSectionProps = {
@@ -8,22 +8,25 @@ type SetlistChordSectionProps = {
   title: string;
   eventDate: string;
   songs: SetlistChordSongItem[];
+  pdfSongs: Array<{
+    songId: string;
+    title: string;
+    imageUrls: string[];
+  }>;
 };
 
-export function SetlistChordSection({ setlistId, title, eventDate, songs }: SetlistChordSectionProps) {
-  const safeName = `${title}-${eventDate}`.replace(/[\\/:*?"<>|]+/g, "-").slice(0, 80);
-
+export function SetlistChordSection({ setlistId, title, eventDate, songs, pdfSongs }: SetlistChordSectionProps) {
   return (
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div>
           <h2 className="text-sm font-semibold">송리스트 코드 악보</h2>
-          <p className="text-xs text-muted-foreground">아래로 스크롤하여 전곡을 확인하고, PDF로 저장할 수 있어요.</p>
+          <p className="text-xs text-muted-foreground">등록된 악보 이미지를 한 PDF로 묶어 다운로드할 수 있어요.</p>
         </div>
-        <PdfExportButton fileName={`송리스트-${safeName}`} />
+        <PdfExportButton setlistTitle={title} songs={pdfSongs} />
       </div>
 
-      <div id={SETLIST_PRINT_ROOT_ID} className="rounded-xl border border-border/50 bg-background p-4 print:border-0 print:p-0">
+      <div className="rounded-xl border border-border/50 bg-background p-4 print:border-0 print:p-0">
         <header className="mb-6 border-b border-border/60 pb-4 print:mb-4">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Setlist</p>
           <h1 className="text-xl font-bold tracking-tight">{title}</h1>
