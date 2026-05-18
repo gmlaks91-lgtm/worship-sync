@@ -77,23 +77,23 @@ export function SetlistLineupEditor({ setlistId, current, members, triggerClassN
       >
         라인업
       </DialogTrigger>
-      <DialogContent className="max-w-lg border border-neutral-200 bg-white sm:max-w-lg">
+      <DialogContent className="max-w-lg border border-gray-100 bg-white sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-neutral-900">라인업</DialogTitle>
-          <DialogDescription className="text-sm text-neutral-500">
+          <DialogTitle className="text-lg font-semibold text-gray-800">라인업</DialogTitle>
+          <DialogDescription className="text-sm text-gray-500">
             V(보컬), STAFF는 여러 명 선택할 수 있습니다.
           </DialogDescription>
         </DialogHeader>
         <div className="grid max-h-[min(70vh,480px)] gap-3 overflow-y-auto sm:grid-cols-2">
           {draft.map((item, index) => (
-            <div key={item.roleCode} className="rounded-xl border border-neutral-200 bg-neutral-50/80 p-3">
-              <p className="mb-2 text-xs font-medium text-neutral-500">{teamRoleLabel(item.roleCode)}</p>
+            <div key={item.roleCode} className="rounded-xl border border-gray-100 bg-slate-50/80 p-3">
+              <p className="mb-2 text-xs font-medium text-gray-500">{teamRoleLabel(item.roleCode)}</p>
               {isMultiMemberRole(item.roleCode) ? (
-                <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-neutral-200 bg-white p-2">
+                <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-gray-100 bg-white p-2">
                   {members.map((m) => {
                     const checked = item.memberIds.includes(m.id);
                     return (
-                      <label key={m.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-neutral-50">
+                      <label key={m.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50">
                         <input
                           type="checkbox"
                           checked={checked}
@@ -109,14 +109,14 @@ export function SetlistLineupEditor({ setlistId, current, members, triggerClassN
                             setDraft(next);
                           }}
                         />
-                        <span className="text-sm text-neutral-800">{m.username}</span>
+                        <span className="text-sm text-gray-800">{m.username}</span>
                       </label>
                     );
                   })}
                 </div>
               ) : (
                 <select
-                  className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
+                  className="h-10 w-full rounded-lg border border-gray-100 bg-white px-3 text-sm text-gray-800 outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
                   value={item.memberIds[0] ?? ""}
                   onChange={(e) => {
                     const next = [...draft];
@@ -135,7 +135,7 @@ export function SetlistLineupEditor({ setlistId, current, members, triggerClassN
             </div>
           ))}
         </div>
-        <div className="flex justify-end gap-2 border-t border-neutral-100 pt-4">
+        <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
           <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
             취소
           </Button>

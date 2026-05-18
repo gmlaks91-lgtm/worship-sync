@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { RoleAccessToast } from "@/components/layout/role-access-toast";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -10,7 +12,10 @@ type AppShellProps = {
 
 export async function AppShell({ children, className }: AppShellProps) {
   return (
-    <div className={cn("flex min-h-full flex-1 flex-col bg-background", className)}>
+    <div className={cn("flex min-h-full flex-1 flex-col bg-slate-50", className)}>
+      <Suspense fallback={null}>
+        <RoleAccessToast />
+      </Suspense>
       <AppHeader />
       <main className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 pb-16 pt-10 sm:px-8 sm:pb-20 sm:pt-12">
         {children}

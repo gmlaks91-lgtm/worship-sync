@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 
-import {
-  submitWeeklyChecklist,
-  upsertWeeklyChecklistDraft,
-} from "@/features/dashboard/actions/weeklyChecklistActions";
+import { submitWeeklyChecklist } from "@/features/dashboard/actions/weeklyChecklistActions";
 import {
   calculateWeeklyChecklistPoints,
   WEEKLY_CHECKLIST_DAY_DEFS,
@@ -18,7 +15,10 @@ import {
 import type { WeeklyChecklistBoardData } from "@/features/dashboard/queries/getWeeklyChecklistBoardData";
 import { WeeklyChecklistDayCard } from "@/features/dashboard/components/WeeklyChecklistDayCard";
 import { WeeklyChecklistTeamOverview } from "@/features/dashboard/components/WeeklyChecklistTeamOverview";
+import { WeeklyChecklistAutosaveStatusLabel } from "@/features/dashboard/components/WeeklyChecklistAutosaveStatus";
 import { WeeklyChecklistWorshipCard } from "@/features/dashboard/components/WeeklyChecklistWorshipCard";
+import { useWeeklyChecklistAutosave } from "@/features/dashboard/hooks/useWeeklyChecklistAutosave";
+import type { WeeklyChecklistSaveSnapshot } from "@/features/dashboard/hooks/useWeeklyChecklistAutosave";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 
 type WeeklyChecklistBoardProps = {
   data: WeeklyChecklistBoardData;
+  onAutosaveComplete?: () => void;
 };
 
 function formatDateTime(value: string | null) {
@@ -49,17 +50,14 @@ function formatDateTime(value: string | null) {
   }
 }
 
-export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
+export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyChecklistBoardProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [dailyRecords, setDailyRecords] = useState(data.checklist.dailyRecords);
   const [worshipRecords, setWorshipRecords] = useState(data.checklist.worshipRecords);
-  const [dirty, setDirty] = useState(false);
-
   useEffect(() => {
     setDailyRecords(data.checklist.dailyRecords);
     setWorshipRecords(data.checklist.worshipRecords);
-    setDirty(false);
   }, [
     data.checklist.id,
     data.checklist.updatedAt,
@@ -72,28 +70,55 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
     () => calculateWeeklyChecklistPoints({ dailyRecords, worshipRecords }),
     [dailyRecords, worshipRecords],
   );
+
+  const { status: autosaveStatus, scheduleDebouncedSave, saveImmediately, flushPending } =
+    useWeeklyChecklistAutosave({
+      weekStartDate: data.weekStartDate,
+      isSubmitted: data.checklist.isSubmitted,
+      dailyRecords,
+      worshipRecords,
+      onSaved: onAutosaveComplete,
+    });
+
+  const applyDailyPatch = useCallback(
+    (
+      index: number,
+      patch: Partial<WeeklyChecklistDailyRecord>,
+      mode: "debounced" | "immediate",
+    ) => {
+      setDailyRecords((current) => {
+        const nextDaily = current.map((item, itemIndex) =>
+          itemIndex === index ? { ...item, ...patch } : item,
+        );
+        const snapshot: WeeklyChecklistSaveSnapshot = {
+          dailyRecords: nextDaily,
+          worshipRecords,
+        };
+        if (mode === "immediate") saveImmediately(snapshot);
+        else scheduleDebouncedSave(snapshot);
+        return nextDaily;
+      });
+    },
+    [saveImmediately, scheduleDebouncedSave, worshipRecords],
+  );
+
+  const applyWorshipPatch = useCallback(
+    (patch: Partial<WeeklyChecklistWorshipRecords>) => {
+      setWorshipRecords((current) => {
+        const nextWorship = { ...current, ...patch };
+        saveImmediately({ dailyRecords, worshipRecords: nextWorship });
+        return nextWorship;
+      });
+    },
+    [dailyRecords, saveImmediately],
+  );
+
   const isSubmitted = data.checklist.isSubmitted;
   const lastSavedLabel = formatDateTime(data.checklist.updatedAt);
   const submittedLabel = formatDateTime(data.checklist.submittedAt);
 
-  const onSave = () => {
-    startTransition(async () => {
-      const result = await upsertWeeklyChecklistDraft({
-        weekStartDate: data.weekStartDate,
-        dailyRecords,
-        worshipRecords,
-      });
-      if (!result.ok) {
-        toastError(result.message);
-        return;
-      }
-      setDirty(false);
-      toastSuccess(result.message);
-      router.refresh();
-    });
-  };
-
   const onSubmit = () => {
+    flushPending();
     if (!window.confirm("이번 주 체크리스트를 제출할까요? 제출 후에는 수정할 수 없습니다.")) {
       return;
     }
@@ -108,7 +133,6 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
         toastError(result.message);
         return;
       }
-      setDirty(false);
       toastSuccess(
         result.awardedPoints
           ? `${result.message} +${result.awardedPoints}P가 반영되었습니다.`
@@ -125,53 +149,40 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
 
   return (
     <section className="space-y-6">
-      <Card className="overflow-hidden rounded-2xl border-neutral-200 bg-white shadow-sm shadow-neutral-100/80">
-        <CardHeader className="border-b border-neutral-100 pb-5">
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b border-gray-100 pb-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="border-neutral-200 bg-neutral-50 text-neutral-700">
+                <Badge variant="outline" className="border-gray-100 bg-slate-50 text-gray-700">
                   이번 주 체크리스트
                 </Badge>
                 {isSubmitted ? (
                   <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
                     제출 완료
                   </Badge>
-                ) : dirty ? (
-                  <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-                    저장 전 변경사항 있음
-                  </Badge>
                 ) : (
-                  <Badge variant="outline" className="border-neutral-200 bg-white text-neutral-500">
-                    초안 작성 중
+                  <Badge variant="outline" className="border-sky-100 bg-sky-50 text-sky-700">
+                    작성 중
                   </Badge>
                 )}
               </div>
               <div>
-                <CardTitle className="text-lg font-semibold tracking-tight text-neutral-900">
+                <CardTitle className="text-lg font-semibold tracking-tight text-gray-800">
                   주간 체크리스트 보드
                 </CardTitle>
-                <CardDescription className="mt-1 text-sm text-neutral-500">
+                <CardDescription className="mt-1 text-sm text-gray-500">
                   {data.weekRangeLabel} · 한줄일기, 말씀, 큐티, 기도, 예배 참석을 기록해 보세요.
                 </CardDescription>
+                <WeeklyChecklistAutosaveStatusLabel status={autosaveStatus} className="mt-2" />
               </div>
             </div>
 
             <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
               <Button
                 type="button"
-                variant="outline"
-                disabled={pending || isSubmitted || !dirty}
-                className="h-10 border-neutral-300 text-neutral-800"
-                onClick={onSave}
-              >
-                {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Save className="size-4" aria-hidden />}
-                임시 저장
-              </Button>
-              <Button
-                type="button"
                 disabled={pending || isSubmitted}
-                className="h-10 bg-neutral-900 text-white hover:bg-neutral-800"
+                className="h-10"
                 onClick={onSubmit}
               >
                 {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Send className="size-4" aria-hidden />}
@@ -188,19 +199,19 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-neutral-200 bg-neutral-50/70 p-5">
+          <div className="rounded-2xl border border-gray-100 bg-slate-50/70 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-neutral-900">
-                  이번 주 획득 예상 포인트 <span className="text-neutral-500">(최대 100점)</span>
+                <p className="text-sm font-semibold text-gray-800">
+                  이번 주 획득 예상 포인트 <span className="text-gray-500">(최대 100점)</span>
                 </p>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-500">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
                   <span>매일 기록 {score.dailyPoints}P</span>
-                  <span className="text-neutral-300">/</span>
+                  <span className="text-gray-300">/</span>
                   <span>예배 기록 {score.worshipPoints}P</span>
                   {score.rawTotalPoints > WEEKLY_CHECKLIST_MAX_POINTS ? (
                     <>
-                      <span className="text-neutral-300">/</span>
+                      <span className="text-gray-300">/</span>
                       <span>상한 적용 전 {score.rawTotalPoints}P</span>
                     </>
                   ) : null}
@@ -208,11 +219,11 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
               </div>
 
               <div className="text-left lg:text-right">
-                <p className="text-3xl font-semibold tracking-tight text-neutral-900">
+                <p className="text-3xl font-semibold tracking-tight text-gray-800">
                   {score.totalPoints}
-                  <span className="ml-1 text-lg text-neutral-400">P</span>
+                  <span className="ml-1 text-lg text-gray-400">P</span>
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-gray-500">
                   {isSubmitted
                     ? submittedLabel
                       ? `${submittedLabel}에 제출 완료`
@@ -224,11 +235,11 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
               </div>
             </div>
 
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-neutral-200">
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-500",
-                  isSubmitted ? "bg-emerald-500" : "bg-neutral-900",
+                  isSubmitted ? "bg-emerald-500" : "bg-sky-500",
                 )}
                 style={{ width: `${progressPercent}%` }}
               />
@@ -241,8 +252,8 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
                   className={cn(
                     "rounded-full border px-2.5 py-1 text-xs",
                     item.points > 0
-                      ? "border-neutral-300 bg-white text-neutral-700"
-                      : "border-neutral-200 bg-neutral-100 text-neutral-400",
+                      ? "border-gray-200 bg-white text-gray-700"
+                      : "border-gray-100 bg-slate-100 text-gray-400",
                   )}
                 >
                   {item.label} {item.points}P
@@ -262,14 +273,9 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
                   disabled={pending || isSubmitted}
                   points={dayScore?.points ?? 0}
                   hasDoubleBonus={Boolean(dayScore?.hasDoubleBonus)}
-                  onChange={(patch) => {
-                    setDailyRecords((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, ...patch } : item,
-                      ),
-                    );
-                    setDirty(true);
-                  }}
+                  onDebouncedChange={(patch) => applyDailyPatch(index, patch, "debounced")}
+                  onImmediateChange={(patch) => applyDailyPatch(index, patch, "immediate")}
+                  onDiaryBlur={() => flushPending()}
                 />
               );
             })}
@@ -278,10 +284,7 @@ export function WeeklyChecklistBoard({ data }: WeeklyChecklistBoardProps) {
           <WeeklyChecklistWorshipCard
             value={worshipRecords}
             disabled={pending || isSubmitted}
-            onChange={(patch) => {
-              setWorshipRecords((current) => ({ ...current, ...patch }));
-              setDirty(true);
-            }}
+            onImmediateChange={applyWorshipPatch}
           />
         </CardContent>
       </Card>

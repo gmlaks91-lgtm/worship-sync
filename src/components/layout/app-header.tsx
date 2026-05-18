@@ -1,6 +1,6 @@
-﻿import { AppHeaderActions } from "@/components/layout/app-header-actions";
-import { AppHeaderClient } from "@/components/layout/app-header-client";
+﻿import { AppHeaderClient } from "@/components/layout/app-header-client";
 import { getRecentSongWarningByVideoId } from "@/features/setlist/queries/getSongUsageStats";
+import type { ProfileRole } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 
 type AppHeaderProps = {
@@ -15,6 +15,7 @@ export async function AppHeader({ className }: AppHeaderProps) {
   let canManageSetlists = false;
   let teamMembers: { id: string; username: string }[] = [];
   let recentSongWarningByVideoId: Record<string, number> = {};
+  let userRole: ProfileRole | null = null;
 
   if (user) {
     const [{ data: row }, { data: members }] = await Promise.all([
@@ -22,6 +23,7 @@ export async function AppHeader({ className }: AppHeaderProps) {
       supabase.from("profiles").select("id, username").order("username", { ascending: true }),
     ]);
     recentSongWarningByVideoId = await getRecentSongWarningByVideoId();
+    userRole = row?.role ?? null;
     canManageSetlists = row?.role === "leader" || row?.role === "admin";
     teamMembers = (members ?? []) as { id: string; username: string }[];
   }
@@ -30,6 +32,7 @@ export async function AppHeader({ className }: AppHeaderProps) {
     <AppHeaderClient
       className={className}
       isLoggedIn={Boolean(user)}
+      userRole={userRole}
       canManageSetlists={canManageSetlists}
       teamMembers={teamMembers}
       recentSongWarningByVideoId={recentSongWarningByVideoId}

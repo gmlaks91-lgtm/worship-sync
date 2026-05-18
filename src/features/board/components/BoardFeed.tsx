@@ -13,6 +13,7 @@ type BoardFeedProps = {
   category: PostCategory;
   posts: BoardPost[];
   currentUserId: string | null;
+  showTabs?: boolean;
 };
 
 const tabs: { value: PostCategory; label: string; emoji: string; short: string }[] = [
@@ -21,8 +22,44 @@ const tabs: { value: PostCategory; label: string; emoji: string; short: string }
   { value: "general", label: "자유 게시판", emoji: "💬", short: "자유" },
 ];
 
-export function BoardFeed({ category, posts, currentUserId }: BoardFeedProps) {
+function categoryPath(category: PostCategory) {
+  if (category === "prayer") return "/announcements";
+  if (category === "general") return "/free-board";
+  return `/board?category=${category}`;
+}
+
+function BoardPostList({
+  category,
+  posts,
+  currentUserId,
+}: Pick<BoardFeedProps, "category" | "posts" | "currentUserId">) {
+  return (
+    <div className="flex flex-col gap-6">
+      <CreatePostForm category={category} />
+      {posts.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border/80 bg-muted/25 px-5 py-12 text-center text-sm text-muted-foreground">
+          아직 글이 없습니다. 첫 글을 남겨 보세요.
+        </p>
+      ) : null}
+      <div className="flex flex-col gap-6">
+        {posts.map((p) => (
+          <PostCard key={p.id} post={p} currentUserId={currentUserId} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function BoardFeed({ category, posts, currentUserId, showTabs = true }: BoardFeedProps) {
   const router = useRouter();
+
+  if (!showTabs) {
+    return (
+      <div className="flex flex-col gap-8">
+        <BoardPostList category={category} posts={posts} currentUserId={currentUserId} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -30,7 +67,7 @@ export function BoardFeed({ category, posts, currentUserId }: BoardFeedProps) {
         value={category}
         onValueChange={(v) => {
           const next = v as PostCategory;
-          router.push(`/board?category=${next}`);
+          router.push(categoryPath(next));
         }}
         className="gap-6"
       >
@@ -55,18 +92,8 @@ export function BoardFeed({ category, posts, currentUserId }: BoardFeedProps) {
 
         {tabs.map((t) => (
           <TabsContent key={t.value} value={t.value} className="mt-0 flex flex-col gap-6 outline-none">
-            {t.value === category ? <CreatePostForm category={category} /> : null}
-            {t.value === category && posts.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border/80 bg-muted/25 px-5 py-12 text-center text-sm text-muted-foreground">
-                아직 글이 없습니다. 첫 글을 남겨 보세요.
-              </p>
-            ) : null}
             {t.value === category ? (
-              <div className="flex flex-col gap-6">
-                {posts.map((p) => (
-                  <PostCard key={p.id} post={p} currentUserId={currentUserId} />
-                ))}
-              </div>
+              <BoardPostList category={category} posts={posts} currentUserId={currentUserId} />
             ) : null}
           </TabsContent>
         ))}

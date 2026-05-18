@@ -67,10 +67,8 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
     <section className="space-y-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            내 요약
-          </p>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">대시보드</h2>
+          <p className="page-eyebrow">내 요약</p>
+          <h2 className="text-lg font-semibold tracking-tight text-gray-800">대시보드</h2>
         </div>
         <Link
           href="/schedule"
@@ -91,7 +89,7 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-border/70">
+        <Card className="surface-card-hover">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <CalendarRange className="size-4 text-muted-foreground" aria-hidden />
@@ -146,7 +144,7 @@ export function PersonalDashboard({ data }: { data: PersonalDashboardData }) {
         </Card>
 
         <div className="flex flex-col gap-6">
-          <Card className="border-border/70">
+          <Card className="surface-card-hover">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ListMusic className="size-4 text-muted-foreground" aria-hidden />

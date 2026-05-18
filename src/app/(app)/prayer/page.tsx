@@ -1,3 +1,4 @@
+import { PageIntro } from "@/components/layout/page-intro";
 import { PrayerBoard } from "@/features/prayer/components/PrayerBoard";
 import { getPrayerPageData } from "@/features/prayer/queries/getPrayerPageData";
 
@@ -8,10 +9,11 @@ export default async function PrayerPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-8">
-      <header className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ahaba</p>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">기도나눔</h1>
-      </header>
+      <PageIntro
+        eyebrow="영성"
+        title="기도 공유"
+        description="팀원들의 기도 제목을 나누고 함께 기도해 보세요."
+      />
 
       {error ? (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3.5 text-sm text-destructive">

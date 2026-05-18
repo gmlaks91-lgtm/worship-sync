@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 
 import { updateProfile } from "@/features/profile/actions/profileActions";
 import type { MyProfileRow } from "@/features/profile/queries/getMyProfile";
+import { roleLabel } from "@/lib/roles";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastPromise } from "@/lib/app-toast";
 import { LayeredProfileAvatar } from "@/components/profile/layered-profile-avatar";
@@ -14,12 +15,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-function roleLabel(role: "leader" | "admin" | "member") {
-  if (role === "leader") return "리더";
-  if (role === "admin") return "관리자";
-  return "팀원";
-}
 
 function formatRolePriorities(...roles: Array<string | null | undefined>) {
   return roles

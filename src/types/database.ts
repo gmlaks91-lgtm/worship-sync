@@ -11,7 +11,7 @@ export type Json =
   | Json[];
 
 /** DB ????? ? UI ???? ???? ???? */
-export type ProfileRole = "leader" | "admin" | "member";
+export type ProfileRole = "leader" | "admin" | "member" | "general";
 export type TeamRoleCode = "L" | "M" | "S" | "D" | "A/G" | "B/G" | "E/G" | "V" | "STAFF";
 export type SetlistStatus = "prep" | "confirmed";
 export type AttendanceStatus = "attending" | "late" | "absent";
@@ -96,6 +96,7 @@ export type Database = {
           id: string;
           title: string;
           youtube_url: string | null;
+          sheet_music_url: string | null;
           description: string | null;
           created_at: string;
           updated_at: string;
@@ -104,6 +105,7 @@ export type Database = {
           id?: string;
           title: string;
           youtube_url?: string | null;
+          sheet_music_url?: string | null;
           description?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -112,9 +114,31 @@ export type Database = {
           id?: string;
           title?: string;
           youtube_url?: string | null;
+          sheet_music_url?: string | null;
           description?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      auth_codes: {
+        Row: {
+          id: number;
+          code: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: number;
+          code: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: number;
+          code?: string;
+          updated_at?: string;
+          updated_by?: string | null;
         };
         Relationships: [];
       };

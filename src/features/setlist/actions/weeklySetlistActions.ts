@@ -181,6 +181,15 @@ export async function movePrepSetlistSong(
   }
 }
 
+const optionalSheetUrlSchema = z
+  .string()
+  .trim()
+  .nullable()
+  .refine(
+    (url) => !url || /\.(png|jpe?g|webp|pdf)(\?|#|$)/i.test(url),
+    "악보 URL은 PNG, JPG, WEBP, PDF 형식이어야 합니다.",
+  );
+
 export async function updateSongInPrepSetlist(raw: unknown): Promise<WeeklySetlistActionResult> {
   const parsed = z
     .object({
@@ -191,13 +200,14 @@ export async function updateSongInPrepSetlist(raw: unknown): Promise<WeeklySetli
         .string()
         .min(1, "YouTube URL을 입력하세요")
         .refine((u) => !!getYoutubeVideoId(u), "유효하지 않은 YouTube URL입니다"),
+      sheetMusicUrl: optionalSheetUrlSchema.optional(),
     })
     .safeParse(raw);
   if (!parsed.success) {
     return { ok: false, message: parsed.error.issues.map((i) => i.message).join(", ") };
   }
 
-  const { setlistId, songId, title, youtubeUrl } = parsed.data;
+  const { setlistId, songId, title, youtubeUrl, sheetMusicUrl } = parsed.data;
 
   try {
     const supabase = await createClient();
@@ -213,7 +223,11 @@ export async function updateSongInPrepSetlist(raw: unknown): Promise<WeeklySetli
 
     const { error: upErr } = await supabase
       .from("songs")
-      .update({ title, youtube_url: canonical })
+      .update({
+        title,
+        youtube_url: canonical,
+        sheet_music_url: sheetMusicUrl ?? null,
+      })
       .eq("id", songId);
     if (upErr) return { ok: false, message: upErr.message };
 

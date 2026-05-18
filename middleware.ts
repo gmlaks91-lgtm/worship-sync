@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { getGeneralAccessRedirect } from "@/lib/route-access";
 import { updateSession } from "@/utils/supabase/middleware";
 
 function isPublicPath(pathname: string) {
@@ -12,7 +13,7 @@ function safeInternalPath(next: string | null) {
 }
 
 export async function middleware(request: NextRequest) {
-  const { response, user, authConfigured } = await updateSession(request);
+  const { response, user, profileRole, authConfigured } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
 
   if (authConfigured && !user && !isPublicPath(pathname)) {
@@ -29,6 +30,17 @@ export async function middleware(request: NextRequest) {
     url.pathname = safeInternalPath(url.searchParams.get("next"));
     url.search = "";
     return NextResponse.redirect(url);
+  }
+
+  if (authConfigured && user) {
+    const redirectTarget = getGeneralAccessRedirect(pathname, profileRole);
+    if (redirectTarget) {
+      const url = request.nextUrl.clone();
+      const [path, search] = redirectTarget.split("?");
+      url.pathname = path;
+      url.search = search ? `?${search}` : "";
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;

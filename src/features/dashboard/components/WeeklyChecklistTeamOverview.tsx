@@ -38,17 +38,17 @@ export function WeeklyChecklistTeamOverview({ rows }: WeeklyChecklistTeamOvervie
   const submittedCount = rows.filter((row) => row.isSubmitted).length;
 
   return (
-    <Card className="overflow-hidden rounded-2xl border-neutral-200 bg-white shadow-sm shadow-neutral-100/80">
-      <CardHeader className="border-b border-neutral-100 pb-5">
+    <Card className="overflow-hidden rounded-2xl border-gray-100 bg-white shadow-sm ">
+      <CardHeader className="border-b border-gray-100 pb-5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Users className="size-4 text-neutral-500" aria-hidden />
-              <CardTitle className="text-base font-semibold text-neutral-900">팀 주간 현황</CardTitle>
+              <Users className="size-4 text-gray-500" aria-hidden />
+              <CardTitle className="text-base font-semibold text-gray-800">팀 주간 현황</CardTitle>
             </div>
             <CardDescription>리더/관리자는 팀원들의 제출 상태와 점수를 한눈에 확인할 수 있습니다.</CardDescription>
           </div>
-          <Badge variant="outline" className="border-neutral-200 bg-neutral-50 text-neutral-700">
+          <Badge variant="outline" className="border-gray-100 bg-slate-50 text-gray-700">
             제출 {submittedCount}/{rows.length}
           </Badge>
         </div>
@@ -62,7 +62,7 @@ export function WeeklyChecklistTeamOverview({ rows }: WeeklyChecklistTeamOvervie
             return (
               <div
                 key={row.userId}
-                className="rounded-2xl border border-neutral-200 bg-neutral-50/70 px-4 py-4"
+                className="rounded-2xl border border-gray-100 bg-slate-50/70 px-4 py-4"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
@@ -72,18 +72,18 @@ export function WeeklyChecklistTeamOverview({ rows }: WeeklyChecklistTeamOvervie
                     </Avatar>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-neutral-900">{row.username}</p>
+                        <p className="truncate text-sm font-semibold text-gray-800">{row.username}</p>
                         <Badge
                           variant="outline"
                           className={cn(
-                            "border-neutral-200 bg-white text-[11px]",
+                            "border-gray-100 bg-white text-[11px]",
                             row.isSubmitted && "border-emerald-200 bg-emerald-50 text-emerald-700",
                           )}
                         >
                           {row.isSubmitted ? "제출 완료" : row.hasStarted ? "작성 중" : "미작성"}
                         </Badge>
                       </div>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs text-gray-500">
                         {row.isSubmitted
                           ? `제출 시각 · ${formatDateTime(row.submittedAt)}`
                           : `최근 수정 · ${formatDateTime(row.updatedAt)}`}
@@ -91,24 +91,24 @@ export function WeeklyChecklistTeamOverview({ rows }: WeeklyChecklistTeamOvervie
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-semibold tracking-tight text-neutral-900">{row.totalPoints}P</p>
-                    <p className="text-[11px] text-neutral-500">
+                    <p className="text-lg font-semibold tracking-tight text-gray-800">{row.totalPoints}P</p>
+                    <p className="text-[11px] text-gray-500">
                       {row.isSubmitted ? `반영 ${row.awardedPoints}P` : "예상 점수"}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-neutral-200">
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-500",
-                      row.isSubmitted ? "bg-emerald-500" : "bg-neutral-900",
+                      row.isSubmitted ? "bg-emerald-500" : "bg-sky-500",
                     )}
                     style={{ width: `${percent}%` }}
                   />
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-neutral-500">
+                <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-gray-500">
                   <span className="inline-flex items-center gap-1">
                     {row.isSubmitted ? (
                       <CheckCircle2 className="size-3.5 text-emerald-500" aria-hidden />

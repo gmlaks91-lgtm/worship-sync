@@ -84,9 +84,14 @@ export default async function MorePage() {
           포인트 내역
         </Link>
         {profile?.role === "leader" || profile?.role === "admin" ? (
-          <Link href="/admin/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-            상점 관리자
-          </Link>
+          <>
+            <Link href="/admin/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+              상점 관리자
+            </Link>
+            <Link href="/admin/auth-code" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+              인증 코드 설정
+            </Link>
+          </>
         ) : null}
         <Link href="/team" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>팀 라인업</Link>
         {/* 임시 숨김: 경건생활/상점 기능 */}

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { EditSetlistDialog } from "@/features/setlist/components/EditSetlistDialog";
+import { SetlistSongsSection } from "@/features/setlist/components/SetlistSongsSection";
 import { SetlistChordSection } from "@/features/setlist/components/SetlistChordSection";
 import { StaffNotesEditor } from "@/features/setlist/components/StaffNotesEditor";
 import type { SetlistChordSongItem } from "@/features/setlist/components/SetlistViewer";
@@ -24,7 +25,7 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
     .select(
       `
       id,title,event_date,staff_notes,
-      setlist_songs(order_index,songs(id,title,youtube_url)),
+      setlist_songs(order_index,songs(id,title,youtube_url,sheet_music_url)),
       setlist_lineups(role_code,member_id,profiles(username))
     `,
     )
@@ -67,7 +68,7 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
     .filter((row) => row.songs?.id)
     .sort((a, b) => a.order_index - b.order_index) as Array<{
     order_index: number;
-    songs: { id: string; title: string; youtube_url: string | null };
+    songs: { id: string; title: string; youtube_url: string | null; sheet_music_url: string | null };
   }>;
 
   const songIds = orderedSongs.map((r) => r.songs.id);
@@ -129,6 +130,16 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
         </div>
       </header>
 
+      <SetlistSongsSection
+        setlistId={data.id}
+        canManage={canManageSetlist}
+        songs={orderedSongs.map((row) => ({
+          id: row.songs.id,
+          title: row.songs.title,
+          sheetMusicUrl: row.songs.sheet_music_url,
+        }))}
+      />
+
       <SetlistChordSection
         setlistId={data.id}
         title={data.title}
@@ -136,17 +147,6 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
         songs={chordSongs}
         pdfSongs={pdfSongs}
       />
-
-      <section className="space-y-2 rounded-lg border border-border/60 bg-card/60 p-4 print:hidden">
-        <h2 className="text-sm font-semibold">수록곡</h2>
-        <ul className="space-y-1 text-sm">
-          {(data.setlist_songs ?? [])
-            .sort((a, b) => a.order_index - b.order_index)
-            .map((row) => (
-              <li key={`${data.id}-${row.order_index}`}>{row.songs?.title ?? "알 수 없음"}</li>
-            ))}
-        </ul>
-      </section>
 
       <section className="space-y-2 rounded-lg border border-border/60 bg-card/60 p-4 print:hidden">
         <h2 className="text-sm font-semibold">라인업</h2>

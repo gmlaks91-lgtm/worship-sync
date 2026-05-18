@@ -9,6 +9,7 @@ export type SetlistSongRow = {
   id: string;
   title: string;
   youtube_url: string | null;
+  sheet_music_url: string | null;
   description: string | null;
   order_index: number;
 };
@@ -69,6 +70,7 @@ export function mapSetlistQueryRows(rows: SetlistQueryRow[]): PrepSetlistRow[] {
         id: l.songs!.id,
         title: l.songs!.title,
         youtube_url: l.songs!.youtube_url,
+        sheet_music_url: l.songs!.sheet_music_url ?? null,
         description: l.songs!.description,
         order_index: l.order_index,
       }))

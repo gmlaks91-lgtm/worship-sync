@@ -6,11 +6,14 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
 import { AppHeaderActions } from "@/components/layout/app-header-actions";
-import { APP_NAV_ITEMS } from "@/lib/navigation";
+import { getHomePathForRole } from "@/lib/roles";
+import { getNavItemsForRole } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import type { ProfileRole } from "@/types/database";
 
 type AppHeaderClientProps = {
   isLoggedIn: boolean;
+  userRole: ProfileRole | null;
   canManageSetlists: boolean;
   teamMembers: Array<{ id: string; username: string }>;
   recentSongWarningByVideoId: Record<string, number>;
@@ -24,6 +27,7 @@ function isActive(pathname: string, href: string) {
 
 export function AppHeaderClient({
   isLoggedIn,
+  userRole,
   canManageSetlists,
   teamMembers,
   recentSongWarningByVideoId,
@@ -31,12 +35,14 @@ export function AppHeaderClient({
 }: AppHeaderClientProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const navItems = getNavItemsForRole(userRole);
+  const homeHref = getHomePathForRole(userRole);
 
   return (
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 border-b border-border/60 bg-background",
+          "sticky top-0 z-40 border-b border-slate-100 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-200",
           className,
         )}
       >
@@ -46,15 +52,16 @@ export function AppHeaderClient({
               type="button"
               aria-label="메뉴 열기"
               onClick={() => setIsOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-white text-foreground transition hover:border-foreground/70 hover:text-foreground"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-700 shadow-sm transition-all duration-200 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600 active:scale-95"
             >
-              <Menu className="h-5 w-5" aria-hidden />
+              <Menu className="h-5 w-5 text-sky-500" aria-hidden />
             </button>
-            <Link href="/" className="group flex flex-col gap-0.5 transition-opacity hover:opacity-90">
-              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                찬양팀
-              </span>
-              <span className="text-base font-semibold tracking-tight text-foreground sm:text-lg">Ahava</span>
+            <Link
+              href={homeHref}
+              className="group flex flex-col gap-0.5 transition-all duration-200 hover:opacity-90"
+            >
+              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-rose-400">Ahava</span>
+              <span className="text-base font-semibold tracking-tight text-slate-800 sm:text-lg">Ahava</span>
             </Link>
           </div>
 
@@ -69,8 +76,8 @@ export function AppHeaderClient({
 
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity duration-300",
-          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+          "fixed inset-0 z-40 bg-sky-950/10 backdrop-blur-sm transition-opacity duration-300",
+          isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         role="button"
         tabIndex={isOpen ? 0 : -1}
@@ -80,28 +87,28 @@ export function AppHeaderClient({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-80 max-w-[80vw] flex-col border-r border-border/70 bg-background p-5 transition-transform duration-300",
+          "fixed inset-y-0 left-0 z-50 flex w-80 max-w-[80vw] flex-col border-r border-slate-100 bg-white p-5 shadow-xl transition-transform duration-300",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
         aria-hidden={!isOpen}
       >
         <div className="flex items-center justify-between gap-4 pb-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">사이드 메뉴</p>
-            <p className="text-lg font-semibold tracking-tight text-foreground">Ahava</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">사이드 메뉴</p>
+            <p className="text-lg font-semibold tracking-tight text-slate-800">Ahava</p>
           </div>
           <button
             type="button"
             aria-label="메뉴 닫기"
             onClick={() => setIsOpen(false)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-white text-foreground transition hover:border-foreground/70 hover:text-foreground"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500 active:scale-95"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
 
         <nav className="flex flex-col gap-2">
-          {APP_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {navItems.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
               <Link
@@ -109,16 +116,16 @@ export function AppHeaderClient({
                 href={href}
                 onClick={() => setIsOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition",
+                  "flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-all duration-200",
                   active
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border/60 bg-white text-foreground hover:border-foreground/70 hover:text-foreground",
+                    ? "border-sky-200 bg-sky-50 text-sky-700 shadow-sm"
+                    : "border-slate-100 bg-white text-slate-700 hover:border-sky-100 hover:bg-sky-50/50 hover:text-sky-600 active:scale-[0.99]",
                 )}
               >
                 <span
                   className={cn(
-                    "inline-flex h-9 w-9 items-center justify-center rounded-2xl",
-                    active ? "bg-primary/15 text-primary" : "bg-neutral-100 text-neutral-700",
+                    "inline-flex h-9 w-9 items-center justify-center rounded-2xl transition-colors duration-200",
+                    active ? "bg-sky-100 text-sky-600" : "bg-slate-100 text-slate-500 group-hover:text-sky-500",
                   )}
                 >
                   <Icon className="h-4.5 w-4.5" aria-hidden />
@@ -129,9 +136,9 @@ export function AppHeaderClient({
           })}
         </nav>
 
-        <div className="mt-auto rounded-3xl border border-border/60 bg-white p-4 shadow-sm shadow-neutral-100/60">
-          <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">계정</p>
-          <p className="mt-2 text-sm text-foreground">프로필, 로그아웃, 기능 버튼을 빠르게 확인하세요.</p>
+        <div className="surface-card mt-auto rounded-3xl p-4">
+          <p className="text-xs uppercase tracking-[0.24em] text-slate-400">계정</p>
+          <p className="mt-2 text-sm text-slate-600">프로필, 로그아웃, 기능 버튼을 빠르게 확인하세요.</p>
         </div>
       </aside>
     </>

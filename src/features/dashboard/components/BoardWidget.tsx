@@ -13,7 +13,7 @@ export async function BoardWidget() {
   const recentPosts = posts.slice(0, 3);
 
   return (
-    <Card className="border-border/70">
+    <Card className="surface-card-hover">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between text-base">
           <span>공지사항</span>

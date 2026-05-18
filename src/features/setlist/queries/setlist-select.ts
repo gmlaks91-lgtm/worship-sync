@@ -11,6 +11,7 @@ export const PREP_SETLIST_NESTED_SELECT = `
       id,
       title,
       youtube_url,
+      sheet_music_url,
       description
     )
   ),

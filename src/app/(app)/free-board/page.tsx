@@ -1,0 +1,32 @@
+import { PageIntro } from "@/components/layout/page-intro";
+import { BoardFeed } from "@/features/board/components/BoardFeed";
+import { getBoardFeed } from "@/features/board/queries/getBoardFeed";
+import { createClient } from "@/utils/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export default async function FreeBoardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { posts, error } = await getBoardFeed("general");
+
+  return (
+    <div className="flex flex-1 flex-col gap-8">
+      <PageIntro
+        eyebrow="소통"
+        title="자유 게시판"
+        description="청년부원들과 자유롭게 나누고 소통해 보세요."
+      />
+
+      {error ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3.5 text-sm text-destructive">
+          게시글을 불러오지 못했습니다: {error}
+        </div>
+      ) : null}
+
+      <BoardFeed category="general" posts={posts} currentUserId={user?.id ?? null} showTabs={false} />
+    </div>
+  );
+}

@@ -28,9 +28,17 @@ type WeeklyChecklistActionResult =
 
 function revalidateWeeklyChecklistRoutes() {
   revalidatePath("/");
+  revalidatePath("/journal");
   revalidatePath("/more");
   revalidatePath("/shop");
   revalidatePath("/points");
+}
+
+export async function fetchWeeklyChecklistJournalFeed() {
+  const { getWeeklyChecklistJournalData } = await import(
+    "@/features/dashboard/queries/getWeeklyChecklistJournalData"
+  );
+  return getWeeklyChecklistJournalData();
 }
 
 async function saveWeeklyChecklistDraftInternal(
@@ -113,7 +121,11 @@ export async function upsertWeeklyChecklistDraft(raw: WeeklyChecklistDraftInput)
 
   const result = await saveWeeklyChecklistDraftInternal(user.id, raw);
   if (result.ok) {
-    revalidateWeeklyChecklistRoutes();
+    // 자동 저장 시 /journal 을 revalidate 하면 편집 중 UI가 서버 데이터로 되돌아갈 수 있음
+    revalidatePath("/");
+    revalidatePath("/more");
+    revalidatePath("/shop");
+    revalidatePath("/points");
   }
   return result;
 }

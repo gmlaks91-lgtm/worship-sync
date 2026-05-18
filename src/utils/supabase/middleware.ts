@@ -3,10 +3,12 @@ import type { User } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 
 import type { Database } from "@/types/database";
+import type { ProfileRole } from "@/types/database";
 
 export type SessionUpdateResult = {
   response: NextResponse;
   user: User | null;
+  profileRole: ProfileRole | null;
   authConfigured: boolean;
 };
 
@@ -23,7 +25,7 @@ export async function updateSession(request: NextRequest): Promise<SessionUpdate
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    return { response: supabaseResponse, user: null, authConfigured: false };
+    return { response: supabaseResponse, user: null, profileRole: null, authConfigured: false };
   }
 
   const supabase = createServerClient<Database>(url, key, {
@@ -55,5 +57,15 @@ export async function updateSession(request: NextRequest): Promise<SessionUpdate
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { response: supabaseResponse, user, authConfigured: true };
+  let profileRole: ProfileRole | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    profileRole = profile?.role ?? null;
+  }
+
+  return { response: supabaseResponse, user, profileRole, authConfigured: true };
 }

@@ -4,7 +4,7 @@ import { LoginForm } from "@/features/auth/components/login-form";
 
 function LoginFallback() {
   return (
-    <div className="rounded-lg border border-border/70 bg-card p-8 text-center text-sm text-muted-foreground sm:p-10">
+    <div className="surface-card p-8 text-center text-sm text-gray-500 sm:p-10">
       Ahaba 로그인 화면으로 이동 중입니다...
     </div>
   );
@@ -12,7 +12,7 @@ function LoginFallback() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center py-10">
+    <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-slate-50 py-10">
       <Suspense fallback={<LoginFallback />}>
         <LoginForm />
       </Suspense>
