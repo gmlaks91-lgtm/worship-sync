@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { cn } from "@/lib/utils";
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
@@ -98,11 +99,13 @@ export function SheetMusicViewer({ open, onOpenChange, title, sheetMusicUrl }: S
             />
           ) : (
             <div className="flex min-h-full justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <RemoteImage
                 src={sheetMusicUrl}
                 alt={`${title} 악보`}
-                className="max-w-none rounded-xl border border-border/60 bg-white shadow-sm shadow-neutral-100/80"
+                width={1400}
+                height={1800}
+                variant="sheetMusic"
+                className="h-auto max-w-none w-auto rounded-xl border border-border/60 bg-white shadow-sm shadow-neutral-100/80"
                 style={{
                   transform: `scale(${zoom})`,
                   transformOrigin: "top center",

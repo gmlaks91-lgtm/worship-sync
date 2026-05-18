@@ -1,9 +1,9 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { UserRound } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { cn } from "@/lib/utils";
 
 type LayeredProfileAvatarProps = {
@@ -66,27 +66,35 @@ export function LayeredProfileAvatar({
       </Avatar>
 
       {frameUrl ? (
-        <img
-          src={frameUrl}
-          alt=""
-          aria-hidden
+        <div
           className={cn(
-            "pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 object-contain",
+            "pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2",
+            "relative",
             s.frame,
           )}
-        />
+        >
+          <RemoteImage
+            src={frameUrl}
+            alt=""
+            aria-hidden
+            fill
+            variant="overlay"
+            className="object-contain"
+          />
+        </div>
       ) : null}
 
       {badgeUrl ? (
-        <img
-          src={badgeUrl}
-          alt=""
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute -bottom-0.5 -right-0.5 z-20 rounded-full border border-background/80 bg-background object-cover",
-            s.badge,
-          )}
-        />
+        <div className={cn("pointer-events-none absolute -bottom-0.5 -right-0.5 z-20", "relative", s.badge)}>
+          <RemoteImage
+            src={badgeUrl}
+            alt=""
+            aria-hidden
+            fill
+            variant="overlay"
+            className="rounded-full border border-background/80 bg-background object-cover"
+          />
+        </div>
       ) : null}
     </div>
   );

@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -8,6 +7,7 @@ import { Box, ShoppingBag, Sparkles } from "lucide-react";
 import { applyShopItem, purchaseShopItem } from "@/features/shop/actions/shopActions";
 import type { ShopItemRow } from "@/features/shop/queries/getShopPageData";
 import { Button } from "@/components/ui/button";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toastError, toastSuccess } from "@/lib/app-toast";
@@ -46,8 +46,14 @@ export function ShopItemsGrid({
 
     return (
       <Card key={item.id} className="overflow-hidden border-border/70 bg-card">
-        <div className="aspect-[16/9] w-full overflow-hidden border-b border-border/60 bg-muted/20">
-          <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" loading="lazy" />
+        <div className="relative aspect-[16/9] w-full overflow-hidden border-b border-border/60 bg-muted/20">
+          <RemoteImage
+            src={item.image_url}
+            alt={item.name}
+            fill
+            variant="card"
+            className="object-cover"
+          />
         </div>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-2">

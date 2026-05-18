@@ -1,4 +1,5 @@
-import nextPWA from "next-pwa";
+import withPWAInit from "@ducanh2912/next-pwa";
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 function supabaseImageHost(): string | null {
@@ -14,17 +15,26 @@ function supabaseImageHost(): string | null {
 const supabaseHost = supabaseImageHost();
 
 const nextConfig: NextConfig = {
-  // 깐깐한 검사들은 모두 패스!
   typescript: {
     ignoreBuildErrors: true,
   },
-  // 이미지 설정도 일단 가장 기본만 남깁니다.
   images: {
+    formats: ["image/webp"],
     remotePatterns: [
       {
         protocol: "https",
         hostname: "img.youtube.com",
         pathname: "/vi/**",
+      },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
       },
       ...(supabaseHost
         ? [
@@ -37,13 +47,19 @@ const nextConfig: NextConfig = {
         : []),
     ],
   },
+  // dev는 Turbopack, production build는 package.json에서 --webpack (PWA 플러그인 필요)
   turbopack: {},
 };
 
-export default nextPWA({
+/** @ducanh2912/next-pwa는 webpack 빌드에서만 service worker를 생성합니다. */
+const withPWA = withPWAInit({
   dest: "public",
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
   publicExcludes: ["!manifest.json", "!icons/**"],
-})(nextConfig as any);
+});
+
+export default withSentryConfig(withPWA(nextConfig), {
+  silent: !process.env.CI,
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { RemoteImage } from "@/components/ui/remote-image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ChevronDown, ChevronUp, Play, Trash2 } from "lucide-react";
@@ -91,7 +91,7 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl bg-slate-100 lg:h-[88px] lg:w-[140px] lg:aspect-auto">
           {thumb ? (
-            <Image src={thumb} alt="" fill className="object-cover" sizes="140px" />
+            <RemoteImage src={thumb} alt="" fill variant="thumbnail" className="object-cover" />
           ) : (
             <div className="flex h-full min-h-[120px] items-center justify-center text-xs text-gray-400 lg:min-h-0">
               미리보기 없음

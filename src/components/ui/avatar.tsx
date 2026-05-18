@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
 
+import { RemoteImage } from "@/components/ui/remote-image"
 import { cn } from "@/lib/utils"
 
 function Avatar({
@@ -17,7 +18,7 @@ function Avatar({
       data-slot="avatar"
       data-size={size}
       className={cn(
-        "group/avatar relative flex size-8 shrink-0 rounded-full select-none after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:border after:border-border/80 data-[size=lg]:size-10 data-[size=sm]:size-6",
+        "group/avatar relative flex size-8 shrink-0 overflow-hidden rounded-full select-none after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:border after:border-border/80 data-[size=lg]:size-10 data-[size=sm]:size-6",
         className
       )}
       {...props}
@@ -25,17 +26,27 @@ function Avatar({
   )
 }
 
-function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
+function AvatarImage({
+  className,
+  src,
+  alt = "",
+  ...props
+}: Omit<React.ComponentProps<typeof RemoteImage>, "variant" | "fill"> & {
+  src?: string | null;
+}) {
+  if (!src) return null;
+
   return (
-    <AvatarPrimitive.Image
+    <RemoteImage
       data-slot="avatar-image"
-      className={cn(
-        "aspect-square size-full rounded-full object-cover",
-        className
-      )}
+      src={src}
+      alt={alt}
+      fill
+      variant="profile"
+      className={cn("aspect-square size-full rounded-full object-cover", className)}
       {...props}
     />
-  )
+  );
 }
 
 function AvatarFallback({

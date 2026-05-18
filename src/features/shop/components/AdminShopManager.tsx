@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { useMemo, useState, useTransition } from "react";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
@@ -9,6 +8,7 @@ import type { ShopItemRow } from "@/features/shop/queries/getShopPageData";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RemoteImage } from "@/components/ui/remote-image";
 
 const CATEGORIES = [
   { value: "avatar", label: "아바타" },
@@ -154,8 +154,14 @@ export function AdminShopManager({ items }: { items: ShopItemRow[] }) {
         <div className="grid gap-4 sm:grid-cols-2">
           {sortedItems.map((item) => (
             <article key={item.id} className="overflow-hidden rounded-xl border border-border/70 bg-card">
-              <div className="aspect-[16/9] border-b border-border/60 bg-muted/20">
-                <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+              <div className="relative aspect-[16/9] border-b border-border/60 bg-muted/20">
+                <RemoteImage
+                  src={item.image_url}
+                  alt={item.name}
+                  fill
+                  variant="card"
+                  className="object-cover"
+                />
               </div>
               <div className="space-y-2 p-4">
                 <p className="text-sm font-semibold">{item.name}</p>
