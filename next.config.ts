@@ -1,3 +1,4 @@
+import nextPWA from "next-pwa";
 import type { NextConfig } from "next";
 
 function supabaseImageHost(): string | null {
@@ -36,6 +37,13 @@ const nextConfig: NextConfig = {
         : []),
     ],
   },
+  turbopack: {},
 };
 
-export default nextConfig;
+export default nextPWA({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+  publicExcludes: ["!manifest.json", "!icons/**"],
+})(nextConfig as any);
