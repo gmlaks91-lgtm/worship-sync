@@ -11,14 +11,14 @@ export function WeeklyAiReportCard({ report }: WeeklyAiReportCardProps) {
   return (
     <section
       aria-label="AI 주간 리포트"
-      className="relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-gradient-to-br from-violet-50/95 via-sky-50/90 to-rose-50/95 p-6 shadow-[0_18px_48px_-16px_rgba(125,211,252,0.35)]"
+      className="transform-gpu relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-gradient-to-br from-violet-50/95 via-sky-50/90 to-rose-50/95 p-6 shadow-[0_18px_48px_-16px_rgba(125,211,252,0.35)]"
     >
       <span
-        className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-sky-200/40 blur-2xl"
+        className="decorative-blur pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-sky-200/40"
         aria-hidden
       />
       <span
-        className="pointer-events-none absolute -bottom-10 -left-4 h-24 w-24 rounded-full bg-rose-200/35 blur-2xl"
+        className="decorative-blur pointer-events-none absolute -bottom-10 -left-4 h-24 w-24 rounded-full bg-rose-200/35"
         aria-hidden
       />
 

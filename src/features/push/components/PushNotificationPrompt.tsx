@@ -62,10 +62,10 @@ export function PushNotificationPrompt({
           <DialogHeader className="items-center space-y-3 text-center">
             <div className="relative">
               <span
-                className="absolute -inset-3 rounded-full bg-sky-200/50 blur-xl"
+                className="decorative-blur pointer-events-none absolute -inset-3 rounded-full bg-sky-200/50"
                 aria-hidden
               />
-              <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-sky-500 text-white shadow-md shadow-sky-200/80">
+              <div className="transform-gpu relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-sky-500 text-white shadow-md shadow-sky-200/80">
                 <BellRing className="h-7 w-7" />
               </div>
             </div>
@@ -109,13 +109,13 @@ export function PushNotificationPrompt({
 
 function PastelPromptCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative rounded-[1.75rem] border border-white/80 bg-gradient-to-br from-sky-50 via-white to-rose-50 p-6 shadow-[0_20px_50px_-12px_rgba(56,189,248,0.25)]">
+    <div className="transform-gpu relative rounded-[1.75rem] border border-white/80 bg-gradient-to-br from-sky-50 via-white to-rose-50 p-6 shadow-[0_20px_50px_-12px_rgba(56,189,248,0.25)]">
       <span
-        className="pointer-events-none absolute right-6 top-5 h-16 w-16 rounded-full bg-sky-200/40 blur-2xl"
+        className="decorative-blur pointer-events-none absolute right-6 top-5 h-16 w-16 rounded-full bg-sky-200/40"
         aria-hidden
       />
       <span
-        className="pointer-events-none absolute bottom-8 left-5 h-12 w-12 rounded-full bg-rose-200/35 blur-2xl"
+        className="decorative-blur pointer-events-none absolute bottom-8 left-5 h-12 w-12 rounded-full bg-rose-200/35"
         aria-hidden
       />
       {children}

@@ -42,7 +42,7 @@ export function AppHeaderClient({
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 border-b border-slate-100 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-200",
+          "glass-surface transform-gpu sticky top-0 z-40 border-b border-slate-100 shadow-sm transition-[box-shadow] duration-200",
           className,
         )}
       >
@@ -76,7 +76,7 @@ export function AppHeaderClient({
 
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-sky-950/10 backdrop-blur-sm transition-opacity duration-300",
+          "fixed inset-0 z-40 bg-sky-950/15 transition-opacity duration-200 md:bg-sky-950/10 md:backdrop-blur-[2px]",
           isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         role="button"
@@ -87,7 +87,7 @@ export function AppHeaderClient({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-80 max-w-[80vw] flex-col border-r border-slate-100 bg-white p-5 shadow-xl transition-transform duration-300",
+          "will-change-transform transform-gpu fixed inset-y-0 left-0 z-50 flex w-80 max-w-[80vw] flex-col border-r border-slate-100 bg-white p-5 shadow-xl transition-transform duration-200 ease-out",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
         aria-hidden={!isOpen}

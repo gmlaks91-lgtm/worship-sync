@@ -53,7 +53,7 @@ export function PwaInstallBanner() {
     >
       <div
         className={cn(
-          "pointer-events-auto w-full max-w-lg overflow-hidden rounded-2xl border border-white/80 shadow-lg shadow-violet-200/40",
+          "transform-gpu pointer-events-auto w-full max-w-lg overflow-hidden rounded-2xl border border-white/80 shadow-lg shadow-violet-200/40",
           "bg-gradient-to-br from-sky-50 via-violet-50/95 to-rose-50",
         )}
         role="dialog"
@@ -69,9 +69,9 @@ export function PwaInstallBanner() {
             <X className="size-4" />
           </button>
           <div className="flex gap-3 pr-8">
-            <motionIcon>
+            <InstallBannerIcon>
               <Smartphone className="size-5 text-violet-600" aria-hidden />
-            </motionIcon>
+            </InstallBannerIcon>
             <div className="min-w-0 space-y-1">
               <p className="text-sm font-semibold leading-snug text-slate-800">
                 Worship Sync를 홈 화면에 추가하고
@@ -117,9 +117,9 @@ export function PwaInstallBanner() {
   );
 }
 
-function motionIcon({ children }: { children: React.ReactNode }) {
+function InstallBannerIcon({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/90 shadow-sm">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
       {children}
     </div>
   );

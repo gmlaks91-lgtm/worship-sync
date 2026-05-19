@@ -114,7 +114,7 @@
 
   button:not(:disabled),
   [role="button"]:not(:disabled) {
-    @apply transition-all duration-200;
+    @apply transition-[color,background-color,border-color,opacity,transform] duration-200;
   }
 
   input[type="checkbox"],
@@ -128,22 +128,70 @@
 
   /* shadcn Card 슬롯 — 앱 전역 카드 UI */
   [data-slot="card"] {
-    @apply rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-200;
+    @apply transform-gpu rounded-2xl border border-slate-100 bg-white shadow-sm transition-[box-shadow,border-color] duration-200;
   }
 
   [data-slot="dialog-content"],
   [data-slot="popover-content"] {
-    @apply rounded-2xl border border-slate-100 bg-white shadow-md transition-all duration-200;
+    @apply transform-gpu rounded-2xl border border-slate-100 bg-white shadow-md transition-[box-shadow,border-color,opacity] duration-200;
+  }
+}
+
+@layer utilities {
+  .transform-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  /* 장식용 블러 — 터치 기기(안드로이드 PWA)에서는 페인트 비용 절감 */
+  .decorative-blur {
+    @apply blur-2xl;
+  }
+
+  .glass-surface {
+    @apply bg-white/95 backdrop-blur-sm;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .decorative-blur {
+    filter: none;
+    opacity: 0.35;
+  }
+
+  .glass-surface {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: rgb(255 255 255);
+  }
+
+  .surface-card-hover:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
 @layer components {
   .surface-card {
-    @apply rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-200 sm:p-6;
+    @apply transform-gpu rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-[box-shadow,border-color] duration-200 sm:p-6;
   }
 
   .surface-card-hover {
-    @apply rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-100 hover:shadow-md active:scale-[0.995] sm:p-6;
+    @apply transform-gpu rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-100 hover:shadow-md active:scale-[0.995] sm:p-6;
   }
 
   .page-eyebrow {

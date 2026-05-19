@@ -58,11 +58,11 @@ export function RouteErrorView({
       <div className="relative w-full max-w-sm">
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-10 -right-8 size-36 rounded-full bg-sky-100/70 blur-3xl"
+          className="decorative-blur pointer-events-none absolute -top-10 -right-8 size-36 rounded-full bg-sky-100/70"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-8 -left-6 size-28 rounded-full bg-rose-100/60 blur-3xl"
+          className="decorative-blur pointer-events-none absolute -bottom-8 -left-6 size-28 rounded-full bg-rose-100/60"
         />
 
         <article className="surface-card relative overflow-hidden rounded-[2rem] px-8 py-10 text-center shadow-md">
