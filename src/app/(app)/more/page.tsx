@@ -118,6 +118,12 @@ export default async function MorePage() {
             >
               일정 AI 등록
             </Link>
+            <Link
+              href="/admin/teams"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              팀 · 목장 관리
+            </Link>
           </>
         ) : null}
         <Link href="/team" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>팀 라인업</Link>
