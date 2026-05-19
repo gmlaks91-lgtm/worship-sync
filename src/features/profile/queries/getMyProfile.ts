@@ -1,5 +1,8 @@
 ﻿import "server-only";
 
+import { unstable_noStore } from "next/cache";
+
+import { getFreshUserPoints } from "@/features/points/queries/getFreshUserPoints";
 import type { ProfileRole, TeamRoleCode } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 
@@ -25,6 +28,8 @@ export async function getMyProfile(): Promise<{
   profile: MyProfileRow | null;
   error: string | null;
 }> {
+  unstable_noStore();
+
   try {
     const supabase = await createClient();
     const {
@@ -50,6 +55,8 @@ export async function getMyProfile(): Promise<{
       return { profile: null, error: "프로필을 찾을 수 없습니다." };
     }
 
+    const freshPoints = await getFreshUserPoints(user.id);
+
     return {
       profile: {
         id: data.id,
@@ -59,7 +66,7 @@ export async function getMyProfile(): Promise<{
         role_priority_1: (data.role_priority_1 as TeamRoleCode | null) ?? null,
         role_priority_2: (data.role_priority_2 as TeamRoleCode | null) ?? null,
         role_priority_3: (data.role_priority_3 as TeamRoleCode | null) ?? null,
-        points: data.points ?? 0,
+        points: freshPoints.error ? (data.points ?? 0) : freshPoints.points,
         active_badge: data.active_badge ?? null,
         active_border_color: data.active_border_color ?? null,
         active_background_color: data.active_background_color ?? null,

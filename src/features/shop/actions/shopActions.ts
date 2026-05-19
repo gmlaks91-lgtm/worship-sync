@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { revalidatePointsRoutes } from "@/features/points/lib/revalidate-points";
 import type { ShopItemType } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 
+type PurchaseResult = { ok: true; points: number } | { ok: false; message: string };
 type ActionResult = { ok: true } | { ok: false; message: string };
 
 const purchaseSchema = z.object({ itemId: z.string().uuid() });
@@ -17,7 +19,7 @@ function profileFieldForItemType(type: ShopItemType) {
   return "avatar_url";
 }
 
-export async function purchaseShopItem(raw: z.infer<typeof purchaseSchema>): Promise<ActionResult> {
+export async function purchaseShopItem(raw: z.infer<typeof purchaseSchema>): Promise<PurchaseResult> {
   const parsed = purchaseSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, message: "입력값이 올바르지 않습니다." };
 
@@ -28,39 +30,30 @@ export async function purchaseShopItem(raw: z.infer<typeof purchaseSchema>): Pro
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, message: "로그인이 필요합니다." };
 
-    const [{ data: profile, error: pErr }, { data: item, error: iErr }, { data: owned, error: oErr }] =
-      await Promise.all([
-        supabase.from("profiles").select("points").eq("id", user.id).maybeSingle(),
-        supabase.from("shop_items").select("id,price_points,is_active").eq("id", parsed.data.itemId).maybeSingle(),
-        supabase.from("user_inventory").select("id").eq("user_id", user.id).eq("shop_item_id", parsed.data.itemId).maybeSingle(),
-      ]);
-
-    if (pErr || !profile) return { ok: false, message: pErr?.message ?? "프로필을 찾을 수 없습니다." };
-    if (iErr || !item || !item.is_active) return { ok: false, message: iErr?.message ?? "상품을 찾을 수 없습니다." };
-    if (oErr) return { ok: false, message: oErr.message };
-    if (owned) return { ok: false, message: "이미 구매한 상품입니다." };
-    if (profile.points < item.price_points) return { ok: false, message: "포인트가 부족합니다." };
-
-    const { error: invErr } = await supabase.from("user_inventory").insert({
-      user_id: user.id,
-      shop_item_id: item.id,
+    const { data: purchaseResult, error: purchaseErr } = await supabase.rpc("purchase_shop_item", {
+      p_item_id: parsed.data.itemId,
     });
-    if (invErr) return { ok: false, message: invErr.message };
+    if (purchaseErr) return { ok: false, message: purchaseErr.message };
 
-    const { data: spendData, error: pointErr } = await supabase.rpc("spend_points", {
-      p_user_id: user.id,
-      p_event_type: "shop_purchase",
-      p_points: item.price_points,
-    });
-    if (pointErr) return { ok: false, message: pointErr.message };
-    const spendRow = Array.isArray(spendData) ? spendData[0] : null;
-    if (!spendRow || Number(spendRow.spent_points ?? 0) <= 0) {
-      return { ok: false, message: String(spendRow?.message ?? "포인트 차감에 실패했습니다.") };
+    const result = purchaseResult as { ok?: boolean; message?: string } | null;
+    if (!result?.ok) {
+      return { ok: false, message: result?.message ?? "구매에 실패했습니다." };
     }
 
+    const { data: profile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("points")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileErr) {
+      return { ok: false, message: profileErr.message };
+    }
+
+    revalidatePointsRoutes();
     revalidatePath("/shop");
-    revalidatePath("/more");
-    return { ok: true };
+
+    return { ok: true, points: profile?.points ?? 0 };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
     return { ok: false, message };
@@ -119,6 +112,7 @@ export async function applyShopItem(raw: z.infer<typeof applySchema>): Promise<A
 
     revalidatePath("/shop");
     revalidatePath("/more");
+    revalidatePath("/profile");
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";

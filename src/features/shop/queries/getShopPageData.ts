@@ -1,5 +1,8 @@
 import "server-only";
 
+import { unstable_noStore } from "next/cache";
+
+import { getFreshUserPoints } from "@/features/points/queries/getFreshUserPoints";
 import type { ShopItemType } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 
@@ -24,6 +27,8 @@ export type ShopPageData = {
 };
 
 export async function getShopPageData(): Promise<ShopPageData> {
+  unstable_noStore();
+
   try {
     const supabase = await createClient();
     const {
@@ -40,8 +45,8 @@ export async function getShopPageData(): Promise<ShopPageData> {
       };
     }
 
-    const [profileRes, itemsRes, invRes] = await Promise.all([
-      supabase.from("profiles").select("points").eq("id", user.id).maybeSingle(),
+    const [freshPoints, itemsRes, invRes] = await Promise.all([
+      getFreshUserPoints(user.id),
       supabase
         .from("shop_items")
         .select("id,name,description,category,image_url,effect_value,price_points,is_active")
@@ -50,7 +55,7 @@ export async function getShopPageData(): Promise<ShopPageData> {
       supabase.from("user_inventory").select("shop_item_id,is_applied").eq("user_id", user.id),
     ]);
 
-    if (profileRes.error) throw new Error(profileRes.error.message);
+    if (freshPoints.error) throw new Error(freshPoints.error);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
     if (invRes.error) throw new Error(invRes.error.message);
 
@@ -59,7 +64,7 @@ export async function getShopPageData(): Promise<ShopPageData> {
 
     return {
       userId: user.id,
-      points: profileRes.data?.points ?? 0,
+      points: freshPoints.points,
       items: (itemsRes.data ?? []) as ShopItemRow[],
       ownedItemIds: owned,
       appliedItemIds: applied,

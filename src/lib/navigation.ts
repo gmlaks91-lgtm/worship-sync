@@ -1,4 +1,4 @@
-﻿import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   Home,
@@ -27,13 +27,13 @@ export const GENERAL_NAV_ITEMS: AppNavItem[] = [
   { href: "/free-board", label: "자유 게시판", icon: MessageSquare },
   { href: "/announcements", label: "공지사항", icon: Megaphone },
   { href: "/playlist", label: "송리스트/추천 플리", icon: ListMusic },
+  { href: "/shop", label: "포인트 상점", icon: ShoppingBag },
 ];
 
 /** 찬양팀·관리자 전체 사이드 메뉴 */
 export const WORSHIP_TEAM_NAV_ITEMS: AppNavItem[] = [
   { href: "/", label: "홈", icon: Home },
   ...GENERAL_NAV_ITEMS,
-  { href: "/shop", label: "포인트 상점", icon: ShoppingBag },
   { href: "/more", label: "마이페이지", icon: MoreHorizontal },
 ];
 

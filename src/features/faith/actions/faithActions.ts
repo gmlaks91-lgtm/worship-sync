@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { revalidatePointsRoutes } from "@/features/points/lib/revalidate-points";
 import { createClient } from "@/utils/supabase/server";
 
 const faithTypeSchema = z.enum(["qt", "prayer", "bible"]);
@@ -13,7 +14,7 @@ const toggleSchema = z.object({
 
 const POINTS_PER_CHECK = 10;
 
-export type FaithActionResult = { ok: true } | { ok: false; message: string };
+export type FaithActionResult = { ok: true; points: number } | { ok: false; message: string };
 
 export async function toggleFaithCheck(raw: z.infer<typeof toggleSchema>): Promise<FaithActionResult> {
   const parsed = toggleSchema.safeParse(raw);
@@ -60,10 +61,20 @@ export async function toggleFaithCheck(raw: z.infer<typeof toggleSchema>): Promi
       if (profileErr) return { ok: false, message: profileErr.message };
     }
 
+    const { data: profile, error: profileReadErr } = await supabase
+      .from("profiles")
+      .select("points")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileReadErr) {
+      return { ok: false, message: profileReadErr.message };
+    }
+
+    revalidatePointsRoutes();
     revalidatePath("/faith");
-    revalidatePath("/shop");
-    revalidatePath("/more");
-    return { ok: true };
+
+    return { ok: true, points: profile?.points ?? 0 };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
     return { ok: false, message };

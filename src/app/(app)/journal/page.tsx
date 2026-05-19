@@ -11,13 +11,15 @@ import { JournalTabs } from "@/features/dashboard/components/JournalTabs";
 import { getKstWeekStartDate } from "@/features/dashboard/lib/weekly-checklist";
 import { getWeeklyChecklistBoardData } from "@/features/dashboard/queries/getWeeklyChecklistBoardData";
 import { getWeeklyChecklistJournalData } from "@/features/dashboard/queries/getWeeklyChecklistJournalData";
+import { getUserTeamsForCurrentUser } from "@/features/teams/queries/getUserTeams";
 
 export const dynamic = "force-dynamic";
 
 export default async function JournalPage() {
-  const [weeklyChecklistData, journalFeed, isGeneral, aiReport] = await Promise.all([
+  const [weeklyChecklistData, journalFeed, userTeams, isGeneral, aiReport] = await Promise.all([
     getWeeklyChecklistBoardData(),
-    getWeeklyChecklistJournalData(),
+    getWeeklyChecklistJournalData("all"),
+    getUserTeamsForCurrentUser(),
     getGeneralUserRole(),
     getLatestAiReportForCurrentWeek(),
   ]);
@@ -42,7 +44,7 @@ export default async function JournalPage() {
         />
 
         <div className="surface-card overflow-hidden rounded-[2rem]">
-          <JournalTabs boardData={weeklyChecklistData} initialFeed={journalFeed} />
+          <JournalTabs boardData={weeklyChecklistData} initialFeed={journalFeed} userTeams={userTeams} />
         </div>
       </div>
     </div>

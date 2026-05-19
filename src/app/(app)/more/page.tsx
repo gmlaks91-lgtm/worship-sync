@@ -1,8 +1,9 @@
 ﻿import Link from "next/link";
 
+import { PointsBalance } from "@/features/points/components/PointsBalance";
+import { getPointLogsPageData } from "@/features/points/queries/getPointLogsPageData";
 import { ProfileSettings } from "@/features/profile/components/ProfileSettings";
 import { getMyProfile } from "@/features/profile/queries/getMyProfile";
-import { getPointLogsPageData } from "@/features/points/queries/getPointLogsPageData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -60,12 +61,14 @@ export default async function MorePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">현재 보유 포인트</p>
-                  <p className="text-2xl font-semibold">{pointsData.currentPoints ?? 0}P</p>
+                  <p className="text-2xl font-semibold">
+                    <PointsBalance />
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">이번 달 적립</p>
                   <p className="text-lg font-medium text-green-600">
-                    +{pointsData.monthlyEarned ?? 0}P
+                    +{pointsData.monthlyEarned}P
                   </p>
                 </div>
               </div>
@@ -109,12 +112,18 @@ export default async function MorePage() {
             >
               AI 주간 리포트
             </Link>
+            <Link
+              href="/admin/schedule"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              일정 AI 등록
+            </Link>
           </>
         ) : null}
         <Link href="/team" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>팀 라인업</Link>
-        {/* 임시 숨김: 경건생활/상점 기능 */}
+        <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>포인트 상점</Link>
+        {/* 임시 숨김: 경건생활 */}
         {/* <Link href="/faith" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>신앙 점검표</Link> */}
-        {/* <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>포인트 상점</Link> */}
         <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>홈으로</Link>
       </footer>
     </div>

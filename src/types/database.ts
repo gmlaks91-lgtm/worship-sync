@@ -574,6 +574,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      team_members: {
+        Row: {
+          id: string;
+          user_id: string;
+          team_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          team_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          team_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey";
+            columns: ["team_id"];
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      teams: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          slug?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       weekly_checklists: {
         Row: {
           id: string;
@@ -784,6 +839,12 @@ export type Database = {
           p_worship_records: Json;
         };
         Returns: number;
+      };
+      purchase_shop_item: {
+        Args: {
+          p_item_id: string;
+        };
+        Returns: Json;
       };
       reorder_chord_sheet_blocks: {
         Args: {

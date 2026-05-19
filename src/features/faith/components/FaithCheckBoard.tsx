@@ -1,8 +1,11 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import { toggleFaithCheck } from "@/features/faith/actions/faithActions";
+import { usePoints } from "@/features/points/components/PointsProvider";
+import { notifyPointsUpdated } from "@/features/points/lib/points-events";
 import type { FaithCheckType } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,13 +32,13 @@ function last7Days() {
 }
 
 export function FaithCheckBoard({
-  points,
   checksByDate,
 }: {
-  points: number;
   checksByDate: Record<string, FaithCheckType[]>;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const { points: pointBalance, setPoints: setPointBalance } = usePoints();
   const days = last7Days();
 
   const onToggle = (checkDate: string, checkType: FaithCheckType) => {
@@ -45,14 +48,17 @@ export function FaithCheckBoard({
         toastError(res.message);
         return;
       }
+      setPointBalance(res.points);
+      notifyPointsUpdated(res.points);
       toastSuccess();
+      router.refresh();
     });
   };
 
   return (
     <Card className="border-border/70">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">신앙 점검표 · 내 포인트 {points}P</CardTitle>
+        <CardTitle className="text-base font-semibold">신앙 점검표 · 내 포인트 {pointBalance}P</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {days.map((date) => {

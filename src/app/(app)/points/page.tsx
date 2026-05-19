@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PointsBalance } from "@/features/points/components/PointsBalance";
 import { getPointLogsPageData } from "@/features/points/queries/getPointLogsPageData";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -48,7 +49,9 @@ export default async function PointsPage() {
           <Card className="border-border/70">
             <CardContent className="py-6">
               <p className="text-sm text-muted-foreground">현재 보유 포인트</p>
-              <p className="mt-1 text-3xl font-semibold tracking-tight">{data.points}P</p>
+              <p className="mt-1 text-3xl font-semibold tracking-tight">
+                <PointsBalance valueClassName="font-semibold" />
+              </p>
             </CardContent>
           </Card>
 

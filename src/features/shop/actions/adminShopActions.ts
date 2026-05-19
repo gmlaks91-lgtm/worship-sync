@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { uploadShopImage } from "@/features/shop/lib/storage";
 import { requireLeader } from "@/lib/require-leader";
 import { createClient } from "@/utils/supabase/server";
 
@@ -27,19 +28,6 @@ function normalizeDescription(value: string | undefined) {
   if (!value) return null;
   const t = value.trim();
   return t.length ? t : null;
-}
-
-async function uploadShopImage(file: File) {
-  const supabase = await createClient();
-  const ext = file.name.split(".").pop()?.toLowerCase() || "webp";
-  const path = `shop/${crypto.randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const { error } = await supabase.storage.from("shop-items").upload(path, buffer, {
-    contentType: file.type || "image/webp",
-    upsert: false,
-  });
-  if (error) throw new Error(error.message);
-  return supabase.storage.from("shop-items").getPublicUrl(path).data.publicUrl;
 }
 
 export async function upsertShopItem(formData: FormData): Promise<ActionResult> {

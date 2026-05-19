@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Send } from "lucide-react";
 
 import { submitWeeklyChecklist } from "@/features/dashboard/actions/weeklyChecklistActions";
+import { syncPointsAfterMutation } from "@/features/points/lib/sync-points-client";
 import {
   calculateWeeklyChecklistPoints,
   WEEKLY_CHECKLIST_DAY_DEFS,
@@ -138,7 +139,11 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
           ? `${result.message} +${result.awardedPoints}P가 반영되었습니다.`
           : result.message,
       );
-      router.refresh();
+      if (result.awardedPoints) {
+        await syncPointsAfterMutation(router);
+      } else {
+        router.refresh();
+      }
     });
   };
 

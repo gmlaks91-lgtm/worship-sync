@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { usePoints } from "@/features/points/components/PointsProvider";
 import { updateProfile } from "@/features/profile/actions/profileActions";
 import type { MyProfileRow } from "@/features/profile/queries/getMyProfile";
 import { roleLabel } from "@/lib/roles";
@@ -25,6 +26,7 @@ function formatRolePriorities(...roles: Array<string | null | undefined>) {
 
 export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
   const router = useRouter();
+  const { points } = usePoints();
   const [openEdit, setOpenEdit] = useState(false);
   const [username, setUsername] = useState(profile.username);
   const [role1, setRole1] = useState(profile.role_priority_1 ?? "");
@@ -69,7 +71,9 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
           <p className="text-lg font-semibold tracking-tight">{profile.username}</p>
           <p className="text-sm text-muted-foreground">권한: <span className="font-medium text-foreground">{roleLabel(profile.role)}</span></p>
           <p className="text-sm text-muted-foreground">포지션: {roleText || "미정"}</p>
-          <p className="text-sm text-muted-foreground">포인트: <span className="font-medium text-foreground">{profile.points}P</span></p>
+          <p className="text-sm text-muted-foreground">
+            포인트: <span className="font-medium tabular-nums text-foreground">{points}P</span>
+          </p>
           <p className="text-sm text-muted-foreground">장착 상태: 아바타 · 프레임 · 배지 레이어 미리보기</p>
           <p className="text-xs text-muted-foreground">프로필 아바타/프레임은 포인트 상점에서 구매한 아이템으로만 변경됩니다.</p>
         </div>

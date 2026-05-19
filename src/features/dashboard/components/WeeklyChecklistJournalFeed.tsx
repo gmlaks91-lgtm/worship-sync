@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CheckCircle2, ChevronDown, Sparkles } from "lucide-react";
 
 import type { WeeklyChecklistJournalFeedEntry } from "@/features/dashboard/queries/getWeeklyChecklistJournalData";
+import type { JournalTeamFilter } from "@/features/teams/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,9 @@ import { cn } from "@/lib/utils";
 
 type WeeklyChecklistJournalFeedProps = {
   entries: WeeklyChecklistJournalFeedEntry[];
+  hasTeams: boolean;
+  teamFilter: JournalTeamFilter;
+  loading?: boolean;
 };
 
 function formatDateTime(value: string | null) {
@@ -155,17 +159,45 @@ function TeamJournalFeedEntry({ entry }: { entry: WeeklyChecklistJournalFeedEntr
   );
 }
 
-export function WeeklyChecklistJournalFeed({ entries }: WeeklyChecklistJournalFeedProps) {
+export function WeeklyChecklistJournalFeed({
+  entries,
+  hasTeams,
+  teamFilter,
+  loading = false,
+}: WeeklyChecklistJournalFeedProps) {
+  if (!hasTeams) {
+    return (
+      <Card className="surface-card rounded-3xl">
+        <CardHeader>
+          <CardTitle>팀원 일지 공유</CardTitle>
+          <CardDescription>소속된 팀이 없습니다.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500">
+            찬양팀·목장 등 팀에 배정되면 같은 팀원의 경건 일지가 여기에 표시됩니다. 일지를 제출하면 별도 선택 없이
+            내가 속한 모든 팀 피드에 자동으로 공유됩니다.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (loading && entries.length === 0) {
+    return <p className="text-sm text-gray-500">팀원 일지를 불러오는 중…</p>;
+  }
+
   if (entries.length === 0) {
     return (
       <Card className="surface-card rounded-3xl">
         <CardHeader>
           <CardTitle>팀원 일지 공유</CardTitle>
-          <CardDescription>아직 등록된 팀원 일지가 없습니다.</CardDescription>
+          <CardDescription>
+            {teamFilter === "all" ? "아직 표시할 팀원 일지가 없습니다." : "이 팀에 표시할 일지가 없습니다."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500">
-            이번 주 다른 팀원의 경건 일지는 작성 후 자동으로 표시됩니다.
+            같은 팀·목장에 소속된 팀원이 이번 주 일지를 작성·제출하면 자동으로 표시됩니다.
           </p>
         </CardContent>
       </Card>
@@ -174,7 +206,12 @@ export function WeeklyChecklistJournalFeed({ entries }: WeeklyChecklistJournalFe
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500">팀원별 주간 경건 일지 요약입니다. 상세보기로 전체 내용을 확인할 수 있습니다.</p>
+      <p className="text-sm text-gray-500">
+        {teamFilter === "all"
+          ? "내가 속한 모든 팀·목장의 팀원 일지입니다."
+          : "선택한 팀·목장 팀원의 일지입니다."}{" "}
+        상세보기로 전체 내용을 확인할 수 있습니다.
+      </p>
       {entries.map((entry) => (
         <TeamJournalFeedEntry key={entry.userId} entry={entry} />
       ))}

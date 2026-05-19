@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { HeaderPointsBadge } from "@/features/points/components/HeaderPointsBadge";
 import { signOut } from "@/features/auth/actions";
 import { AddSetlistTriggerButton } from "@/features/setlist/components/AddSetlistDialog";
 import { PwaInstallButton } from "@/components/layout/PwaInstallButton";
@@ -24,6 +25,7 @@ export function AppHeaderActions({
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
       <PwaInstallButton />
+      <HeaderPointsBadge />
       {isLoggedIn ? (
         <Link
           href="/profile"

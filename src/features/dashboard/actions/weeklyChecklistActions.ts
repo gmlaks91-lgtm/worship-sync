@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { JournalTeamFilter } from "@/features/teams/types";
+import { revalidatePointsRoutes } from "@/features/points/lib/revalidate-points";
 import { createClient } from "@/utils/supabase/server";
 
 import {
@@ -29,16 +31,14 @@ type WeeklyChecklistActionResult =
 function revalidateWeeklyChecklistRoutes() {
   revalidatePath("/");
   revalidatePath("/journal");
-  revalidatePath("/more");
-  revalidatePath("/shop");
-  revalidatePath("/points");
+  revalidatePointsRoutes();
 }
 
-export async function fetchWeeklyChecklistJournalFeed() {
+export async function fetchWeeklyChecklistJournalFeed(teamFilter: JournalTeamFilter = "all") {
   const { getWeeklyChecklistJournalData } = await import(
     "@/features/dashboard/queries/getWeeklyChecklistJournalData"
   );
-  return getWeeklyChecklistJournalData();
+  return getWeeklyChecklistJournalData(teamFilter);
 }
 
 async function saveWeeklyChecklistDraftInternal(
@@ -123,9 +123,7 @@ export async function upsertWeeklyChecklistDraft(raw: WeeklyChecklistDraftInput)
   if (result.ok) {
     // 자동 저장 시 /journal 을 revalidate 하면 편집 중 UI가 서버 데이터로 되돌아갈 수 있음
     revalidatePath("/");
-    revalidatePath("/more");
-    revalidatePath("/shop");
-    revalidatePath("/points");
+    revalidatePointsRoutes();
   }
   return result;
 }

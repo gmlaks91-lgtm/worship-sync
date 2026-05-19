@@ -1,6 +1,8 @@
 import "server-only";
 
 import type { ProfileRole, Tables } from "@/types/database";
+import { resolveTeamPeerUserIds } from "@/features/teams/queries/resolveTeamPeerUserIds";
+import type { JournalTeamFilter } from "@/features/teams/types";
 import { createClient } from "@/utils/supabase/server";
 import {
   calculateWeeklyChecklistPoints,
@@ -88,7 +90,9 @@ function buildFeedEntry(
   };
 }
 
-export async function getWeeklyChecklistJournalData(): Promise<WeeklyChecklistJournalFeedEntry[]> {
+export async function getWeeklyChecklistJournalData(
+  teamFilter: JournalTeamFilter = "all",
+): Promise<WeeklyChecklistJournalFeedEntry[]> {
   const supabase = await createClient();
   const weekStartDate = getKstWeekStartDate();
 
@@ -100,12 +104,22 @@ export async function getWeeklyChecklistJournalData(): Promise<WeeklyChecklistJo
     return [];
   }
 
+  const peerUserIds = await resolveTeamPeerUserIds(supabase, user.id, teamFilter);
+  if (peerUserIds.length === 0) {
+    return [];
+  }
+
   const [{ data: rows }, { data: profiles }] = await Promise.all([
     supabase
       .from("weekly_checklists")
       .select("user_id, daily_records, worship_records, total_points, is_submitted, submitted_at, updated_at")
-      .eq("week_start_date", weekStartDate),
-    supabase.from("profiles").select("id, username, avatar_url, role").order("username", { ascending: true }),
+      .eq("week_start_date", weekStartDate)
+      .in("user_id", peerUserIds),
+    supabase
+      .from("profiles")
+      .select("id, username, avatar_url, role")
+      .in("id", peerUserIds)
+      .order("username", { ascending: true }),
   ]);
 
   const checklistByUser = new Map<string, WeeklyChecklistRow>();
@@ -116,7 +130,7 @@ export async function getWeeklyChecklistJournalData(): Promise<WeeklyChecklistJo
   });
 
   return (profiles ?? [])
-    .filter((profile): profile is TeamProfileRow => Boolean(profile?.id && profile.id !== user.id))
+    .filter((profile): profile is TeamProfileRow => Boolean(profile?.id))
     .map((profile) => buildFeedEntry(profile, checklistByUser.get(profile.id) ?? null, weekStartDate))
     .sort((a, b) => {
       const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;

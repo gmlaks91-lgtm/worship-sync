@@ -2,9 +2,11 @@
 
 import type { FormEvent } from "react";
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarPlus, Check, Trash2, X } from "lucide-react";
 import { ko } from "date-fns/locale";
 
+import { syncPointsAfterMutation } from "@/features/points/lib/sync-points-client";
 import {
   createSchedule,
   deleteSchedule,
@@ -119,6 +121,7 @@ function MyResponsePicker({
   schedule: ScheduleListRow;
   myRow: ScheduleAttendanceRow | null;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [local, setLocal] = useState<ScheduleAttendanceStatus | null>(myRow?.status ?? null);
   const [reason, setReason] = useState(myRow?.reason ?? "");
@@ -149,9 +152,13 @@ function MyResponsePicker({
       });
       if (!res.ok) {
         toastError(res.message);
+        setLocal(myRow?.status ?? null);
         return;
       }
       toastSuccess(res.awardedPoints ? `일정 체크 보상 +${res.awardedPoints}P` : undefined);
+      if (res.awardedPoints) {
+        await syncPointsAfterMutation(router, res.totalPoints);
+      }
     });
   };
 

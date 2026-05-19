@@ -1,9 +1,11 @@
 "use client";
 
 import { Loader2, SendHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 import { createPost } from "@/features/board/actions";
+import { syncPointsAfterMutation } from "@/features/points/lib/sync-points-client";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import type { PostCategory } from "@/types/database";
 import { Button } from "@/components/ui/button";
@@ -14,6 +16,7 @@ type CreatePostFormProps = {
 };
 
 export function CreatePostForm({ category }: CreatePostFormProps) {
+  const router = useRouter();
   const [text, setText] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -39,6 +42,11 @@ export function CreatePostForm({ category }: CreatePostFormProps) {
       setText("");
       setExpanded(false);
       toastSuccess(res.awardedPoints ? `게시글 작성 보상 +${res.awardedPoints}P` : "게시글을 올렸습니다.");
+      if (res.awardedPoints) {
+        await syncPointsAfterMutation(router, res.totalPoints);
+      } else {
+        router.refresh();
+      }
     });
   };
 

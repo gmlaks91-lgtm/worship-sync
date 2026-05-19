@@ -10,6 +10,8 @@ const GENERAL_ALLOWED_PREFIXES = [
   "/announcements",
   "/free-board",
   "/profile",
+  "/shop",
+  "/points",
 ] as const;
 
 /** 찬양팀 전용 경로(접두사 일치) */

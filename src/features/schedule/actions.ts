@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { createPrepSetlist } from "@/features/setlist/actions/setlistActions";
+import {
+  createScheduleWithSetlistPayloadSchema,
+  type CreateScheduleWithSetlistPayload,
+} from "@/features/schedule/schemas/scheduleRegistration";
+import { revalidatePointsRoutes } from "@/features/points/lib/revalidate-points";
 import { requireLeader } from "@/lib/require-leader";
 import { awardPointsForEvent } from "@/features/points/server/awardPoints";
 import { createClient } from "@/utils/supabase/server";
@@ -26,7 +32,9 @@ const deleteScheduleSchema = z.object({
   scheduleId: z.string().uuid(),
 });
 
-export type ActionResult = { ok: true; awardedPoints?: number } | { ok: false; message: string };
+export type ActionResult =
+  | { ok: true; awardedPoints?: number; totalPoints?: number | null }
+  | { ok: false; message: string };
 
 export async function setScheduleAttendance(
   raw: z.infer<typeof setAttendanceSchema>,
@@ -72,7 +80,14 @@ export async function setScheduleAttendance(
 
     revalidatePath("/schedule");
     revalidatePath("/");
-    return { ok: true, awardedPoints: reward.awardedPoints };
+    if (reward.awardedPoints > 0) {
+      revalidatePointsRoutes();
+    }
+    return {
+      ok: true,
+      awardedPoints: reward.awardedPoints,
+      totalPoints: reward.totalPoints,
+    };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
     return { ok: false, message };
@@ -109,12 +124,45 @@ export async function createSchedule(raw: z.infer<typeof createScheduleSchema>):
     }
 
     revalidatePath("/schedule");
+    revalidatePath("/admin/schedule");
     revalidatePath("/");
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
     return { ok: false, message };
   }
+}
+
+export async function createScheduleWithSetlist(
+  raw: CreateScheduleWithSetlistPayload,
+): Promise<ActionResult> {
+  const parsed = createScheduleWithSetlistPayloadSchema.safeParse(raw);
+  if (!parsed.success) {
+    const message = parsed.error.issues.map((i) => i.message).join(", ");
+    return { ok: false, message: message || "입력값을 확인하세요." };
+  }
+
+  const { title, kind, startsAt, eventDate, tracks, lineup } = parsed.data;
+  const startsMs = Date.parse(startsAt);
+  if (Number.isNaN(startsMs)) {
+    return { ok: false, message: "날짜·시간 형식이 올바르지 않습니다." };
+  }
+
+  const setlistResult = await createPrepSetlist({
+    title: title.trim(),
+    eventDate,
+    tracks,
+    lineup,
+  });
+  if (!setlistResult.ok) {
+    return setlistResult;
+  }
+
+  return createSchedule({
+    title: title.trim(),
+    kind,
+    startsAt: new Date(startsMs).toISOString(),
+  });
 }
 
 export async function deleteSchedule(raw: z.infer<typeof deleteScheduleSchema>): Promise<ActionResult> {
