@@ -1,0 +1,8 @@
+import webPush from "web-push";
+
+const keys = webPush.generateVAPIDKeys();
+
+console.log("VAPID keys generated. Add these to your environment:\n");
+console.log(`NEXT_PUBLIC_VAPID_PUBLIC_KEY=${keys.publicKey}`);
+console.log(`VAPID_PRIVATE_KEY=${keys.privateKey}`);
+console.log(`VAPID_SUBJECT=mailto:admin@example.com`);

@@ -85,11 +85,29 @@ export default async function MorePage() {
         </Link>
         {profile?.role === "leader" || profile?.role === "admin" ? (
           <>
+            <Link
+              href="/admin/dashboard"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              데이터 대시보드
+            </Link>
             <Link href="/admin/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
               상점 관리자
             </Link>
             <Link href="/admin/auth-code" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
               인증 코드 설정
+            </Link>
+            <Link
+              href="/admin/announcements"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              공지 푸시 알림
+            </Link>
+            <Link
+              href="/admin/ai-report"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              AI 주간 리포트
             </Link>
           </>
         ) : null}

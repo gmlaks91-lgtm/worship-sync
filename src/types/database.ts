@@ -658,6 +658,75 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_reports: {
+        Row: {
+          id: string;
+          week_start_date: string;
+          week_end_date: string;
+          summary: string;
+          keywords: string[];
+          stats: Json;
+          generated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          week_start_date: string;
+          week_end_date: string;
+          summary: string;
+          keywords?: string[];
+          stats?: Json;
+          generated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          week_start_date?: string;
+          week_end_date?: string;
+          summary?: string;
+          keywords?: string[];
+          stats?: Json;
+          generated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth_key: string;
+          user_agent: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth_key: string;
+          user_agent?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          endpoint?: string;
+          p256dh?: string;
+          auth_key?: string;
+          user_agent?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       posts: {
         Row: {
           id: string;

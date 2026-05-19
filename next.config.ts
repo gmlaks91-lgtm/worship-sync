@@ -58,6 +58,7 @@ const withPWA = withPWAInit({
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
   publicExcludes: ["!manifest.json", "!icons/**"],
+  customWorkerSrc: "worker",
 });
 
 export default withSentryConfig(withPWA(nextConfig), {
