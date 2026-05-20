@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "Worship Sync",
   "short_name": "Worship Sync",
   "description": "Worship Sync 모바일 앱으로 팀 일정, 악보, 일정, 포인트를 빠르게 관리하세요.",
@@ -10,22 +11,28 @@
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }

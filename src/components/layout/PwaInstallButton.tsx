@@ -1,9 +1,11 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { Download, Share2, Smartphone } from "lucide-react";
+import { Download, ExternalLink, Share2, Smartphone } from "lucide-react";
 
+import { InAppBrowserEscapeActions } from "@/features/pwa/components/InAppBrowserEscapeActions";
 import { usePwaInstall } from "@/features/pwa/hooks/usePwaInstall";
+import { getDefaultBrowserName } from "@/features/pwa/lib/in-app-browser";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,22 +17,71 @@ import {
 } from "@/components/ui/dialog";
 
 export function PwaInstallButton() {
-  const { platform, canShowInstallUi, canPromptAndroid, promptInstall, promptState } = usePwaInstall();
+  const {
+    platform,
+    canShowInstallUi,
+    canPromptAndroid,
+    isInAppBrowser,
+    inAppBrowser,
+    promptInstall,
+    openInExternalBrowser,
+    promptState,
+  } = usePwaInstall();
   const [showIosDialog, setShowIosDialog] = useState(false);
+  const [showInAppDialog, setShowInAppDialog] = useState(false);
 
   if (!canShowInstallUi) {
     return null;
   }
 
+  const browserName = getDefaultBrowserName(platform);
+
   const handleInstallClick = async () => {
-    if (platform === "android" && canPromptAndroid) {
-      await promptInstall();
+    if (isInAppBrowser) {
+      openInExternalBrowser();
+      if (inAppBrowser.id !== "kakao") {
+        setShowInAppDialog(true);
+      }
       return;
     }
     if (platform === "ios") {
       setShowIosDialog(true);
+      return;
+    }
+    if (platform === "android" && canPromptAndroid) {
+      await promptInstall();
     }
   };
+
+  if (isInAppBrowser) {
+    return (
+      <>
+        <Button variant="outline" size="sm" onClick={handleInstallClick}>
+          <ExternalLink className="mr-2 h-4 w-4" />
+          {browserName}에서 열기
+        </Button>
+        <Dialog open={showInAppDialog} onOpenChange={setShowInAppDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>기본 브라우저에서 설치</DialogTitle>
+              <DialogDescription>
+                {inAppBrowser.displayName}에서는 앱 설치가 지원되지 않습니다. {browserName}에서 페이지를 연 뒤
+                홈 화면에 추가해 주세요.
+              </DialogDescription>
+            </DialogHeader>
+            <InAppBrowserEscapeActions
+              platform={platform}
+              inAppDisplayName={inAppBrowser.displayName}
+              onOpenExternal={openInExternalBrowser}
+            />
+            <DialogFooter showCloseButton>
+              <Button onClick={() => setShowInAppDialog(false)}>확인</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
 
   if (platform === "ios") {
     return (
@@ -77,9 +128,14 @@ export function PwaInstallButton() {
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={handleInstallClick} disabled={promptState === "prompting"}>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleInstallClick}
+      disabled={!canPromptAndroid || promptState === "prompting"}
+    >
       <Smartphone className="mr-2 h-4 w-4" />
-      앱 설치하기
+      {promptState === "prompting" ? "설치 중…" : "앱 설치하기"}
     </Button>
   );
 }
