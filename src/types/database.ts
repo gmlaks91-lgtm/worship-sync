@@ -710,6 +710,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      qt_shares: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          author_name: string;
+          author_avatar_url: string | null;
+          message: string;
+          image_url: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          author_name?: string;
+          author_avatar_url?: string | null;
+          message?: string;
+          image_url?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          author_name?: string;
+          author_avatar_url?: string | null;
+          message?: string;
+          image_url?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       prayer_requests: {
         Row: {
           id: string;

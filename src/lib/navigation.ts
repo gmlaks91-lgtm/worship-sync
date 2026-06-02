@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   ShoppingBag,
   Sparkles,
+  Sun,
 } from "lucide-react";
 
 import type { ProfileRole } from "@/types/database";
@@ -23,6 +24,7 @@ export type AppNavItem = {
 /** 일반 청년부원 사이드 메뉴 */
 export const GENERAL_NAV_ITEMS: AppNavItem[] = [
   { href: "/journal", label: "경건 일지", icon: BookOpen },
+  { href: "/qt", label: "QT 나눔방", icon: Sun },
   { href: "/prayer", label: "기도 공유", icon: Sparkles },
   { href: "/free-board", label: "자유 게시판", icon: MessageSquare },
   { href: "/announcements", label: "공지사항", icon: Megaphone },
