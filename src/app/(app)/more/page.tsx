@@ -2,8 +2,10 @@
 
 import { PointsBalance } from "@/features/points/components/PointsBalance";
 import { getPointLogsPageData } from "@/features/points/queries/getPointLogsPageData";
+import { PushNotificationSettings } from "@/features/push/components/PushNotificationSettings";
 import { ProfileSettings } from "@/features/profile/components/ProfileSettings";
 import { getMyProfile } from "@/features/profile/queries/getMyProfile";
+import { getVapidPublicKey } from "@/lib/push/vapid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,6 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function MorePage() {
   const { profile, error } = await getMyProfile();
   const pointsData = await getPointLogsPageData();
+  const vapidPublicKey = getVapidPublicKey();
 
   return (
     <div className="flex flex-col gap-10">
@@ -74,6 +77,8 @@ export default async function MorePage() {
               </div>
             </CardContent>
           </Card>
+
+          <PushNotificationSettings vapidPublicKey={vapidPublicKey} />
 
           <ProfileSettings key={profile.updated_at} profile={profile} />
         </>

@@ -27,7 +27,6 @@ self.addEventListener("push", (event: PushEvent) => {
     badge: payload.badge ?? "/icons/icon-192.png",
     data: { url: payload.url ?? "/announcements" },
     tag: "worship-sync-announcement",
-    renotify: true,
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -35,17 +34,21 @@ self.addEventListener("push", (event: PushEvent) => {
 
 self.addEventListener("notificationclick", (event: NotificationEvent) => {
   event.notification.close();
-  const targetUrl =
+  const targetPath =
     (event.notification.data as { url?: string } | undefined)?.url ?? "/announcements";
+  const targetUrl = new URL(targetPath, self.location.origin).href;
 
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
+      .then(async (clientList) => {
         for (const client of clientList) {
-          if ("focus" in client && client.url.includes(self.location.origin)) {
-            return client.focus();
+          if (!client.url.startsWith(self.location.origin)) continue;
+          if ("navigate" in client) {
+            const focused = await (client as WindowClient).navigate(targetUrl);
+            return focused?.focus();
           }
+          return client.focus();
         }
         if (self.clients.openWindow) {
           return self.clients.openWindow(targetUrl);

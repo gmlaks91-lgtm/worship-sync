@@ -68,30 +68,9 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
 
-  const { data: generalProfiles, error: profilesError } = await admin
-    .from("profiles")
-    .select("id")
-    .eq("role", "general");
-
-  if (profilesError) {
-    return NextResponse.json({ ok: false, message: profilesError.message }, { status: 500 });
-  }
-
-  const generalUserIds = (generalProfiles ?? []).map((p) => p.id);
-  if (generalUserIds.length === 0) {
-    return NextResponse.json({
-      ok: true,
-      sent: 0,
-      failed: 0,
-      removed: 0,
-      message: "구독 중인 청년부원이 없습니다.",
-    });
-  }
-
   const { data: subscriptions, error: subsError } = await admin
     .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth_key")
-    .in("user_id", generalUserIds);
+    .select("id, endpoint, p256dh, auth_key");
 
   if (subsError) {
     return NextResponse.json({ ok: false, message: subsError.message }, { status: 500 });
@@ -104,7 +83,7 @@ export async function POST(request: Request) {
       sent: 0,
       failed: 0,
       removed: 0,
-      message: "푸시 구독이 등록된 청년부원이 없습니다.",
+      message: "푸시 구독이 등록된 사용자가 없습니다.",
     });
   }
 

@@ -7,8 +7,6 @@ import {
   isPushSupported,
   wasPushPromptDismissed,
 } from "@/features/push/lib/client-push";
-import { isGeneralRole } from "@/lib/roles";
-import type { ProfileRole } from "@/types/database";
 import { createClient } from "@/utils/supabase/client";
 
 type PushNotificationProviderProps = {
@@ -30,15 +28,6 @@ export function PushNotificationProvider({ vapidPublicKey }: PushNotificationPro
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      const role = profile?.role as ProfileRole | undefined;
-      if (!isGeneralRole(role)) return;
 
       const registration = await navigator.serviceWorker.ready;
       const existing = await registration.pushManager.getSubscription();

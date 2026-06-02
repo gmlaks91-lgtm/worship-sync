@@ -131,7 +131,7 @@ function SubscriberSummary({ subscriberCount }: { subscriberCount: number }) {
     <div className="flex items-start gap-3 rounded-2xl bg-sky-50/80 px-4 py-3">
       <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" />
       <div>
-        <p className="text-sm font-medium text-slate-800">청년부원 푸시 구독</p>
+        <p className="text-sm font-medium text-slate-800">전체 푸시 구독</p>
         <p className="mt-0.5 text-sm text-slate-600">
           현재 <span className="font-semibold text-sky-700">{subscriberCount}</span>개 기기가 구독
           중이에요.

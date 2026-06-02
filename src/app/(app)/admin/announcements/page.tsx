@@ -32,16 +32,10 @@ export default async function AdminAnnouncementsPage() {
   let subscriberCount = 0;
   try {
     const admin = createAdminClient();
-    const { data: generalProfiles } = await admin.from("profiles").select("id").eq("role", "general");
-    const generalIds = (generalProfiles ?? []).map((p) => p.id);
-
-    if (generalIds.length > 0) {
-      const { count } = await admin
-        .from("push_subscriptions")
-        .select("id", { count: "exact", head: true })
-        .in("user_id", generalIds);
-      subscriberCount = count ?? 0;
-    }
+    const { count } = await admin
+      .from("push_subscriptions")
+      .select("id", { count: "exact", head: true });
+    subscriberCount = count ?? 0;
   } catch {
     subscriberCount = 0;
   }
@@ -52,7 +46,7 @@ export default async function AdminAnnouncementsPage() {
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Admin</p>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">공지 푸시 알림</h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          청년부원(general)에게 웹 푸시로 공지를 보냅니다. 필요하면 공지사항 게시판에도 함께 올릴 수
+          푸시를 구독한 모든 사용자에게 웹 푸시로 공지를 보냅니다. 필요하면 공지사항 게시판에도 함께 올릴 수
           있어요.
         </p>
       </header>
