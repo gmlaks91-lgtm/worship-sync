@@ -22,10 +22,16 @@ type PushStatus = "unsupported" | "denied" | "subscribed" | "available";
 export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSettingsProps) {
   const [status, setStatus] = useState<PushStatus>("available");
   const [pending, start] = useTransition();
-  const effectivePublicKey = vapidPublicKey ?? getVapidPublicKeyFromEnv();
+  // 서버에서 내려준 prop을 우선 사용. 클라이언트 env 참조는 useEffect 안에서만.
+  const [effectivePublicKey, setEffectivePublicKey] = useState<string | null>(
+    vapidPublicKey ?? null,
+  );
 
   useEffect(() => {
-    if (!isPushSupported() || !effectivePublicKey) {
+    const key = vapidPublicKey ?? getVapidPublicKeyFromEnv();
+    setEffectivePublicKey(key);
+
+    if (!isPushSupported() || !key) {
       setStatus("unsupported");
       return;
     }
@@ -38,7 +44,7 @@ export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSet
       const subscription = await registration.pushManager.getSubscription();
       setStatus(subscription ? "subscribed" : "available");
     });
-  }, [effectivePublicKey]);
+  }, [vapidPublicKey]);
 
   const handleEnable = () => {
     if (!effectivePublicKey) return;

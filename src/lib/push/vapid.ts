@@ -6,8 +6,8 @@ import {
   describeMissingVapidEnv,
   getVapidPrivateKeyFromEnv,
   getVapidPublicKeyFromEnv,
+  getVapidSubjectFromEnv,
   normalizeVapidSubject,
-  readEnvValue,
 } from "@/lib/push/vapid-env";
 
 export type VapidConfig = {
@@ -21,7 +21,7 @@ let configured = false;
 export function getVapidConfig(): VapidConfig | null {
   const publicKey = getVapidPublicKeyFromEnv();
   const privateKey = getVapidPrivateKeyFromEnv();
-  const subject = normalizeVapidSubject(readEnvValue("VAPID_SUBJECT"));
+  const subject = normalizeVapidSubject(getVapidSubjectFromEnv());
 
   if (!publicKey || !privateKey) {
     return null;

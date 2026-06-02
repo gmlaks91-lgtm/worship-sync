@@ -1,8 +1,7 @@
 const DEFAULT_VAPID_SUBJECT = "mailto:관리자이메일@test.com";
 
 /** .env 값의 앞뒤 공백·따옴표 제거 */
-export function readEnvValue(name: string): string | undefined {
-  const raw = process.env[name];
+function cleanEnvValue(raw: string | undefined): string | undefined {
   if (typeof raw !== "string") return undefined;
 
   let value = raw.trim();
@@ -18,12 +17,24 @@ export function readEnvValue(name: string): string | undefined {
   return value || undefined;
 }
 
+/**
+ * 중요: NEXT_PUBLIC_* 변수는 반드시 정적 멤버 표현식
+ * (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)으로 읽어야 합니다.
+ * process.env[name] 같은 동적 접근은 Next.js가 클라이언트 번들에 인라인하지
+ * 못해 브라우저에서 항상 undefined가 됩니다.
+ */
 export function getVapidPublicKeyFromEnv(): string | null {
-  return readEnvValue("NEXT_PUBLIC_VAPID_PUBLIC_KEY") ?? null;
+  return cleanEnvValue(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) ?? null;
 }
 
+/** 서버 전용 (클라이언트 번들에는 포함되지 않음) */
 export function getVapidPrivateKeyFromEnv(): string | null {
-  return readEnvValue("VAPID_PRIVATE_KEY") ?? null;
+  return cleanEnvValue(process.env.VAPID_PRIVATE_KEY) ?? null;
+}
+
+/** 서버 전용 */
+export function getVapidSubjectFromEnv(): string | undefined {
+  return cleanEnvValue(process.env.VAPID_SUBJECT);
 }
 
 /** web-push는 subject가 mailto: 또는 https:// URI여야 함 */
@@ -31,7 +42,6 @@ export function normalizeVapidSubject(raw: string | undefined): string {
   const value = raw?.trim();
   if (!value) return DEFAULT_VAPID_SUBJECT;
   if (value.startsWith("mailto:") || value.startsWith("https://")) return value;
-  if (value.includes("@")) return `mailto:${value}`;
   return `mailto:${value}`;
 }
 

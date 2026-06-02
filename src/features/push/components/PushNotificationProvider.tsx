@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { PushNotificationPrompt } from "@/features/push/components/PushNotificationPrompt";
 import {
@@ -16,13 +16,16 @@ type PushNotificationProviderProps = {
 
 export function PushNotificationProvider({ vapidPublicKey }: PushNotificationProviderProps) {
   const [open, setOpen] = useState(false);
-  const effectivePublicKey = useMemo(
-    () => vapidPublicKey ?? getVapidPublicKeyFromEnv(),
-    [vapidPublicKey],
+  // 클라이언트 env 참조는 useEffect 안에서만 (렌더 시점 SSR 접근 방지)
+  const [effectivePublicKey, setEffectivePublicKey] = useState<string | null>(
+    vapidPublicKey ?? null,
   );
 
   useEffect(() => {
-    if (!effectivePublicKey || !isPushSupported()) return;
+    const key = vapidPublicKey ?? getVapidPublicKeyFromEnv();
+    setEffectivePublicKey(key);
+
+    if (!key || !isPushSupported()) return;
     if (wasPushPromptDismissed()) return;
     if (typeof Notification !== "undefined" && Notification.permission !== "default") return;
 
@@ -42,7 +45,7 @@ export function PushNotificationProvider({ vapidPublicKey }: PushNotificationPro
     };
 
     void check();
-  }, [effectivePublicKey]);
+  }, [vapidPublicKey]);
 
   if (!effectivePublicKey) return null;
 
