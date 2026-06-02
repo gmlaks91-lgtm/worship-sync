@@ -2,16 +2,26 @@ import "server-only";
 
 import webpush from "web-push";
 
+import {
+  describeMissingVapidEnv,
+  getVapidPrivateKeyFromEnv,
+  getVapidPublicKeyFromEnv,
+  normalizeVapidSubject,
+  readEnvValue,
+} from "@/lib/push/vapid-env";
+
 export type VapidConfig = {
   publicKey: string;
   privateKey: string;
   subject: string;
 };
 
+let configured = false;
+
 export function getVapidConfig(): VapidConfig | null {
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:admin@worship-sync.local";
+  const publicKey = getVapidPublicKeyFromEnv();
+  const privateKey = getVapidPrivateKeyFromEnv();
+  const subject = normalizeVapidSubject(readEnvValue("VAPID_SUBJECT"));
 
   if (!publicKey || !privateKey) {
     return null;
@@ -24,10 +34,20 @@ export function configureWebPush(): VapidConfig | null {
   const config = getVapidConfig();
   if (!config) return null;
 
-  webpush.setVapidDetails(config.subject, config.publicKey, config.privateKey);
+  if (!configured) {
+    webpush.setVapidDetails(config.subject, config.publicKey, config.privateKey);
+    configured = true;
+  }
+
   return config;
 }
 
 export function getVapidPublicKey(): string | null {
-  return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null;
+  return getVapidPublicKeyFromEnv();
 }
+
+export function getVapidConfigError(): string {
+  return describeMissingVapidEnv() ?? "VAPID 키가 설정되지 않았습니다.";
+}
+
+export { describeMissingVapidEnv };

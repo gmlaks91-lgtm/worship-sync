@@ -2,7 +2,7 @@ import "server-only";
 
 import webpush from "web-push";
 
-import { configureWebPush } from "@/lib/push/vapid";
+import { configureWebPush, getVapidConfigError } from "@/lib/push/vapid";
 import type { Tables } from "@/types/database";
 
 export type PushSubscriptionRow = Pick<
@@ -28,7 +28,7 @@ export async function sendPushToSubscriptions(
   onInvalidSubscription?: (subscriptionId: string) => Promise<void>,
 ): Promise<PushSendSummary> {
   if (!configureWebPush()) {
-    throw new Error("VAPID 키가 설정되지 않았습니다.");
+    throw new Error(getVapidConfigError());
   }
 
   const body = JSON.stringify({

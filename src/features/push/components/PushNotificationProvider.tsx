@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { PushNotificationPrompt } from "@/features/push/components/PushNotificationPrompt";
 import {
   isPushSupported,
   wasPushPromptDismissed,
 } from "@/features/push/lib/client-push";
+import { getVapidPublicKeyFromEnv } from "@/lib/push/vapid-env";
 import { createClient } from "@/utils/supabase/client";
 
 type PushNotificationProviderProps = {
@@ -15,9 +16,13 @@ type PushNotificationProviderProps = {
 
 export function PushNotificationProvider({ vapidPublicKey }: PushNotificationProviderProps) {
   const [open, setOpen] = useState(false);
+  const effectivePublicKey = useMemo(
+    () => vapidPublicKey ?? getVapidPublicKeyFromEnv(),
+    [vapidPublicKey],
+  );
 
   useEffect(() => {
-    if (!vapidPublicKey || !isPushSupported()) return;
+    if (!effectivePublicKey || !isPushSupported()) return;
     if (wasPushPromptDismissed()) return;
     if (typeof Notification !== "undefined" && Notification.permission !== "default") return;
 
@@ -37,9 +42,15 @@ export function PushNotificationProvider({ vapidPublicKey }: PushNotificationPro
     };
 
     void check();
-  }, [vapidPublicKey]);
+  }, [effectivePublicKey]);
 
-  if (!vapidPublicKey) return null;
+  if (!effectivePublicKey) return null;
 
-  return <PushNotificationPrompt open={open} onOpenChange={setOpen} vapidPublicKey={vapidPublicKey} />;
+  return (
+    <PushNotificationPrompt
+      open={open}
+      onOpenChange={setOpen}
+      vapidPublicKey={effectivePublicKey}
+    />
+  );
 }

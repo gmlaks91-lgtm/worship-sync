@@ -4,9 +4,11 @@ import { z } from "zod";
 
 import { createAnnouncementPost } from "@/features/push/actions";
 import { sendPushToSubscriptions } from "@/lib/push/send-notifications";
-import { configureWebPush } from "@/lib/push/vapid";
+import { configureWebPush, getVapidConfigError } from "@/lib/push/vapid";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
+
+export const runtime = "nodejs";
 
 const pushBodySchema = z.object({
   title: z.string().trim().min(1, "제목을 입력하세요.").max(120),
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
 
   if (!configureWebPush()) {
     return NextResponse.json(
-      { ok: false, message: "VAPID 키가 설정되지 않았습니다." },
+      { ok: false, message: getVapidConfigError() },
       { status: 503 },
     );
   }

@@ -8,6 +8,7 @@ import {
   isPushSupported,
   subscribeToPushNotifications,
 } from "@/features/push/lib/client-push";
+import { getVapidPublicKeyFromEnv } from "@/lib/push/vapid-env";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,9 +22,10 @@ type PushStatus = "unsupported" | "denied" | "subscribed" | "available";
 export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSettingsProps) {
   const [status, setStatus] = useState<PushStatus>("available");
   const [pending, start] = useTransition();
+  const effectivePublicKey = vapidPublicKey ?? getVapidPublicKeyFromEnv();
 
   useEffect(() => {
-    if (!isPushSupported() || !vapidPublicKey) {
+    if (!isPushSupported() || !effectivePublicKey) {
       setStatus("unsupported");
       return;
     }
@@ -36,13 +38,13 @@ export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSet
       const subscription = await registration.pushManager.getSubscription();
       setStatus(subscription ? "subscribed" : "available");
     });
-  }, [vapidPublicKey]);
+  }, [effectivePublicKey]);
 
   const handleEnable = () => {
-    if (!vapidPublicKey) return;
+    if (!effectivePublicKey) return;
     start(async () => {
       try {
-        await subscribeToPushNotifications(vapidPublicKey);
+        await subscribeToPushNotifications(effectivePublicKey);
         setStatus("subscribed");
         toastSuccess("알림을 켰어요.");
       } catch (e) {
@@ -73,12 +75,14 @@ export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSet
     });
   };
 
-  if (!vapidPublicKey) {
+  if (!effectivePublicKey) {
     return (
       <Card className="border-border/70">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">웹 푸시 알림</CardTitle>
-          <CardDescription>VAPID 키가 설정되지 않아 알림을 사용할 수 없습니다.</CardDescription>
+          <CardDescription>
+            NEXT_PUBLIC_VAPID_PUBLIC_KEY가 설정되지 않았습니다. .env.local 확인 후 서버를 재시작해 주세요.
+          </CardDescription>
         </CardHeader>
       </Card>
     );

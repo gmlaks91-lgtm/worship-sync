@@ -1,6 +1,7 @@
 "use client";
 
 import { savePushSubscription } from "@/features/push/actions";
+import { getVapidPublicKeyFromEnv } from "@/lib/push/vapid-env";
 
 const DISMISS_STORAGE_KEY = "worship-sync:push-prompt-dismissed";
 
@@ -13,6 +14,16 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
+}
+
+export function resolveVapidPublicKey(explicit?: string | null): string {
+  const key = (explicit ?? getVapidPublicKeyFromEnv() ?? "").trim();
+  if (!key) {
+    throw new Error(
+      "VAPID Public Key가 설정되지 않았습니다. NEXT_PUBLIC_VAPID_PUBLIC_KEY를 확인하고 서버를 재시작해 주세요.",
+    );
+  }
+  return key;
 }
 
 export function isPushSupported(): boolean {
@@ -40,10 +51,12 @@ export function dismissPushPrompt(): void {
   }
 }
 
-export async function subscribeToPushNotifications(vapidPublicKey: string) {
+export async function subscribeToPushNotifications(vapidPublicKey?: string | null) {
   if (!isPushSupported()) {
     throw new Error("이 브라우저는 웹 푸시를 지원하지 않습니다.");
   }
+
+  const key = resolveVapidPublicKey(vapidPublicKey);
 
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
@@ -52,15 +65,13 @@ export async function subscribeToPushNotifications(vapidPublicKey: string) {
 
   const registration = await navigator.serviceWorker.ready;
   const existing = await registration.pushManager.getSubscription();
-  const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+  const applicationServerKey = urlBase64ToUint8Array(key);
+
   const subscription =
     existing ??
     (await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: applicationServerKey.buffer.slice(
-        applicationServerKey.byteOffset,
-        applicationServerKey.byteOffset + applicationServerKey.byteLength,
-      ) as ArrayBuffer,
+      applicationServerKey,
     }));
 
   const json = subscription.toJSON();
