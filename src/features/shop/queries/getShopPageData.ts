@@ -72,27 +72,66 @@ export async function getShopPageData(): Promise<ShopPageData> {
     } = await supabase.auth.getUser();
     if (!user) return empty;
 
-    const [freshPoints, itemsRes, invRes, listingsRes] = await Promise.all([
+    const [freshPoints, invRes] = await Promise.all([
       getFreshUserPoints(user.id),
-      supabase
-        .from("shop_items")
-        .select("id,name,description,category,image_url,effect_value,price_points,is_active,stock")
-        .eq("is_active", true)
-        .order("price_points"),
       supabase.from("user_inventory").select("id,shop_item_id,is_applied").eq("user_id", user.id),
-      supabase
-        .from("inventory_marketplace_listings")
-        .select(
-          "id,price_points,created_at,seller_id,shop_item_id,inventory_id,seller:profiles!seller_id(id,username,avatar_url)",
-        )
-        .eq("status", "active")
-        .order("created_at", { ascending: false }),
     ]);
 
     if (freshPoints.error) throw new Error(freshPoints.error);
-    if (itemsRes.error) throw new Error(itemsRes.error.message);
     if (invRes.error) throw new Error(invRes.error.message);
-    if (listingsRes.error) throw new Error(listingsRes.error.message);
+
+    let itemsRes = await supabase
+      .from("shop_items")
+      .select("id,name,description,category,image_url,effect_value,price_points,is_active,stock")
+      .eq("is_active", true)
+      .order("price_points");
+
+    if (itemsRes.error && itemsRes.error.message.toLowerCase().includes("stock")) {
+      const fallback = await supabase
+        .from("shop_items")
+        .select("id,name,description,category,image_url,effect_value,price_points,is_active")
+        .eq("is_active", true)
+        .order("price_points");
+      if (fallback.error) throw new Error(fallback.error.message);
+      itemsRes = {
+        ...fallback,
+        data: (fallback.data ?? []).map((row) => ({ ...row, stock: null })),
+      };
+    } else if (itemsRes.error) {
+      throw new Error(itemsRes.error.message);
+    }
+
+    let listingsRes: {
+      data: Array<{
+        id: string;
+        price_points: number;
+        created_at: string;
+        seller_id: string;
+        shop_item_id: string;
+        inventory_id: string;
+        seller: { id: string; username: string; avatar_url: string | null } | null;
+      }> | null;
+      error: { message: string } | null;
+    } = { data: [], error: null };
+
+    const listingsQuery = await supabase
+      .from("inventory_marketplace_listings")
+      .select(
+        "id,price_points,created_at,seller_id,shop_item_id,inventory_id,seller:profiles!seller_id(id,username,avatar_url)",
+      )
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+
+    if (listingsQuery.error) {
+      const msg = listingsQuery.error.message.toLowerCase();
+      const migrationMissing =
+        msg.includes("inventory_marketplace_listings") ||
+        msg.includes("does not exist") ||
+        msg.includes("schema cache");
+      if (!migrationMissing) throw new Error(listingsQuery.error.message);
+    } else {
+      listingsRes = listingsQuery as typeof listingsRes;
+    }
 
     const items = (itemsRes.data ?? []) as ShopItemRow[];
     const listingItemIds = [

@@ -3,10 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { Loader2, Tag } from "lucide-react";
 
-import {
-  cancelMarketplaceListing,
-  createMarketplaceListing,
-} from "@/features/shop/actions/marketplaceActions";
+import { createMarketplaceListing } from "@/features/shop/actions/marketplaceActions";
 import type { ShopItemRow, UserInventoryEntry } from "@/features/shop/queries/getShopPageData";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
@@ -115,7 +112,7 @@ export function ShopSellDialog({
                       )}
                     >
                       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                        <RemoteImage src={item.image_url} alt={item.name} fill variant="thumb" className="object-cover" />
+                        <RemoteImage src={item.image_url} alt={item.name} fill variant="thumbnail" className="object-cover" />
                       </div>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium text-slate-800">{item.name}</span>

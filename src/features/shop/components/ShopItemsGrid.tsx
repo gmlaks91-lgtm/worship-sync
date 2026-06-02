@@ -6,7 +6,7 @@ import { Box, Coins, ShoppingBag, Sparkles, Store, Tag } from "lucide-react";
 
 import { usePoints } from "@/features/points/components/PointsProvider";
 import { notifyPointsUpdated } from "@/features/points/lib/points-events";
-import { applyShopItem, purchaseShopItem } from "@/features/shop/actions/shopActions";
+import { applyShopItem, purchaseShopItem, unequipShopItem } from "@/features/shop/actions/shopActions";
 import { ExpandableDescription } from "@/features/shop/components/ExpandableDescription";
 import { ShopMarketplacePanel } from "@/features/shop/components/ShopMarketplacePanel";
 import { ShopSellDialog } from "@/features/shop/components/ShopSellDialog";
@@ -155,33 +155,60 @@ export function ShopItemsGrid({
                     중고 장터 등록 중
                   </span>
                 ) : null}
-                <Button
-                  type="button"
-                  variant={applied ? "secondary" : "outline"}
-                  className={cn(
-                    "min-h-11 h-11 w-full",
-                    !applied && "border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/60",
-                  )}
-                  disabled={pending || applied || listed}
-                  onClick={() =>
-                    startTransition(async () => {
-                      const res = await applyShopItem({ itemId: item.id });
-                      if (!res.ok) return toastError(res.message);
-                      setAppliedState((prev) => {
-                        const next = new Set(prev);
-                        for (const each of items) {
-                          if (each.category === item.category) next.delete(each.id);
-                        }
-                        next.add(item.id);
-                        return next;
-                      });
-                      toastSuccess("장착 완료! 프로필에 즉시 반영됩니다.");
-                      router.refresh();
-                    })
-                  }
-                >
-                  {applied ? "장착 중" : listed ? "장터 등록 중" : "장착하기"}
-                </Button>
+                {applied ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 h-11 w-full border-amber-200 text-amber-800 hover:bg-amber-50"
+                    disabled={pending || listed}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const res = await unequipShopItem({ itemId: item.id });
+                        if (!res.ok) return toastError(res.message);
+                        setAppliedState((prev) => {
+                          const next = new Set(prev);
+                          next.delete(item.id);
+                          return next;
+                        });
+                        toastSuccess("장착이 해제되었습니다.");
+                        router.refresh();
+                      })
+                    }
+                  >
+                    장착 해제
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      "min-h-11 h-11 w-full",
+                      "border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/60",
+                    )}
+                    disabled={pending || listed}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const res = await applyShopItem({ itemId: item.id });
+                        if (!res.ok) return toastError(res.message);
+                        setAppliedState((prev) => {
+                          const next = new Set(prev);
+                          for (const each of items) {
+                            if (each.category === item.category) next.delete(each.id);
+                          }
+                          next.add(item.id);
+                          return next;
+                        });
+                        toastSuccess("장착 완료! 프로필에 즉시 반영됩니다.");
+                        router.refresh();
+                      })
+                    }
+                  >
+                    {listed ? "장터 등록 중" : "장착하기"}
+                  </Button>
+                )}
+                {applied ? (
+                  <span className="text-center text-xs text-sky-600 sm:text-left">현재 장착 중</span>
+                ) : null}
               </>
             ) : null}
           </div>

@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 
 import { usePoints } from "@/features/points/components/PointsProvider";
 import { ChangePasswordForm } from "@/features/profile/components/ChangePasswordForm";
+import { ProfileEquipControls } from "@/features/profile/components/ProfileEquipControls";
 import { updateProfile } from "@/features/profile/actions/profileActions";
 import type { MyProfileRow } from "@/features/profile/queries/getMyProfile";
 import { roleLabel } from "@/lib/roles";
@@ -77,6 +78,7 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
           </p>
           <p className="text-sm text-muted-foreground">장착 상태: 아바타 · 프레임 · 배지 레이어 미리보기</p>
           <p className="text-xs text-muted-foreground">프로필 아바타/프레임은 포인트 상점에서 구매한 아이템으로만 변경됩니다.</p>
+          <ProfileEquipControls profile={profile} />
         </div>
       </section>
 
