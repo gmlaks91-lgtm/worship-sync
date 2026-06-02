@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { ImagePlus, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { deleteShopItem, upsertShopItem } from "@/features/shop/actions/adminShopActions";
+import { ExpandableDescription } from "@/features/shop/components/ExpandableDescription";
 import type { ShopItemRow } from "@/features/shop/queries/getShopPageData";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ type FormState = {
   description: string;
   category: "avatar" | "frame" | "badge";
   pricePoints: string;
+  stock: string;
   currentImageUrl: string;
 };
 
@@ -31,6 +33,7 @@ const EMPTY_FORM: FormState = {
   description: "",
   category: "avatar",
   pricePoints: "100",
+  stock: "",
   currentImageUrl: "",
 };
 
@@ -68,6 +71,7 @@ export function AdminShopManager({ items }: { items: ShopItemRow[] }) {
       fd.set("description", form.description);
       fd.set("category", form.category);
       fd.set("pricePoints", form.pricePoints);
+      fd.set("stock", form.stock);
       fd.set("currentImageUrl", form.currentImageUrl);
       if (file) fd.set("image", file);
 
@@ -95,6 +99,7 @@ export function AdminShopManager({ items }: { items: ShopItemRow[] }) {
       description: item.description ?? "",
       category: item.category,
       pricePoints: String(item.price_points),
+      stock: item.stock === null ? "" : String(item.stock),
       currentImageUrl: item.image_url,
     });
     setFile(null);
@@ -163,6 +168,17 @@ export function AdminShopManager({ items }: { items: ShopItemRow[] }) {
                 required
               />
             </label>
+            <label className="block space-y-1.5">
+              <span className="text-sm font-medium text-slate-700">재고</span>
+              <Input
+                type="number"
+                min={0}
+                value={form.stock}
+                onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))}
+                placeholder="비우면 무제한"
+              />
+              <p className="text-xs text-slate-400">0 = 품절, 비워두면 무제한 판매</p>
+            </label>
           </div>
         </div>
 
@@ -192,8 +208,11 @@ export function AdminShopManager({ items }: { items: ShopItemRow[] }) {
               </div>
               <div className="space-y-2 p-4">
                 <p className="font-semibold text-slate-800">{item.name}</p>
-                <p className="line-clamp-2 text-xs text-slate-500">{item.description ?? "-"}</p>
-                <p className="text-sm font-medium text-sky-600">{item.price_points}P</p>
+                <ExpandableDescription text={item.description ?? "-"} className="text-xs" />
+                <p className="text-sm font-medium text-sky-600">
+                  {item.price_points}P
+                  {item.stock !== null ? ` · 재고 ${item.stock}` : " · 무제한"}
+                </p>
                 <div className="flex gap-2">
                   <Button type="button" size="sm" variant="outline" onClick={() => onEdit(item)} disabled={pending}>
                     <Pencil className="h-3.5 w-3.5" />

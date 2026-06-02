@@ -14,9 +14,13 @@ const categorySchema = z.enum(["avatar", "frame", "badge"]);
 const upsertSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(120),
-  description: z.string().trim().max(500).optional(),
+  description: z.string().trim().optional(),
   category: categorySchema,
   pricePoints: z.coerce.number().int().min(0).max(100000),
+  stock: z
+    .union([z.literal(""), z.coerce.number().int().min(0).max(1_000_000)])
+    .optional()
+    .transform((value) => (value === "" || value === undefined ? null : value)),
   currentImageUrl: z.string().url().optional(),
 });
 
@@ -37,6 +41,7 @@ export async function upsertShopItem(formData: FormData): Promise<ActionResult> 
     description: formData.get("description")?.toString(),
     category: formData.get("category")?.toString(),
     pricePoints: formData.get("pricePoints")?.toString(),
+    stock: formData.get("stock")?.toString() ?? "",
     currentImageUrl: formData.get("currentImageUrl")?.toString() || undefined,
   });
 
@@ -68,6 +73,7 @@ export async function upsertShopItem(formData: FormData): Promise<ActionResult> 
       image_url: imageUrl,
       effect_value: imageUrl,
       price_points: parsed.data.pricePoints,
+      stock: parsed.data.stock,
       is_active: true,
     };
 

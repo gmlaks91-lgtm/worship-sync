@@ -35,9 +35,14 @@ export default async function ShopPage() {
       ) : null}
 
       <ShopItemsGrid
+        userId={data.userId!}
         items={data.items}
         ownedItemIds={data.ownedItemIds}
         appliedItemIds={data.appliedItemIds}
+        inventoryEntries={data.inventoryEntries}
+        listedInventoryIds={data.listedInventoryIds}
+        marketplaceListings={data.marketplaceListings}
+        ownedAvatarItems={data.ownedAvatarItems}
       />
     </div>
   );

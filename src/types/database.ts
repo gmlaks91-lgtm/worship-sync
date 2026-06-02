@@ -524,6 +524,7 @@ export type Database = {
           effect_value: string;
           price_points: number;
           is_active: boolean;
+          stock: number | null;
           created_at: string;
         };
         Insert: {
@@ -535,6 +536,7 @@ export type Database = {
           effect_value: string;
           price_points: number;
           is_active?: boolean;
+          stock?: number | null;
           created_at?: string;
         };
         Update: {
@@ -546,6 +548,43 @@ export type Database = {
           effect_value?: string;
           price_points?: number;
           is_active?: boolean;
+          stock?: number | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      inventory_marketplace_listings: {
+        Row: {
+          id: string;
+          seller_id: string;
+          inventory_id: string;
+          shop_item_id: string;
+          price_points: number;
+          status: "active" | "sold" | "cancelled";
+          buyer_id: string | null;
+          sold_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          seller_id: string;
+          inventory_id: string;
+          shop_item_id: string;
+          price_points: number;
+          status?: "active" | "sold" | "cancelled";
+          buyer_id?: string | null;
+          sold_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          seller_id?: string;
+          inventory_id?: string;
+          shop_item_id?: string;
+          price_points?: number;
+          status?: "active" | "sold" | "cancelled";
+          buyer_id?: string | null;
+          sold_at?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -843,6 +882,25 @@ export type Database = {
       purchase_shop_item: {
         Args: {
           p_item_id: string;
+        };
+        Returns: Json;
+      };
+      create_inventory_listing: {
+        Args: {
+          p_inventory_id: string;
+          p_price_points: number;
+        };
+        Returns: Json;
+      };
+      cancel_inventory_listing: {
+        Args: {
+          p_listing_id: string;
+        };
+        Returns: Json;
+      };
+      purchase_inventory_listing: {
+        Args: {
+          p_listing_id: string;
         };
         Returns: Json;
       };
