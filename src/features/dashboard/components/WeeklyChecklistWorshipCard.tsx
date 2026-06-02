@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 type WeeklyChecklistWorshipCardProps = {
   value: WeeklyChecklistWorshipRecords;
+  /** 제출 완료·저장 중일 때만 비활성화 (과거 날짜 조회와 무관) */
   disabled?: boolean;
   onImmediateChange: (patch: Partial<WeeklyChecklistWorshipRecords>) => void;
 };
@@ -54,7 +55,9 @@ export function WeeklyChecklistWorshipCard({
         <Church className="size-4 text-sky-500" aria-hidden />
         <div>
           <p className="text-base font-semibold text-gray-800">예배 참석 기록</p>
-          <p className="text-sm text-gray-500">이번 주 예배와 기도회 참석 여부를 체크하세요.</p>
+          <p className="text-sm text-gray-500">
+            이번 주 예배·기도회 참석은 날짜와 관계없이 언제든 수정할 수 있습니다.
+          </p>
         </div>
       </div>
 

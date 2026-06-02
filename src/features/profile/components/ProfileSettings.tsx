@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { usePoints } from "@/features/points/components/PointsProvider";
+import { ChangePasswordForm } from "@/features/profile/components/ChangePasswordForm";
 import { updateProfile } from "@/features/profile/actions/profileActions";
 import type { MyProfileRow } from "@/features/profile/queries/getMyProfile";
 import { roleLabel } from "@/lib/roles";
@@ -92,6 +93,14 @@ export function ProfileSettings({ profile }: { profile: MyProfileRow }) {
             상점에서 아이템 장착하기
           </Link>
         </div>
+      </section>
+
+      <section className="space-y-4 rounded-lg border border-border/60 bg-card/70 p-5 sm:p-6">
+        <h2 className="text-sm font-medium text-foreground">비밀번호 변경</h2>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          새 비밀번호와 확인 값이 일치할 때만 변경됩니다.
+        </p>
+        <ChangePasswordForm />
       </section>
 
       <section className="space-y-4 rounded-lg border border-border/60 bg-card/70 p-5 sm:p-6">

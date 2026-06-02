@@ -9,6 +9,7 @@ type WeeklyChecklistDayCardProps = {
   record: WeeklyChecklistDailyRecord;
   label: string;
   disabled?: boolean;
+  readOnly?: boolean;
   points: number;
   hasDoubleBonus: boolean;
   onDebouncedChange: (patch: Partial<WeeklyChecklistDailyRecord>) => void;
@@ -70,6 +71,7 @@ export function WeeklyChecklistDayCard({
   record,
   label,
   disabled,
+  readOnly,
   points,
   hasDoubleBonus,
   onDebouncedChange,
@@ -78,6 +80,11 @@ export function WeeklyChecklistDayCard({
 }: WeeklyChecklistDayCardProps) {
   return (
     <article className="surface-card-hover relative p-4">
+      {readOnly ? (
+        <p className="mb-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          과거 날짜는 조회만 가능합니다. 수정은 오늘 날짜에서만 할 수 있습니다.
+        </p>
+      ) : null}
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-gray-800">{label}</p>

@@ -14,6 +14,14 @@ import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Field,
   FieldError,
   FieldGroup,
@@ -84,6 +92,7 @@ export function LoginForm({ className }: { className?: string }) {
   const next = useMemo(() => searchParams.get("next") ?? "/", [searchParams]);
   const urlError = searchParams.get("error");
   const [mode, setMode] = useState<Mode>("signin");
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const signInForm = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
@@ -200,9 +209,16 @@ export function LoginForm({ className }: { className?: string }) {
                   <FieldError errors={[signInForm.formState.errors.password]} />
                 </Field>
               </FieldGroup>
-              <Button type="submit" className="h-11 w-full text-sm" disabled={signInForm.formState.isSubmitting}>
+              <Button type="submit" className="h-11 min-h-11 w-full px-4 text-sm" disabled={signInForm.formState.isSubmitting}>
                 {signInForm.formState.isSubmitting ? "처리 중..." : "로그인"}
               </Button>
+              <button
+                type="button"
+                className="min-h-11 w-full rounded-lg px-3 py-3 text-center text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline active:bg-muted/40"
+                onClick={() => setForgotPasswordOpen(true)}
+              >
+                비밀번호를 잊으셨나요?
+              </button>
             </FieldSet>
           </form>
         ) : (
@@ -306,6 +322,27 @@ export function LoginForm({ className }: { className?: string }) {
           </form>
         )}
       </CardContent>
+
+      <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+        <DialogContent className="max-w-[calc(100%-1.5rem)] gap-4 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>비밀번호 찾기</DialogTitle>
+            <DialogDescription className="text-left leading-relaxed">
+              비밀번호를 잊으신 경우, 보안을 위해 관리자(임원진)에게 문의하여 임시 비밀번호를
+              발급받아 주세요.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="border-t-0 bg-transparent p-0 sm:justify-stretch">
+            <Button
+              type="button"
+              className="min-h-11 h-11 w-full px-4"
+              onClick={() => setForgotPasswordOpen(false)}
+            >
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <CardFooter className="flex flex-col gap-2 border-t border-border/60 bg-muted/20 px-4 py-4">
         <p className="text-center text-xs text-muted-foreground">

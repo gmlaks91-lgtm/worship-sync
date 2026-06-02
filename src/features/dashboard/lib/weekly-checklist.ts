@@ -124,6 +124,40 @@ export function getKstWeekStartDate(now = new Date()) {
   return formatUtcDateYmd(kst);
 }
 
+/** KST 기준 오늘과 동일한 YMD인지 (문자열 YMD 비교, 타임존 일관) */
+export function isKstTodayYmd(ymd: string, now = new Date()) {
+  return ymd === getKstTodayYmd(now);
+}
+
+export function formatYmdKstLabel(ymd: string) {
+  const date = parseUtcDateFromYmd(ymd);
+  const weekday = WEEKLY_CHECKLIST_DAY_DEFS[date.getUTCDay()]?.label ?? "";
+  return `${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일(${weekday})`;
+}
+
+/** 달력 UI 선택값 → YMD (로컬 연·월·일 그대로, UTC 변환 없음) */
+export function ymdFromCalendarDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** YMD → 달력 UI용 로컬 Date (연·월·일 그대로) */
+export function calendarDateFromYmd(ymd: string) {
+  const [year, month, day] = ymd.split("-").map(Number);
+  return new Date(year, (month ?? 1) - 1, day ?? 1);
+}
+
+export function resolveDefaultSelectedDateYmd(
+  dailyRecords: WeeklyChecklistDailyRecord[],
+  now = new Date(),
+) {
+  const today = getKstTodayYmd(now);
+  if (dailyRecords.some((record) => record.date === today)) return today;
+  return dailyRecords[0]?.date ?? today;
+}
+
 export function formatWeekRangeLabel(weekStartDate: string) {
   const start = parseUtcDateFromYmd(weekStartDate);
   const end = parseUtcDateFromYmd(addDaysToYmd(weekStartDate, 6));

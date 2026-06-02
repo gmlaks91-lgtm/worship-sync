@@ -8,13 +8,16 @@ import { submitWeeklyChecklist } from "@/features/dashboard/actions/weeklyCheckl
 import { syncPointsAfterMutation } from "@/features/points/lib/sync-points-client";
 import {
   calculateWeeklyChecklistPoints,
-  WEEKLY_CHECKLIST_DAY_DEFS,
+  formatYmdKstLabel,
+  isKstTodayYmd,
+  resolveDefaultSelectedDateYmd,
   WEEKLY_CHECKLIST_MAX_POINTS,
   type WeeklyChecklistDailyRecord,
   type WeeklyChecklistWorshipRecords,
 } from "@/features/dashboard/lib/weekly-checklist";
 import type { WeeklyChecklistBoardData } from "@/features/dashboard/queries/getWeeklyChecklistBoardData";
 import { WeeklyChecklistDayCard } from "@/features/dashboard/components/WeeklyChecklistDayCard";
+import { WeeklyChecklistDayPicker } from "@/features/dashboard/components/WeeklyChecklistDayPicker";
 import { WeeklyChecklistTeamOverview } from "@/features/dashboard/components/WeeklyChecklistTeamOverview";
 import { WeeklyChecklistAutosaveStatusLabel } from "@/features/dashboard/components/WeeklyChecklistAutosaveStatus";
 import { WeeklyChecklistWorshipCard } from "@/features/dashboard/components/WeeklyChecklistWorshipCard";
@@ -56,9 +59,14 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
   const [pending, startTransition] = useTransition();
   const [dailyRecords, setDailyRecords] = useState(data.checklist.dailyRecords);
   const [worshipRecords, setWorshipRecords] = useState(data.checklist.worshipRecords);
+  const [selectedDateYmd, setSelectedDateYmd] = useState(() =>
+    resolveDefaultSelectedDateYmd(data.checklist.dailyRecords),
+  );
+
   useEffect(() => {
     setDailyRecords(data.checklist.dailyRecords);
     setWorshipRecords(data.checklist.worshipRecords);
+    setSelectedDateYmd(resolveDefaultSelectedDateYmd(data.checklist.dailyRecords));
   }, [
     data.checklist.id,
     data.checklist.updatedAt,
@@ -117,6 +125,16 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
   const isSubmitted = data.checklist.isSubmitted;
   const lastSavedLabel = formatDateTime(data.checklist.updatedAt);
   const submittedLabel = formatDateTime(data.checklist.submittedAt);
+
+  const selectedDailyIndex = dailyRecords.findIndex((record) => record.date === selectedDateYmd);
+  const selectedDailyRecord =
+    selectedDailyIndex >= 0 ? dailyRecords[selectedDailyIndex] : dailyRecords[0];
+  const selectedDailyIndexSafe = selectedDailyIndex >= 0 ? selectedDailyIndex : 0;
+  const isSelectedToday = selectedDailyRecord
+    ? isKstTodayYmd(selectedDailyRecord.date)
+    : false;
+  const isDailyEditable = isSelectedToday && !pending && !isSubmitted;
+  const isWorshipEditable = !pending && !isSubmitted;
 
   const onSubmit = () => {
     flushPending();
@@ -177,7 +195,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
                   주간 체크리스트 보드
                 </CardTitle>
                 <CardDescription className="mt-1 text-sm text-gray-500">
-                  {data.weekRangeLabel} · 한줄일기, 말씀, 큐티, 기도, 예배 참석을 기록해 보세요.
+                  {data.weekRangeLabel} · 오늘의 경건일지를 작성하고, 예배 참석은 주간 단위로 기록합니다.
                 </CardDescription>
                 <WeeklyChecklistAutosaveStatusLabel status={autosaveStatus} className="mt-2" />
               </div>
@@ -267,28 +285,34 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-            {dailyRecords.map((record, index) => {
-              const dayScore = score.dailyBreakdown[index];
-              return (
-                <WeeklyChecklistDayCard
-                  key={`${record.dayKey}-${record.date}`}
-                  record={record}
-                  label={`${WEEKLY_CHECKLIST_DAY_DEFS[index]?.label ?? ""}요일`}
-                  disabled={pending || isSubmitted}
-                  points={dayScore?.points ?? 0}
-                  hasDoubleBonus={Boolean(dayScore?.hasDoubleBonus)}
-                  onDebouncedChange={(patch) => applyDailyPatch(index, patch, "debounced")}
-                  onImmediateChange={(patch) => applyDailyPatch(index, patch, "immediate")}
-                  onDiaryBlur={() => flushPending()}
-                />
-              );
-            })}
-          </div>
+          <WeeklyChecklistDayPicker
+            dailyRecords={dailyRecords}
+            selectedDateYmd={selectedDailyRecord?.date ?? selectedDateYmd}
+            onSelectDateYmd={setSelectedDateYmd}
+          />
+
+          {selectedDailyRecord ? (
+            <WeeklyChecklistDayCard
+              key={`${selectedDailyRecord.dayKey}-${selectedDailyRecord.date}`}
+              record={selectedDailyRecord}
+              label={formatYmdKstLabel(selectedDailyRecord.date)}
+              disabled={!isDailyEditable}
+              readOnly={!isSelectedToday && !isSubmitted}
+              points={score.dailyBreakdown[selectedDailyIndexSafe]?.points ?? 0}
+              hasDoubleBonus={Boolean(score.dailyBreakdown[selectedDailyIndexSafe]?.hasDoubleBonus)}
+              onDebouncedChange={(patch) =>
+                applyDailyPatch(selectedDailyIndexSafe, patch, "debounced")
+              }
+              onImmediateChange={(patch) =>
+                applyDailyPatch(selectedDailyIndexSafe, patch, "immediate")
+              }
+              onDiaryBlur={() => flushPending()}
+            />
+          ) : null}
 
           <WeeklyChecklistWorshipCard
             value={worshipRecords}
-            disabled={pending || isSubmitted}
+            disabled={!isWorshipEditable}
             onImmediateChange={applyWorshipPatch}
           />
         </CardContent>

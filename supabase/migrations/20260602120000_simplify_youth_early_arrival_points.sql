@@ -1,4 +1,11 @@
+-- =============================================================================
 -- 청년/오후 예배: 단순 참석(youthService)은 0점, 10분 전 입실(youthEarlyArrival)만 4점
+--
+-- 주의: 이 파일은 CREATE OR REPLACE FUNCTION 문 전체를 한 번에 실행해야 합니다.
+--       함수 본문의 IF/CASE 일부만 따로 실행하면 syntax error가 납니다.
+-- =============================================================================
+
+begin;
 
 create or replace function public.calculate_weekly_checklist_points(
   p_daily_records jsonb,
@@ -8,7 +15,7 @@ returns integer
 language plpgsql
 stable
 set search_path = public
-as $$
+as $function$
 declare
   v_total integer := 0;
   v_day jsonb;
@@ -34,35 +41,43 @@ begin
         case when v_qt then 2 else 0 end +
         case when v_prayer then 2 else 0 end;
 
-      if v_bible >= 7 and v_qt and v_prayer then
-        v_total := v_total + 12;
-      else
-        v_total := v_total + v_day_points;
-      end if;
+      v_total := v_total + case
+        when v_bible >= 7 and v_qt and v_prayer then 12
+        else v_day_points
+      end;
     end loop;
   end if;
 
-  if coalesce(p_worship_records ->> 'sundayFirstService', 'false') = 'true'
-     or coalesce(p_worship_records ->> 'sundaySecondService', 'false') = 'true' then
-    v_total := v_total + 3;
-  end if;
+  v_total := v_total + case
+    when coalesce(p_worship_records ->> 'sundayFirstService', 'false') = 'true'
+      or coalesce(p_worship_records ->> 'sundaySecondService', 'false') = 'true' then 3
+    else 0
+  end;
 
-  if coalesce(p_worship_records ->> 'youthEarlyArrival', 'false') = 'true' then
-    v_total := v_total + 4;
-  end if;
+  v_total := v_total + case
+    when coalesce(p_worship_records ->> 'youthEarlyArrival', 'false') = 'true' then 4
+    else 0
+  end;
 
-  if coalesce(p_worship_records ->> 'wednesdayService', 'false') = 'true' then
-    v_total := v_total + 3;
-  end if;
+  v_total := v_total + case
+    when coalesce(p_worship_records ->> 'wednesdayService', 'false') = 'true' then 3
+    else 0
+  end;
 
-  if coalesce(p_worship_records ->> 'fridayPrayer', 'false') = 'true' then
-    v_total := v_total + 3;
-  end if;
+  v_total := v_total + case
+    when coalesce(p_worship_records ->> 'fridayPrayer', 'false') = 'true' then 3
+    else 0
+  end;
 
-  if coalesce(p_worship_records ->> 'saturdayPrayer', 'false') = 'true' then
-    v_total := v_total + 3;
-  end if;
+  v_total := v_total + case
+    when coalesce(p_worship_records ->> 'saturdayPrayer', 'false') = 'true' then 3
+    else 0
+  end;
 
   return least(v_total, 100);
 end;
-$$;
+$function$;
+
+grant execute on function public.calculate_weekly_checklist_points(jsonb, jsonb) to authenticated;
+
+commit;

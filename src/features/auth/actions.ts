@@ -115,6 +115,34 @@ export async function signUpWithIdAction(input: {
   return { error: null };
 }
 
+export type PasswordActionResult = { ok: true; message: string } | { ok: false; message: string };
+
+export async function changePasswordAction(input: {
+  password: string;
+}): Promise<PasswordActionResult> {
+  const password = input.password?.trim() ?? "";
+  if (password.length < 6) {
+    return { ok: false, message: "비밀번호는 6자 이상이어야 합니다." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, message: "로그인이 필요합니다." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  return { ok: true, message: "비밀번호가 성공적으로 변경되었습니다." };
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
