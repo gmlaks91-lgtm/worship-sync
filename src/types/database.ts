@@ -710,32 +710,53 @@ export type Database = {
         };
         Relationships: [];
       };
-      qt_shares: {
+      qt_posts: {
         Row: {
           id: string;
+          image_url: string;
+          bible_verses: string;
           user_id: string | null;
-          author_name: string;
-          author_avatar_url: string | null;
-          message: string;
-          image_url: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
+          image_url: string;
+          bible_verses?: string;
           user_id?: string | null;
-          author_name?: string;
-          author_avatar_url?: string | null;
-          message?: string;
-          image_url?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
+          image_url?: string;
+          bible_verses?: string;
           user_id?: string | null;
-          author_name?: string;
-          author_avatar_url?: string | null;
-          message?: string;
-          image_url?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      qt_comments: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string | null;
+          quoted_verse: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          user_id?: string | null;
+          quoted_verse?: string;
+          content?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: string;
+          user_id?: string | null;
+          quoted_verse?: string;
+          content?: string;
           created_at?: string;
         };
         Relationships: [];

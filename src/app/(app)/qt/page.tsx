@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { QtShareRoom } from "@/features/qt-share/components/QtShareRoom";
-import { getQtShares } from "@/features/qt-share/queries/getQtShares";
+import { QtFeedBoard } from "@/features/qt-share/components/QtFeedBoard";
+import { getQtFeedData } from "@/features/qt-share/queries/getQtFeedData";
 import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +16,11 @@ export default async function QtSharePage() {
     redirect("/login?next=/qt");
   }
 
-  const { shares, error } = await getQtShares();
+  const data = await getQtFeedData();
 
   return (
     <div className="-mx-6 -mt-10 sm:-mx-8">
-      <QtShareRoom initialShares={shares} currentUserId={user.id} loadError={error} />
+      <QtFeedBoard {...data} currentUserId={user.id} />
     </div>
   );
 }
