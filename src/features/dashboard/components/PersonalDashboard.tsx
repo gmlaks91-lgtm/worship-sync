@@ -41,19 +41,6 @@ function formatWhen(iso: string) {
   }
 }
 
-function formatShortWhen(iso: string) {
-  try {
-    return new Date(iso).toLocaleString("ko-KR", {
-      month: "numeric",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
 function myStatusLabel(status: ScheduleAttendanceStatus | null) {
   if (status === "attending") return { text: "참석", className: "border-emerald-500/40 bg-emerald-500/10" };
   if (status === "absent") return { text: "불참", className: "border-red-500/40 bg-red-500/10" };

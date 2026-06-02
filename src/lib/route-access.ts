@@ -5,8 +5,8 @@ import { getHomePathForRole, isGeneralRole } from "@/lib/roles";
 /** 일반 멤버가 접근할 수 있는 경로(접두사 일치) */
 const GENERAL_ALLOWED_PREFIXES = [
   "/journal",
+  "/qt",
   "/prayer",
-  "/playlist",
   "/announcements",
   "/free-board",
   "/profile",

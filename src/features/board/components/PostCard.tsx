@@ -8,6 +8,7 @@ import { useState, useTransition } from "react";
 import { CommentSection } from "@/features/board/components/CommentSection";
 import { PostActions } from "@/features/board/components/PostActions";
 import { togglePinPost, updatePost } from "@/features/board/actions";
+import { splitTitleBody } from "@/features/board/lib/announcement";
 import type { BoardPost } from "@/features/board/queries/getBoardFeed";
 import { toastPromise, toastError } from "@/lib/app-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,21 +19,6 @@ function initials(name: string) {
   const t = name.trim();
   if (!t) return "?";
   return t.slice(0, 2);
-}
-
-/** 공지(prayer)는 첫 줄을 제목, 나머지를 본문으로 분리해 게시판처럼 표시 */
-function splitTitleBody(content: string): { title: string | null; body: string } {
-  const trimmed = content.trim();
-  const newlineIndex = trimmed.indexOf("\n");
-  if (newlineIndex === -1) {
-    return { title: null, body: trimmed };
-  }
-  const title = trimmed.slice(0, newlineIndex).trim();
-  const body = trimmed.slice(newlineIndex + 1).trim();
-  if (!title || !body) {
-    return { title: null, body: trimmed };
-  }
-  return { title, body };
 }
 
 type PostCardProps = {

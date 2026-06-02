@@ -7,6 +7,7 @@ import {
   getGeneralUserRole,
   getLatestAiReportForCurrentWeek,
 } from "@/features/ai-report/queries/getLatestAiReport";
+import { BoardWidget } from "@/features/dashboard/components/BoardWidget";
 import { JournalTabs } from "@/features/dashboard/components/JournalTabs";
 import { getKstWeekStartDate } from "@/features/dashboard/lib/weekly-checklist";
 import { getWeeklyChecklistBoardData } from "@/features/dashboard/queries/getWeeklyChecklistBoardData";
@@ -28,6 +29,8 @@ export default async function JournalPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-8">
+      <BoardWidget />
+
       {isGeneral ? (
         aiReport ? (
           <WeeklyAiReportCard report={aiReport} />

@@ -37,9 +37,6 @@ export const WORSHIP_TEAM_NAV_ITEMS: AppNavItem[] = [
   { href: "/more", label: "마이페이지", icon: MoreHorizontal },
 ];
 
-/** @deprecated WORSHIP_TEAM_NAV_ITEMS 또는 getNavItemsForRole 사용 */
-export const APP_NAV_ITEMS = WORSHIP_TEAM_NAV_ITEMS;
-
 export function getNavItemsForRole(role: ProfileRole | null | undefined): AppNavItem[] {
   return isWorshipTeamRole(role) ? WORSHIP_TEAM_NAV_ITEMS : GENERAL_NAV_ITEMS;
 }

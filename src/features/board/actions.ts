@@ -42,6 +42,13 @@ export type BoardActionResult =
   | { ok: true; awardedPoints?: number; totalPoints?: number | null }
   | { ok: false; message: string };
 
+/** 게시글/댓글 변경 시 공지가 노출되는 모든 화면(홈 위젯 포함)을 갱신한다. */
+function revalidateBoardSurfaces() {
+  for (const path of ["/", "/journal", "/announcements", "/free-board", "/board"]) {
+    revalidatePath(path);
+  }
+}
+
 function formatFeedbackTitle(songTitle: string) {
   const now = new Date();
   const mm = String(now.getMonth() + 1).padStart(2, "0");
@@ -85,7 +92,7 @@ export async function createPost(
       points: 10,
     });
 
-    revalidatePath("/board");
+    revalidateBoardSurfaces();
     return {
       ok: true,
       awardedPoints: reward.awardedPoints,
@@ -134,7 +141,7 @@ export async function addComment(postId: string, content: string): Promise<Board
       return { ok: false, message: error.message };
     }
 
-    revalidatePath("/board");
+    revalidateBoardSurfaces();
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
@@ -175,7 +182,7 @@ export async function updatePost(postId: string, content: string): Promise<Board
       return { ok: false, message: "글을 찾을 수 없거나 수정 권한이 없습니다." };
     }
 
-    revalidatePath("/board");
+    revalidateBoardSurfaces();
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
@@ -224,8 +231,7 @@ export async function togglePinPost(postId: string, pinned: boolean): Promise<Bo
       return { ok: false, message: "글을 찾을 수 없습니다." };
     }
 
-    revalidatePath("/announcements");
-    revalidatePath("/board");
+    revalidateBoardSurfaces();
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
@@ -265,7 +271,7 @@ export async function deletePost(postId: string): Promise<BoardActionResult> {
       return { ok: false, message: "글을 찾을 수 없거나 삭제 권한이 없습니다." };
     }
 
-    revalidatePath("/board");
+    revalidateBoardSurfaces();
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
@@ -305,7 +311,7 @@ export async function updateComment(commentId: string, content: string): Promise
       return { ok: false, message: "댓글을 찾을 수 없거나 수정 권한이 없습니다." };
     }
 
-    revalidatePath("/board");
+    revalidateBoardSurfaces();
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
@@ -344,7 +350,7 @@ export async function deleteComment(commentId: string): Promise<BoardActionResul
       return { ok: false, message: "댓글을 찾을 수 없거나 삭제 권한이 없습니다." };
     }
 
-    revalidatePath("/board");
+    revalidateBoardSurfaces();
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
