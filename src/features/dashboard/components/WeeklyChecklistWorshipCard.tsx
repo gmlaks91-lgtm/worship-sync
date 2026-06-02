@@ -1,4 +1,4 @@
-import { Church, Clock3 } from "lucide-react";
+import { Church } from "lucide-react";
 
 import type { WeeklyChecklistWorshipRecords } from "@/features/dashboard/lib/weekly-checklist";
 import { cn } from "@/lib/utils";
@@ -77,32 +77,16 @@ export function WeeklyChecklistWorshipCard({
           checked={value.youthService}
           disabled={disabled}
           label="청년/오후 예배"
-          hint="기본 3점, 10분 전 도착 시 4점입니다."
-          onChange={(youthService) => onImmediateChange({
-              youthService,
-              youthEarlyArrival: youthService ? value.youthEarlyArrival : false,
-            })
-          }
+          hint="참석 기록용 (점수 없음). 10분 전 입실 시에만 4점이 부여됩니다."
+          onChange={(youthService) => onImmediateChange({ youthService })}
         />
-        <div className="rounded-xl border border-gray-100 bg-slate-50 px-4 py-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-800">
-            <Clock3 className="size-4 text-rose-400" aria-hidden />
-            청년/오후 예배 10분 전 도착
-          </div>
-          <label className="mt-3 flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={value.youthEarlyArrival}
-              disabled={disabled || !value.youthService}
-              onChange={(event) => onImmediateChange({ youthEarlyArrival: event.target.checked })}
-              className="size-4 rounded border-gray-200 accent-rose-400"
-            />
-            미리 도착했어요 (+1점)
-          </label>
-          {!value.youthService ? (
-            <p className="mt-2 text-xs text-gray-400">청년/오후 예배를 체크하면 활성화됩니다.</p>
-          ) : null}
-        </div>
+        <WorshipCheckbox
+          checked={value.youthEarlyArrival}
+          disabled={disabled}
+          label="청년/오후 예배 10분 전 도착"
+          hint="10분 전 입실 시 4점 부여 (단순 참석은 0점)"
+          onChange={(youthEarlyArrival) => onImmediateChange({ youthEarlyArrival })}
+        />
         <WorshipCheckbox
           checked={value.wednesdayService}
           disabled={disabled}

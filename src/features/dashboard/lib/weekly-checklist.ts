@@ -17,8 +17,8 @@ export const WEEKLY_CHECKLIST_DAY_DEFS = [
 export const WEEKLY_WORSHIP_FIELDS = [
   { key: "sundayFirstService", label: "주일 1부 예배", basePoints: 3 },
   { key: "sundaySecondService", label: "주일 2부 예배", basePoints: 3 },
-  { key: "youthService", label: "청년/오후 예배", basePoints: 3 },
-  { key: "youthEarlyArrival", label: "청년/오후 예배 10분 전 도착", basePoints: 1 },
+  { key: "youthService", label: "청년/오후 예배", basePoints: 0 },
+  { key: "youthEarlyArrival", label: "청년/오후 예배 10분 전 도착", basePoints: 4 },
   { key: "wednesdayService", label: "수요 예배", basePoints: 3 },
   { key: "fridayPrayer", label: "금요 기도회", basePoints: 3 },
   { key: "saturdayPrayer", label: "토요 기도회", basePoints: 3 },
@@ -219,13 +219,8 @@ export function calculateWeeklyChecklistPoints(params: {
       };
     }
 
-    if (field.key === "youthService") {
-      points = active ? (params.worshipRecords.youthEarlyArrival ? 4 : 3) : 0;
-      return { key: field.key, label: field.label, active, points };
-    }
-
     if (field.key === "youthEarlyArrival") {
-      points = 0;
+      points = active ? 4 : 0;
       return { key: field.key, label: field.label, active, points };
     }
 
