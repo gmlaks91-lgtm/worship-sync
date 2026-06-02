@@ -29,6 +29,8 @@ export type QtCommentRow = {
 export type QtFeedData = {
   post: QtPostRow | null;
   comments: QtCommentRow[];
+  /** 현재 사용자가 리더/관리자라 모든 글을 수정·삭제할 수 있는지 */
+  canManage: boolean;
   error: string | null;
 };
 
@@ -80,11 +82,26 @@ export async function getQtFeedData(): Promise<QtFeedData> {
   const empty: QtFeedData = {
     post: null,
     comments: [],
+    canManage: false,
     error: null,
   };
 
   try {
     const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let canManage = false;
+    if (user) {
+      const { data: me } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      canManage = me?.role === "leader" || me?.role === "admin";
+    }
 
     const { data: posts, error: postsErr } = await supabase
       .from("qt_posts")
@@ -95,7 +112,7 @@ export async function getQtFeedData(): Promise<QtFeedData> {
     if (postsErr) throw new Error(postsErr.message);
 
     const postRow = posts?.[0] ?? null;
-    if (!postRow) return empty;
+    if (!postRow) return { ...empty, canManage };
 
     let authorName = "팀원";
     if (postRow.user_id) {
@@ -131,6 +148,7 @@ export async function getQtFeedData(): Promise<QtFeedData> {
     return {
       post,
       comments,
+      canManage,
       error: null,
     };
   } catch (e) {

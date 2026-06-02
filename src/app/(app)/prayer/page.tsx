@@ -5,7 +5,7 @@ import { getPrayerPageData } from "@/features/prayer/queries/getPrayerPageData";
 export const dynamic = "force-dynamic";
 
 export default async function PrayerPage() {
-  const { prayers, error } = await getPrayerPageData();
+  const { prayers, canManage, error } = await getPrayerPageData();
 
   return (
     <div className="flex flex-1 flex-col gap-8">
@@ -21,7 +21,7 @@ export default async function PrayerPage() {
         </div>
       ) : null}
 
-      <PrayerBoard prayers={prayers} />
+      <PrayerBoard prayers={prayers} canManage={canManage} />
     </div>
   );
 }

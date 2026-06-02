@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Pencil, Plus } from "lucide-react";
+import { BookOpen, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { deleteQtPost } from "@/features/qt-share/actions/qtFeedActions";
 import type { QtPostPayload } from "@/features/qt-share/actions/qtFeedActions";
+import { toastError, toastSuccess } from "@/lib/app-toast";
 import { QtCommentCard } from "@/features/qt-share/components/QtCommentCard";
 import { QtCommentForm } from "@/features/qt-share/components/QtCommentForm";
 import {
@@ -64,6 +66,7 @@ function payloadToPostRow(payload: QtPostPayload): QtPostRow {
 export function QtFeedBoard({
   post: initialPost,
   comments: initialComments,
+  canManage,
   error,
   currentUserId,
 }: QtFeedBoardProps) {
@@ -72,8 +75,10 @@ export function QtFeedBoard({
   const [comments, setComments] = useState(initialComments);
   const [postDialogOpen, setPostDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<QtPostEditTarget | null>(null);
+  const [deletePending, startDelete] = useTransition();
 
   const isOwner = Boolean(post && post.userId && post.userId === currentUserId);
+  const canModify = isOwner || canManage;
 
   useEffect(() => {
     setPost(initialPost);
@@ -145,6 +150,22 @@ export function QtFeedBoard({
     setPostDialogOpen(true);
   };
 
+  const handleDelete = () => {
+    if (!post) return;
+    if (!window.confirm("이 QT를 삭제할까요? 남겨진 나눔 댓글도 함께 삭제됩니다.")) return;
+    startDelete(async () => {
+      const res = await deleteQtPost(post.id);
+      if (!res.ok) {
+        toastError(res.message);
+        return;
+      }
+      toastSuccess("QT가 삭제되었습니다.");
+      setPost(null);
+      setComments([]);
+      router.refresh();
+    });
+  };
+
   return (
     <div className="relative min-h-[calc(100dvh-5rem)] bg-slate-50 pb-24">
       {error ? (
@@ -185,15 +206,31 @@ export function QtFeedBoard({
                     {formatPostDate(post.createdAt)} · {post.authorName}
                   </p>
                 </div>
-                {isOwner ? (
-                  <button
-                    type="button"
-                    onClick={openEditDialog}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-200 hover:text-sky-600"
-                  >
-                    <Pencil className="size-3.5" aria-hidden />
-                    수정
-                  </button>
+                {canModify ? (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={openEditDialog}
+                      disabled={deletePending}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-200 hover:text-sky-600 disabled:opacity-50"
+                    >
+                      <Pencil className="size-3.5" aria-hidden />
+                      수정
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={deletePending}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-red-200 hover:text-red-600 disabled:opacity-50"
+                    >
+                      {deletePending ? (
+                        <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                      ) : (
+                        <Trash2 className="size-3.5" aria-hidden />
+                      )}
+                      삭제
+                    </button>
+                  </div>
                 ) : null}
               </div>
               <div className="mt-4 whitespace-pre-wrap break-words text-center text-[15px] leading-[1.75] text-slate-800 sm:text-left">

@@ -22,6 +22,19 @@ type ActionResult<T = undefined> =
   | { ok: true; data?: T }
   | { ok: false; message: string };
 
+/** 현재 사용자가 리더 또는 관리자인지 확인한다. */
+async function isLeaderOrAdmin(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<boolean> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+  return profile?.role === "leader" || profile?.role === "admin";
+}
+
 export type QtCommentPayload = {
   id: string;
   postId: string;
@@ -185,15 +198,11 @@ export async function updateQtPost(formData: FormData): Promise<ActionResult<QtP
 
     if (fetchError) return { ok: false, message: fetchError.message };
     if (!existing) return { ok: false, message: "게시글을 찾을 수 없습니다." };
-    if (existing.user_id !== user.id) {
-      return { ok: false, message: "본인이 올린 QT만 수정할 수 있습니다." };
-    }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .maybeSingle();
+    const isLeader = await isLeaderOrAdmin(supabase, user.id);
+    if (existing.user_id !== user.id && !isLeader) {
+      return { ok: false, message: "본인 글 또는 리더/관리자만 수정할 수 있습니다." };
+    }
 
     const imageUrl = file ? await uploadQtImage(file) : existing.image_url;
 
@@ -204,12 +213,21 @@ export async function updateQtPost(formData: FormData): Promise<ActionResult<QtP
         bible_verses: parsed.data.bibleVerses,
       })
       .eq("id", parsedId.data)
-      .eq("user_id", user.id)
       .select("id,image_url,bible_verses,created_at,user_id")
       .single();
 
     if (error || !updated) {
       return { ok: false, message: error?.message ?? "말씀 수정에 실패했습니다." };
+    }
+
+    let authorName = "팀원";
+    if (updated.user_id) {
+      const { data: author } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", updated.user_id)
+        .maybeSingle();
+      if (author?.username) authorName = author.username;
     }
 
     revalidatePath("/qt");
@@ -222,9 +240,47 @@ export async function updateQtPost(formData: FormData): Promise<ActionResult<QtP
         bibleVerses: updated.bible_verses ?? "",
         createdAt: updated.created_at,
         userId: updated.user_id,
-        authorName: profile?.username ?? "팀원",
+        authorName,
       },
     };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "알 수 없는 오류입니다." };
+  }
+}
+
+/** 본인 글 또는 리더/관리자만 QT 게시글을 삭제할 수 있다. */
+export async function deleteQtPost(postId: string): Promise<ActionResult> {
+  const parsedId = postIdSchema.safeParse(postId);
+  if (!parsedId.success) {
+    return { ok: false, message: "잘못된 요청입니다." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { ok: false, message: "로그인이 필요합니다." };
+
+    const { data: existing, error: fetchError } = await supabase
+      .from("qt_posts")
+      .select("user_id")
+      .eq("id", parsedId.data)
+      .maybeSingle();
+
+    if (fetchError) return { ok: false, message: fetchError.message };
+    if (!existing) return { ok: false, message: "게시글을 찾을 수 없습니다." };
+
+    const isLeader = await isLeaderOrAdmin(supabase, user.id);
+    if (existing.user_id !== user.id && !isLeader) {
+      return { ok: false, message: "본인 글 또는 리더/관리자만 삭제할 수 있습니다." };
+    }
+
+    const { error } = await supabase.from("qt_posts").delete().eq("id", parsedId.data);
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath("/qt");
+    return { ok: true };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "알 수 없는 오류입니다." };
   }
