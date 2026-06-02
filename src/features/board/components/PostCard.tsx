@@ -1,13 +1,13 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { ChevronDown, Loader2, MessageCircle } from "lucide-react";
+import { ChevronDown, Loader2, MessageCircle, Pin, PinOff } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { CommentSection } from "@/features/board/components/CommentSection";
 import { PostActions } from "@/features/board/components/PostActions";
-import { updatePost } from "@/features/board/actions";
+import { togglePinPost, updatePost } from "@/features/board/actions";
 import type { BoardPost } from "@/features/board/queries/getBoardFeed";
 import { toastPromise, toastError } from "@/lib/app-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,18 +20,39 @@ function initials(name: string) {
   return t.slice(0, 2);
 }
 
+/** 공지(prayer)는 첫 줄을 제목, 나머지를 본문으로 분리해 게시판처럼 표시 */
+function splitTitleBody(content: string): { title: string | null; body: string } {
+  const trimmed = content.trim();
+  const newlineIndex = trimmed.indexOf("\n");
+  if (newlineIndex === -1) {
+    return { title: null, body: trimmed };
+  }
+  const title = trimmed.slice(0, newlineIndex).trim();
+  const body = trimmed.slice(newlineIndex + 1).trim();
+  if (!title || !body) {
+    return { title: null, body: trimmed };
+  }
+  return { title, body };
+}
+
 type PostCardProps = {
   post: BoardPost;
   currentUserId: string | null;
+  canManage?: boolean;
 };
 
-export function PostCard({ post, currentUserId }: PostCardProps) {
+export function PostCard({ post, currentUserId, canManage = false }: PostCardProps) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [pending, startTransition] = useTransition();
+  const [pinPending, startPinTransition] = useTransition();
   const count = post.comments.length;
   const isOwner = Boolean(currentUserId && post.user_id === currentUserId);
+  const isAnnouncement = post.category === "prayer";
+  const { title, body } = isAnnouncement
+    ? splitTitleBody(post.content)
+    : { title: null, body: post.content };
 
   const startEdit = () => {
     setDraft(post.content);
@@ -44,15 +65,15 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   };
 
   const saveEdit = () => {
-    const body = draft.trim();
-    if (!body) {
+    const value = draft.trim();
+    if (!value) {
       toastError("내용을 입력해 주세요.");
       return;
     }
     startTransition(async () => {
       try {
         await toastPromise(
-          updatePost(post.id, body).then((res) => {
+          updatePost(post.id, value).then((res) => {
             if (!res.ok) throw new Error(res.message);
           }),
           "저장하는 중이에요…",
@@ -65,10 +86,28 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
     });
   };
 
+  const togglePin = () => {
+    startPinTransition(async () => {
+      try {
+        await toastPromise(
+          togglePinPost(post.id, !post.is_pinned).then((res) => {
+            if (!res.ok) throw new Error(res.message);
+          }),
+          post.is_pinned ? "고정을 해제하는 중이에요…" : "상단에 고정하는 중이에요…",
+        ).unwrap();
+      } catch {
+        /* handled */
+      }
+    });
+  };
+
   return (
     <article
       className={cn(
-        "rounded-lg border border-border/60 bg-card px-5 py-7 sm:px-6",
+        "rounded-lg border px-5 py-7 transition-colors sm:px-6",
+        post.is_pinned
+          ? "border-sky-200 bg-sky-50/50 ring-1 ring-sky-100"
+          : "border-border/60 bg-card",
       )}
     >
       <div className="flex gap-4">
@@ -84,6 +123,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
               <time
                 className="text-[11px] text-muted-foreground"
                 dateTime={post.created_at}
+                title={format(new Date(post.created_at), "yyyy년 M월 d일 HH:mm", { locale: ko })}
               >
                 {formatDistanceToNow(new Date(post.created_at), {
                   addSuffix: true,
@@ -91,8 +131,40 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
                 })}
               </time>
             </div>
-            {isOwner && !editing ? <PostActions postId={post.id} onEdit={startEdit} /> : null}
+            <div className="flex shrink-0 items-center gap-1">
+              {canManage ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={pinPending}
+                  onClick={togglePin}
+                  aria-label={post.is_pinned ? "고정 해제" : "상단 고정"}
+                  title={post.is_pinned ? "고정 해제" : "상단 고정"}
+                  className={cn(
+                    "text-muted-foreground hover:text-sky-600",
+                    post.is_pinned && "text-sky-600",
+                  )}
+                >
+                  {pinPending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : post.is_pinned ? (
+                    <PinOff className="size-4" aria-hidden />
+                  ) : (
+                    <Pin className="size-4" aria-hidden />
+                  )}
+                </Button>
+              ) : null}
+              {isOwner && !editing ? <PostActions postId={post.id} onEdit={startEdit} /> : null}
+            </div>
           </div>
+
+          {post.is_pinned && !editing ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700">
+              <Pin className="size-3" aria-hidden />
+              고정된 공지
+            </span>
+          ) : null}
 
           {editing ? (
             <div className="space-y-3 rounded-lg border border-border/60 bg-muted/15 p-4 sm:p-5">
@@ -124,9 +196,16 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
               </div>
             </div>
           ) : (
-            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/95">
-              {post.content}
-            </p>
+            <div className="space-y-1.5">
+              {title ? (
+                <h3 className="text-base font-bold leading-snug tracking-tight text-foreground">
+                  {title}
+                </h3>
+              ) : null}
+              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/95">
+                {body}
+              </p>
+            </div>
           )}
 
           <div className="pt-2">

@@ -26,6 +26,11 @@ const updatePostSchema = z.object({
 
 const postIdSchema = z.object({ postId: z.string().uuid() });
 
+const togglePinSchema = z.object({
+  postId: z.string().uuid(),
+  pinned: z.boolean(),
+});
+
 const updateCommentSchema = z.object({
   commentId: z.string().uuid(),
   content: z.string().trim().min(1, "댓글을 입력하세요.").max(4000),
@@ -170,6 +175,56 @@ export async function updatePost(postId: string, content: string): Promise<Board
       return { ok: false, message: "글을 찾을 수 없거나 수정 권한이 없습니다." };
     }
 
+    revalidatePath("/board");
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "알 수 없는 오류입니다.";
+    return { ok: false, message };
+  }
+}
+
+/** 공지 고정/해제 — 리더·관리자만 가능 */
+export async function togglePinPost(postId: string, pinned: boolean): Promise<BoardActionResult> {
+  const parsed = togglePinSchema.safeParse({ postId, pinned });
+  if (!parsed.success) {
+    return { ok: false, message: "잘못된 요청입니다." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { ok: false, message: "로그인이 필요합니다." };
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile || (profile.role !== "leader" && profile.role !== "admin")) {
+      return { ok: false, message: "공지 고정 권한이 없습니다." };
+    }
+
+    const { data, error } = await supabase
+      .from("posts")
+      .update({ is_pinned: parsed.data.pinned })
+      .eq("id", parsed.data.postId)
+      .select("id")
+      .maybeSingle();
+
+    if (error) {
+      return { ok: false, message: error.message };
+    }
+    if (!data) {
+      return { ok: false, message: "글을 찾을 수 없습니다." };
+    }
+
+    revalidatePath("/announcements");
     revalidatePath("/board");
     return { ok: true };
   } catch (e) {

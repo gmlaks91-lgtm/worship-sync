@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Pencil, Plus } from "lucide-react";
 
 import type { QtPostPayload } from "@/features/qt-share/actions/qtFeedActions";
 import { QtCommentCard } from "@/features/qt-share/components/QtCommentCard";
 import { QtCommentForm } from "@/features/qt-share/components/QtCommentForm";
-import { QtPostCreateDialog } from "@/features/qt-share/components/QtPostCreateDialog";
+import {
+  QtPostCreateDialog,
+  type QtPostEditTarget,
+} from "@/features/qt-share/components/QtPostCreateDialog";
 import type { QtCommentRow, QtFeedData, QtPostRow } from "@/features/qt-share/queries/getQtFeedData";
 import type { QtCommentPayload } from "@/features/qt-share/actions/qtFeedActions";
 import { RemoteImage } from "@/components/ui/remote-image";
@@ -68,6 +71,9 @@ export function QtFeedBoard({
   const [post, setPost] = useState(initialPost);
   const [comments, setComments] = useState(initialComments);
   const [postDialogOpen, setPostDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<QtPostEditTarget | null>(null);
+
+  const isOwner = Boolean(post && post.userId && post.userId === currentUserId);
 
   useEffect(() => {
     setPost(initialPost);
@@ -118,6 +124,27 @@ export function QtFeedBoard({
     router.refresh();
   };
 
+  const onPostUpdated = (payload: QtPostPayload) => {
+    setPost((current) =>
+      current
+        ? { ...current, imageUrl: payload.imageUrl, bibleVerses: payload.bibleVerses }
+        : payloadToPostRow(payload),
+    );
+    setEditTarget(null);
+    router.refresh();
+  };
+
+  const openCreateDialog = () => {
+    setEditTarget(null);
+    setPostDialogOpen(true);
+  };
+
+  const openEditDialog = () => {
+    if (!post) return;
+    setEditTarget({ id: post.id, bibleVerses: post.bibleVerses });
+    setPostDialogOpen(true);
+  };
+
   return (
     <div className="relative min-h-[calc(100dvh-5rem)] bg-slate-50 pb-24">
       {error ? (
@@ -137,23 +164,38 @@ export function QtFeedBoard({
       ) : (
         <>
           <header className="bg-white">
-            <div className="relative aspect-[4/5] w-full max-h-[70vh] overflow-hidden bg-slate-900 sm:aspect-[3/4] sm:max-h-[75vh]">
+            <div className="flex w-full justify-center bg-slate-100">
               <RemoteImage
                 src={post.imageUrl}
                 alt="오늘의 QT"
-                fill
+                width={1200}
+                height={1600}
                 priority
                 variant="card"
-                className="object-cover"
-                sizes="100vw"
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="h-auto w-full max-w-2xl max-h-[80vh] object-contain"
               />
             </div>
 
             <div className="mx-auto max-w-2xl px-4 py-6 text-center sm:px-6 sm:text-left">
-              <p className="text-xs font-medium uppercase tracking-wider text-sky-600">오늘의 말씀</p>
-              <p className="mt-1 text-sm text-slate-500">
-                {formatPostDate(post.createdAt)} · {post.authorName}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wider text-sky-600">오늘의 말씀</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {formatPostDate(post.createdAt)} · {post.authorName}
+                  </p>
+                </div>
+                {isOwner ? (
+                  <button
+                    type="button"
+                    onClick={openEditDialog}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-200 hover:text-sky-600"
+                  >
+                    <Pencil className="size-3.5" aria-hidden />
+                    수정
+                  </button>
+                ) : null}
+              </div>
               <div className="mt-4 whitespace-pre-wrap break-words text-center text-[15px] leading-[1.75] text-slate-800 sm:text-left">
                 {post.bibleVerses}
               </div>
@@ -189,7 +231,7 @@ export function QtFeedBoard({
         type="button"
         className="fixed bottom-6 right-4 z-40 flex min-h-14 items-center gap-2 rounded-full bg-sky-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg transition active:scale-[0.98] hover:bg-sky-700 sm:right-6"
         style={{ marginBottom: "env(safe-area-inset-bottom)" }}
-        onClick={() => setPostDialogOpen(true)}
+        onClick={openCreateDialog}
         aria-label="오늘의 QT 올리기"
       >
         <Plus className="size-5" aria-hidden />
@@ -199,8 +241,13 @@ export function QtFeedBoard({
 
       <QtPostCreateDialog
         open={postDialogOpen}
-        onOpenChange={setPostDialogOpen}
+        onOpenChange={(next) => {
+          setPostDialogOpen(next);
+          if (!next) setEditTarget(null);
+        }}
         onCreated={onPostCreated}
+        editPost={editTarget}
+        onUpdated={onPostUpdated}
       />
     </div>
   );

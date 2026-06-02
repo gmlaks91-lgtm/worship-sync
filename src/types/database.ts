@@ -878,6 +878,7 @@ export type Database = {
           user_id: string;
           category: PostCategory;
           content: string;
+          is_pinned: boolean;
           created_at: string;
         };
         Insert: {
@@ -885,6 +886,7 @@ export type Database = {
           user_id: string;
           category: PostCategory;
           content: string;
+          is_pinned?: boolean;
           created_at?: string;
         };
         Update: {
@@ -892,6 +894,7 @@ export type Database = {
           user_id?: string;
           category?: PostCategory;
           content?: string;
+          is_pinned?: boolean;
           created_at?: string;
         };
         Relationships: [];

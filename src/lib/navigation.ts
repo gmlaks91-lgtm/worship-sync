@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   Home,
-  ListMusic,
   Megaphone,
   MessageSquare,
   MoreHorizontal,
@@ -28,7 +27,6 @@ export const GENERAL_NAV_ITEMS: AppNavItem[] = [
   { href: "/prayer", label: "기도 공유", icon: Sparkles },
   { href: "/free-board", label: "자유 게시판", icon: MessageSquare },
   { href: "/announcements", label: "공지사항", icon: Megaphone },
-  { href: "/playlist", label: "송리스트/추천 플리", icon: ListMusic },
   { href: "/shop", label: "포인트 상점", icon: ShoppingBag },
 ];
 

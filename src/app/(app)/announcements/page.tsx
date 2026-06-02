@@ -10,6 +10,17 @@ export default async function AnnouncementsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  let canManage = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    canManage = profile?.role === "leader" || profile?.role === "admin";
+  }
+
   const { posts, error } = await getBoardFeed("prayer");
 
   return (
@@ -26,7 +37,13 @@ export default async function AnnouncementsPage() {
         </div>
       ) : null}
 
-      <BoardFeed category="prayer" posts={posts} currentUserId={user?.id ?? null} showTabs={false} />
+      <BoardFeed
+        category="prayer"
+        posts={posts}
+        currentUserId={user?.id ?? null}
+        showTabs={false}
+        canManage={canManage}
+      />
     </div>
   );
 }

@@ -70,10 +70,6 @@ async function saveWeeklyChecklistDraftInternal(
     return { ok: false, message: existingError.message };
   }
 
-  if (existing?.is_submitted) {
-    return { ok: false, message: "이미 제출된 주간 체크리스트는 수정할 수 없습니다." };
-  }
-
   if (existing?.id) {
     const { error } = await supabase
       .from("weekly_checklists")

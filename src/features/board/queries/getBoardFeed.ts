@@ -17,6 +17,7 @@ export type BoardPost = {
   user_id: string;
   category: PostCategory;
   content: string;
+  is_pinned: boolean;
   created_at: string;
   author_username: string;
   comments: BoardComment[];
@@ -38,8 +39,9 @@ export async function getBoardFeed(category: PostCategory): Promise<{
 
     const { data: postsRaw, error: postsError } = await supabase
       .from("posts")
-      .select("id, user_id, category, content, created_at")
+      .select("id, user_id, category, content, is_pinned, created_at")
       .eq("category", category)
+      .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -91,6 +93,7 @@ export async function getBoardFeed(category: PostCategory): Promise<{
       user_id: p.user_id,
       category: p.category as PostCategory,
       content: p.content,
+      is_pinned: p.is_pinned ?? false,
       created_at: p.created_at,
       author_username: nameByUser.get(p.user_id) ?? "알 수 없음",
       comments: commentsByPost.get(p.id) ?? [],

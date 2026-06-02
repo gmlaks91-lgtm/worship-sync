@@ -29,7 +29,6 @@ type UseWeeklyChecklistAutosaveOptions = {
 
 export function useWeeklyChecklistAutosave({
   weekStartDate,
-  isSubmitted,
   dailyRecords,
   worshipRecords,
   onSaved,
@@ -60,7 +59,7 @@ export function useWeeklyChecklistAutosave({
 
   const runSave = useCallback(
     async (override?: WeeklyChecklistSaveSnapshot) => {
-      if (isSubmitted || isSavingRef.current) return;
+      if (isSavingRef.current) return;
 
       const snapshot = getSnapshot(override);
 
@@ -88,7 +87,7 @@ export function useWeeklyChecklistAutosave({
       setStatus("error");
       toastError(result.message);
     },
-    [clearSavedTimer, getSnapshot, isSubmitted, onSaved, weekStartDate],
+    [clearSavedTimer, getSnapshot, onSaved, weekStartDate],
   );
 
   const debouncedSave = useDebouncedCallback(
@@ -100,29 +99,26 @@ export function useWeeklyChecklistAutosave({
 
   const scheduleDebouncedSave = useCallback(
     (override?: WeeklyChecklistSaveSnapshot) => {
-      if (isSubmitted) return;
       setStatus("pending");
       debouncedSave(override);
     },
-    [debouncedSave, isSubmitted],
+    [debouncedSave],
   );
 
   const saveImmediately = useCallback(
     (override?: WeeklyChecklistSaveSnapshot) => {
-      if (isSubmitted) return;
       debouncedSave.cancel();
       void runSave(override);
     },
-    [debouncedSave, isSubmitted, runSave],
+    [debouncedSave, runSave],
   );
 
   const flushPending = useCallback(
     (override?: WeeklyChecklistSaveSnapshot) => {
-      if (isSubmitted) return;
       debouncedSave.cancel();
       void runSave(override ?? getSnapshot());
     },
-    [debouncedSave, getSnapshot, isSubmitted, runSave],
+    [debouncedSave, getSnapshot, runSave],
   );
 
   useEffect(() => {

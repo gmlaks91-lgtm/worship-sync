@@ -133,12 +133,15 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
   const isSelectedToday = selectedDailyRecord
     ? isKstTodayYmd(selectedDailyRecord.date)
     : false;
-  const isDailyEditable = isSelectedToday && !pending && !isSubmitted;
-  const isWorshipEditable = !pending && !isSubmitted;
+  const isDailyEditable = isSelectedToday && !pending;
+  const isWorshipEditable = !pending;
 
   const onSubmit = () => {
     flushPending();
-    if (!window.confirm("이번 주 체크리스트를 제출할까요? 제출 후에는 수정할 수 없습니다.")) {
+    const confirmMessage = isSubmitted
+      ? "수정한 내용으로 다시 제출할까요? 변경된 점수로 다시 계산됩니다."
+      : "이번 주 체크리스트를 제출할까요? 제출 후에도 언제든 수정해 다시 제출할 수 있습니다.";
+    if (!window.confirm(confirmMessage)) {
       return;
     }
 
@@ -204,12 +207,12 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
             <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
               <Button
                 type="button"
-                disabled={pending || isSubmitted}
+                disabled={pending}
                 className="h-10"
                 onClick={onSubmit}
               >
                 {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Send className="size-4" aria-hidden />}
-                이번 주 제출
+                {isSubmitted ? "수정 후 다시 제출" : "이번 주 제출"}
               </Button>
             </div>
           </div>
@@ -297,7 +300,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
               record={selectedDailyRecord}
               label={formatYmdKstLabel(selectedDailyRecord.date)}
               disabled={!isDailyEditable}
-              readOnly={!isSelectedToday && !isSubmitted}
+              readOnly={!isSelectedToday}
               points={score.dailyBreakdown[selectedDailyIndexSafe]?.points ?? 0}
               hasDoubleBonus={Boolean(score.dailyBreakdown[selectedDailyIndexSafe]?.hasDoubleBonus)}
               onDebouncedChange={(patch) =>

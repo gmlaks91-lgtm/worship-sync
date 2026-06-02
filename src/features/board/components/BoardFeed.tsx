@@ -14,6 +14,7 @@ type BoardFeedProps = {
   posts: BoardPost[];
   currentUserId: string | null;
   showTabs?: boolean;
+  canManage?: boolean;
 };
 
 const tabs: { value: PostCategory; label: string; emoji: string; short: string }[] = [
@@ -32,7 +33,8 @@ function BoardPostList({
   category,
   posts,
   currentUserId,
-}: Pick<BoardFeedProps, "category" | "posts" | "currentUserId">) {
+  canManage,
+}: Pick<BoardFeedProps, "category" | "posts" | "currentUserId" | "canManage">) {
   return (
     <div className="flex flex-col gap-6">
       <CreatePostForm category={category} />
@@ -43,20 +45,31 @@ function BoardPostList({
       ) : null}
       <div className="flex flex-col gap-6">
         {posts.map((p) => (
-          <PostCard key={p.id} post={p} currentUserId={currentUserId} />
+          <PostCard key={p.id} post={p} currentUserId={currentUserId} canManage={canManage} />
         ))}
       </div>
     </div>
   );
 }
 
-export function BoardFeed({ category, posts, currentUserId, showTabs = true }: BoardFeedProps) {
+export function BoardFeed({
+  category,
+  posts,
+  currentUserId,
+  showTabs = true,
+  canManage = false,
+}: BoardFeedProps) {
   const router = useRouter();
 
   if (!showTabs) {
     return (
       <div className="flex flex-col gap-8">
-        <BoardPostList category={category} posts={posts} currentUserId={currentUserId} />
+        <BoardPostList
+          category={category}
+          posts={posts}
+          currentUserId={currentUserId}
+          canManage={canManage}
+        />
       </div>
     );
   }
@@ -93,7 +106,12 @@ export function BoardFeed({ category, posts, currentUserId, showTabs = true }: B
         {tabs.map((t) => (
           <TabsContent key={t.value} value={t.value} className="mt-0 flex flex-col gap-6 outline-none">
             {t.value === category ? (
-              <BoardPostList category={category} posts={posts} currentUserId={currentUserId} />
+              <BoardPostList
+                category={category}
+                posts={posts}
+                currentUserId={currentUserId}
+                canManage={canManage}
+              />
             ) : null}
           </TabsContent>
         ))}

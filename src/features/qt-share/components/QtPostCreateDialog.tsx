@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { ImagePlus, Loader2, Pencil } from "lucide-react";
 
-import { createQtPost, type QtPostPayload } from "@/features/qt-share/actions/qtFeedActions";
+import {
+  createQtPost,
+  updateQtPost,
+  type QtPostPayload,
+} from "@/features/qt-share/actions/qtFeedActions";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,15 +19,35 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+export type QtPostEditTarget = {
+  id: string;
+  bibleVerses: string;
+};
+
 type QtPostCreateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: (post: QtPostPayload) => void;
+  editPost?: QtPostEditTarget | null;
+  onUpdated?: (post: QtPostPayload) => void;
 };
 
-export function QtPostCreateDialog({ open, onOpenChange, onCreated }: QtPostCreateDialogProps) {
+export function QtPostCreateDialog({
+  open,
+  onOpenChange,
+  onCreated,
+  editPost = null,
+  onUpdated,
+}: QtPostCreateDialogProps) {
+  const isEdit = Boolean(editPost);
   const [bibleVerses, setBibleVerses] = useState("");
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (open) {
+      setBibleVerses(editPost?.bibleVerses ?? "");
+    }
+  }, [open, editPost]);
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,6 +56,20 @@ export function QtPostCreateDialog({ open, onOpenChange, onCreated }: QtPostCrea
     fd.set("bibleVerses", bibleVerses);
 
     startTransition(async () => {
+      if (isEdit && editPost) {
+        fd.set("postId", editPost.id);
+        const result = await updateQtPost(fd);
+        if (!result.ok) {
+          toastError(result.message);
+          return;
+        }
+        if (result.data) onUpdated?.(result.data);
+        toastSuccess("QT가 수정되었습니다.");
+        form.reset();
+        onOpenChange(false);
+        return;
+      }
+
       const result = await createQtPost(fd);
       if (!result.ok) {
         toastError(result.message);
@@ -49,20 +87,24 @@ export function QtPostCreateDialog({ open, onOpenChange, onCreated }: QtPostCrea
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>오늘의 QT 올리기</DialogTitle>
+          <DialogTitle>{isEdit ? "QT 수정하기" : "오늘의 QT 올리기"}</DialogTitle>
           <DialogDescription className="text-left leading-relaxed">
-            QT 이미지와 성경 본문을 등록하면 청년들이 나눔을 남길 수 있습니다. 누구나 올릴 수 있어요.
+            {isEdit
+              ? "이미지를 새로 선택하지 않으면 기존 이미지가 그대로 유지됩니다."
+              : "QT 이미지와 성경 본문을 등록하면 청년들이 나눔을 남길 수 있습니다. 누구나 올릴 수 있어요."}
           </DialogDescription>
         </DialogHeader>
 
         <form id="qt-post-form" onSubmit={onSubmit} className="space-y-4">
           <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-slate-700">QT 이미지</span>
+            <span className="text-sm font-medium text-slate-700">
+              QT 이미지{isEdit ? " (변경 시에만 선택)" : ""}
+            </span>
             <input
               name="image"
               type="file"
               accept="image/*"
-              required
+              required={!isEdit}
               disabled={pending}
               className="block w-full text-sm text-slate-600 file:mr-3 file:min-h-10 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium"
             />
@@ -90,8 +132,14 @@ export function QtPostCreateDialog({ open, onOpenChange, onCreated }: QtPostCrea
             className="min-h-11 h-11 w-full gap-2"
             disabled={pending}
           >
-            {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ImagePlus className="size-4" aria-hidden />}
-            등록하기
+            {pending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : isEdit ? (
+              <Pencil className="size-4" aria-hidden />
+            ) : (
+              <ImagePlus className="size-4" aria-hidden />
+            )}
+            {isEdit ? "수정하기" : "등록하기"}
           </Button>
           <Button
             type="button"
