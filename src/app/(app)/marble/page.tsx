@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Settings } from "lucide-react";
+import { Crown, Settings } from "lucide-react";
 
 import { PageIntro } from "@/components/layout/page-intro";
 import { MarbleBoard } from "@/features/marble/components/MarbleBoard";
@@ -7,6 +7,7 @@ import { getBlueMarbleTeams } from "@/features/marble/queries/getBlueMarbleTeams
 import { tokenColorForIndex } from "@/features/marble/types";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -67,8 +68,14 @@ export default async function MarblePage() {
         </div>
       ) : (
         <>
-          <div className="surface-card rounded-[2rem] p-4 sm:p-6">
-            <MarbleBoard teams={teams} />
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/50 bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-200 p-4 shadow-[0_20px_50px_-12px_rgba(14,165,233,0.45)] sm:p-7">
+            {/* 역동적인 배경 데코: 구름/햇살 느낌의 광원 */}
+            <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/40 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-12 -right-8 h-48 w-48 rounded-full bg-emerald-300/40 blur-3xl" />
+            <div className="pointer-events-none absolute right-6 top-6 h-24 w-24 rounded-full bg-amber-200/50 blur-2xl" />
+            <div className="relative">
+              <MarbleBoard teams={teams} />
+            </div>
           </div>
 
           <section className="space-y-3">
@@ -77,9 +84,20 @@ export default async function MarblePage() {
               {teams.map((team, rank) => (
                 <li
                   key={team.id}
-                  className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                  className={cn(
+                    "flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm transition-colors",
+                    rank === 0
+                      ? "border-amber-300 bg-gradient-to-r from-amber-50 to-white"
+                      : "border-slate-200 bg-white",
+                  )}
                 >
-                  <span className="w-6 text-center text-sm font-bold text-slate-400">{rank + 1}</span>
+                  <span className="flex w-6 shrink-0 justify-center">
+                    {rank === 0 ? (
+                      <Crown className="h-5 w-5 text-amber-500" fill="currentColor" />
+                    ) : (
+                      <span className="text-sm font-bold text-slate-400">{rank + 1}</span>
+                    )}
+                  </span>
                   <span
                     className="h-3.5 w-3.5 shrink-0 rounded-full ring-2 ring-white"
                     style={{ backgroundColor: colorByTeamId[team.id] }}
