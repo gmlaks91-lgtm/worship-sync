@@ -12,6 +12,7 @@ const GENERAL_ALLOWED_PREFIXES = [
   "/profile",
   "/shop",
   "/points",
+  "/marble",
 ] as const;
 
 /** 찬양팀 전용 경로(접두사 일치) */

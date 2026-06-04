@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
+  Dices,
   Home,
   Megaphone,
   MessageSquare,
@@ -27,6 +28,7 @@ export const GENERAL_NAV_ITEMS: AppNavItem[] = [
   { href: "/prayer", label: "기도 공유", icon: Sparkles },
   { href: "/free-board", label: "자유 게시판", icon: MessageSquare },
   { href: "/announcements", label: "공지사항", icon: Megaphone },
+  { href: "/marble", label: "부루마블", icon: Dices },
   { href: "/shop", label: "포인트 상점", icon: ShoppingBag },
 ];
 

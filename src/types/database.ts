@@ -553,6 +553,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      blue_marble: {
+        Row: {
+          id: string;
+          team_name: string;
+          score: number;
+          position: number;
+          image_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_name: string;
+          score?: number;
+          position?: number;
+          image_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          team_name?: string;
+          score?: number;
+          position?: number;
+          image_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       inventory_marketplace_listings: {
         Row: {
           id: string;
