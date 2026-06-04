@@ -9,6 +9,7 @@ import {
 } from "@/features/ai-report/queries/getLatestAiReport";
 import { BoardWidget } from "@/features/dashboard/components/BoardWidget";
 import { JournalTabs } from "@/features/dashboard/components/JournalTabs";
+import { QuickActionsHero } from "@/features/dashboard/components/QuickActionsHero";
 import { getKstWeekStartDate } from "@/features/dashboard/lib/weekly-checklist";
 import { getWeeklyChecklistBoardData } from "@/features/dashboard/queries/getWeeklyChecklistBoardData";
 import { getWeeklyChecklistJournalData } from "@/features/dashboard/queries/getWeeklyChecklistJournalData";
@@ -29,6 +30,7 @@ export default async function JournalPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-8">
+      <QuickActionsHero />
       <BoardWidget />
 
       {isGeneral ? (

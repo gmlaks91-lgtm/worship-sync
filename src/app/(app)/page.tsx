@@ -1,4 +1,5 @@
 ﻿import { PersonalDashboard } from "@/features/dashboard/components/PersonalDashboard";
+import { QuickActionsHero } from "@/features/dashboard/components/QuickActionsHero";
 import { BoardWidget } from "@/features/dashboard/components/BoardWidget";
 import { WeeklySetlistHero } from "@/features/setlist/components/WeeklySetlistHero";
 import { getPersonalDashboardData } from "@/features/dashboard/queries/getPersonalDashboardData";
@@ -38,6 +39,7 @@ export default async function AhavaDashboardPage({
 
   return (
     <div className="flex flex-1 flex-col gap-12">
+      <QuickActionsHero />
       <BoardWidget />
 
       <PersonalDashboard data={dashboardData} />
