@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Flag, UserRound } from "lucide-react";
 
@@ -15,6 +15,7 @@ import {
   type BlueMarbleRow,
 } from "@/features/marble/types";
 import { RemoteImage } from "@/components/ui/remote-image";
+import { createClient } from "@/utils/supabase/client";
 import { cn } from "@/lib/utils";
 
 type TokenLayout = {
@@ -27,10 +28,55 @@ type TokenLayout = {
 };
 
 export function MarbleBoard({ teams }: { teams: BlueMarbleRow[] }) {
+  // 서버에서 받은 초기 데이터를 상태로 보관하고, Realtime UPDATE로 갱신한다.
+  const [liveTeams, setLiveTeams] = useState<BlueMarbleRow[]>(teams);
+
+  // 서버 재검증 등으로 props가 바뀌면 동기화
+  useEffect(() => {
+    setLiveTeams(teams);
+  }, [teams]);
+
+  // Supabase Realtime: blue_marble UPDATE 이벤트를 구독 → 상태 갱신 →
+  // position 변경이 framer-motion 애니메이션을 자동 트리거한다.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("blue_marble_board")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "blue_marble" },
+        (payload) => {
+          const updated = payload.new as BlueMarbleRow;
+          if (!updated?.id) return;
+          setLiveTeams((current) =>
+            current.map((team) => (team.id === updated.id ? { ...team, ...updated } : team)),
+          );
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "blue_marble" },
+        (payload) => {
+          const inserted = payload.new as BlueMarbleRow;
+          if (!inserted?.id) return;
+          setLiveTeams((current) =>
+            current.some((team) => team.id === inserted.id)
+              ? current
+              : [...current, inserted],
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
+
   // 같은 칸을 공유하는 목장들이 겹치지 않도록 분산 오프셋을 계산
   const tokens = useMemo<TokenLayout[]>(() => {
     const byCell = new Map<number, BlueMarbleRow[]>();
-    teams.forEach((team) => {
+    liveTeams.forEach((team) => {
       const pos = normalizePosition(team.position);
       const list = byCell.get(pos) ?? [];
       list.push(team);
@@ -38,7 +84,7 @@ export function MarbleBoard({ teams }: { teams: BlueMarbleRow[] }) {
     });
 
     // 색상은 팀 순서로 고정 (점수 변동에 흔들리지 않도록 id 기준 정렬 인덱스 사용)
-    const colorOrder = [...teams]
+    const colorOrder = [...liveTeams]
       .sort((a, b) => a.id.localeCompare(b.id))
       .reduce<Record<string, number>>((acc, team, i) => {
         acc[team.id] = i;
@@ -67,7 +113,7 @@ export function MarbleBoard({ teams }: { teams: BlueMarbleRow[] }) {
       });
     });
     return result;
-  }, [teams]);
+  }, [liveTeams]);
 
   const cells = useMemo(() => buildCells(), []);
 

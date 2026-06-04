@@ -559,6 +559,8 @@ export type Database = {
           team_name: string;
           score: number;
           position: number;
+          pending_score: number;
+          pending_move: number;
           image_url: string | null;
           created_at: string;
           updated_at: string;
@@ -568,6 +570,8 @@ export type Database = {
           team_name: string;
           score?: number;
           position?: number;
+          pending_score?: number;
+          pending_move?: number;
           image_url?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -577,6 +581,8 @@ export type Database = {
           team_name?: string;
           score?: number;
           position?: number;
+          pending_score?: number;
+          pending_move?: number;
           image_url?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -956,6 +962,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      apply_all_pending_marble_moves: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
       calculate_weekly_checklist_points: {
         Args: {
           p_daily_records: Json;

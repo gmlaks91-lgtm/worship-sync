@@ -4,20 +4,24 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { uploadMarbleFace } from "@/features/marble/lib/storage";
-import { MARBLE_BOARD_SIZE } from "@/features/marble/types";
 import { requireLeader } from "@/lib/require-leader";
 import { createClient } from "@/utils/supabase/server";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
-const updateSchema = z.object({
+/** 라이브 이벤트: 주중에 모아두는 대기 점수/이동 칸수 */
+const pendingSchema = z.object({
   id: z.string().uuid({ message: "잘못된 목장 식별자입니다." }),
-  score: z.coerce.number().int("점수는 정수여야 합니다.").min(0, "점수는 0 이상이어야 합니다.").max(1_000_000),
-  position: z.coerce
+  pendingScore: z.coerce
     .number()
-    .int("칸 수는 정수여야 합니다.")
-    .min(0, "칸 수는 0 이상이어야 합니다.")
-    .max(MARBLE_BOARD_SIZE - 1, `칸 수는 0 ~ ${MARBLE_BOARD_SIZE - 1} 사이여야 합니다.`),
+    .int("추가 점수는 정수여야 합니다.")
+    .min(-1_000_000, "추가 점수 범위를 벗어났습니다.")
+    .max(1_000_000, "추가 점수 범위를 벗어났습니다."),
+  pendingMove: z.coerce
+    .number()
+    .int("이동 칸 수는 정수여야 합니다.")
+    .min(-100, "이동 칸 수 범위를 벗어났습니다.")
+    .max(100, "이동 칸 수 범위를 벗어났습니다."),
 });
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -28,12 +32,12 @@ function revalidateMarble() {
   revalidatePath("/marble");
 }
 
-/** 목장 점수·위치(칸 수) 업데이트 */
-export async function updateMarbleTeam(formData: FormData): Promise<ActionResult> {
-  const parsed = updateSchema.safeParse({
+/** 목장의 '이번 주 대기 점수/이동 칸수'만 업데이트 (본 값 score/position은 건드리지 않음) */
+export async function updateMarblePending(formData: FormData): Promise<ActionResult> {
+  const parsed = pendingSchema.safeParse({
     id: formData.get("id")?.toString(),
-    score: formData.get("score")?.toString(),
-    position: formData.get("position")?.toString(),
+    pendingScore: formData.get("pendingScore")?.toString(),
+    pendingMove: formData.get("pendingMove")?.toString(),
   });
 
   if (!parsed.success) {
@@ -47,7 +51,10 @@ export async function updateMarbleTeam(formData: FormData): Promise<ActionResult
 
     const { error } = await supabase
       .from("blue_marble")
-      .update({ score: parsed.data.score, position: parsed.data.position })
+      .update({
+        pending_score: parsed.data.pendingScore,
+        pending_move: parsed.data.pendingMove,
+      })
       .eq("id", parsed.data.id);
 
     if (error) return { ok: false, message: error.message };
@@ -56,6 +63,27 @@ export async function updateMarbleTeam(formData: FormData): Promise<ActionResult
     return { ok: true };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "알 수 없는 오류입니다." };
+  }
+}
+
+/**
+ * 주간 결과 일괄 반영:
+ *  모든 목장의 score += pending_score, position += pending_move (mod 24) 후 pending을 0으로 초기화.
+ *  실제 합산/초기화는 원자적으로 처리되도록 DB RPC에서 수행한다.
+ */
+export async function applyAllPendingMoves(): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+    const leader = await requireLeader(supabase);
+    if (!leader.ok) return { ok: false, message: leader.message };
+
+    const { error } = await supabase.rpc("apply_all_pending_marble_moves");
+    if (error) return { ok: false, message: error.message };
+
+    revalidateMarble();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "일괄 반영 중 오류가 발생했습니다." };
   }
 }
 

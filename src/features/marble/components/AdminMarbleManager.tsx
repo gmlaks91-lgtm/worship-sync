@@ -1,16 +1,53 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import { ImagePlus, Loader2, Save, UserRound } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ImagePlus, Loader2, Rocket, Save, UserRound } from "lucide-react";
 
-import { updateMarbleFace, updateMarbleTeam } from "@/features/marble/actions/adminMarbleActions";
-import { MARBLE_BOARD_SIZE, tokenColorForIndex, type BlueMarbleRow } from "@/features/marble/types";
+import {
+  applyAllPendingMoves,
+  updateMarbleFace,
+  updateMarblePending,
+} from "@/features/marble/actions/adminMarbleActions";
+import {
+  normalizePosition,
+  tokenColorForIndex,
+  type BlueMarbleRow,
+} from "@/features/marble/types";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RemoteImage } from "@/components/ui/remote-image";
 
 export function AdminMarbleManager({ teams }: { teams: BlueMarbleRow[] }) {
+  const router = useRouter();
+  const [applying, startApply] = useTransition();
+
+  const pendingCount = useMemo(
+    () => teams.filter((t) => t.pending_score !== 0 || t.pending_move !== 0).length,
+    [teams],
+  );
+
+  const onApplyAll = () => {
+    if (pendingCount === 0) {
+      toastError("반영할 대기 항목이 없습니다. 먼저 목장별 대기 점수/칸 수를 입력해 주세요.");
+      return;
+    }
+    if (
+      !window.confirm(
+        `대기 중인 ${pendingCount}개 목장의 결과를 한 번에 반영합니다.\n반영 후 대기 값은 0으로 초기화되며, 화면의 말들이 즉시 이동합니다. 진행할까요?`,
+      )
+    ) {
+      return;
+    }
+    startApply(async () => {
+      const res = await applyAllPendingMoves();
+      if (!res.ok) return toastError(res.message);
+      toastSuccess("주간 결과를 일괄 반영했습니다. 보드판이 움직입니다!");
+      router.refresh();
+    });
+  };
+
   if (teams.length === 0) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-700">
@@ -20,29 +57,57 @@ export function AdminMarbleManager({ teams }: { teams: BlueMarbleRow[] }) {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {teams.map((team, index) => (
-        <MarbleTeamCard key={team.id} team={team} colorIndex={index} />
-      ))}
+    <div className="flex flex-col gap-5">
+      {/* 일괄 반영 히어로 버튼 */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-indigo-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-800">주간 결과 일괄 반영</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            현재 대기 중인 목장:{" "}
+            <span className="font-semibold text-sky-600">{pendingCount}개</span>
+            {" "}· 버튼을 누르면 모든 말이 동시에 이동합니다.
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="lg"
+          onClick={onApplyAll}
+          disabled={applying}
+          className="h-12 shrink-0 bg-sky-600 px-6 text-base font-bold hover:bg-sky-700"
+        >
+          {applying ? (
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          ) : (
+            <Rocket className="mr-2 h-5 w-5" />
+          )}
+          🚀 주간 결과 일괄 반영하기
+        </Button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {teams.map((team, index) => (
+          <MarbleTeamCard key={team.id} team={team} colorIndex={index} />
+        ))}
+      </div>
     </div>
   );
 }
 
 function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex: number }) {
-  const [score, setScore] = useState(String(team.score));
-  const [position, setPosition] = useState(String(team.position));
-  const [savingScore, startScoreSave] = useTransition();
+  const [pendingScore, setPendingScore] = useState(String(team.pending_score));
+  const [pendingMove, setPendingMove] = useState(String(team.pending_move));
+  const [savingPending, startPendingSave] = useTransition();
   const [uploading, startUpload] = useTransition();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // DB 값이 외부에서(다른 저장/재검증) 갱신되면 입력값도 동기화
+  // 일괄 반영/외부 갱신으로 DB 값이 바뀌면 입력값 동기화
   useEffect(() => {
-    setScore(String(team.score));
-    setPosition(String(team.position));
-  }, [team.score, team.position]);
+    setPendingScore(String(team.pending_score));
+    setPendingMove(String(team.pending_move));
+  }, [team.pending_score, team.pending_move]);
 
   useEffect(() => {
     if (!pendingFile) {
@@ -57,17 +122,21 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
   const tokenColor = tokenColorForIndex(colorIndex);
   const displayImage = previewUrl ?? team.image_url;
 
-  const onSaveScore = (e: React.FormEvent) => {
+  // 반영 시 예상 결과 미리보기
+  const previewScore = Math.max(0, team.score + (Number(pendingScore) || 0));
+  const previewPosition = normalizePosition(team.position + (Number(pendingMove) || 0));
+
+  const onSavePending = (e: React.FormEvent) => {
     e.preventDefault();
-    startScoreSave(async () => {
+    startPendingSave(async () => {
       const fd = new FormData();
       fd.set("id", team.id);
-      fd.set("score", score.trim());
-      fd.set("position", position.trim());
+      fd.set("pendingScore", pendingScore.trim() || "0");
+      fd.set("pendingMove", pendingMove.trim() || "0");
 
-      const res = await updateMarbleTeam(fd);
+      const res = await updateMarblePending(fd);
       if (!res.ok) return toastError(res.message);
-      toastSuccess(`${team.team_name} 점수/위치를 저장했습니다.`);
+      toastSuccess(`${team.team_name} 대기 값을 저장했습니다.`);
     });
   };
 
@@ -110,45 +179,51 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
         </span>
         <div className="min-w-0">
           <p className="truncate text-base font-semibold text-slate-800">{team.team_name}</p>
-          <p className="text-xs text-slate-400">현재 {team.score}점 · {team.position}칸</p>
+          {/* 현재 값은 읽기 전용(참고용) */}
+          <p className="text-xs text-slate-500">
+            현재 <span className="font-semibold text-slate-700">{team.score}점</span> ·{" "}
+            <span className="font-semibold text-slate-700">{team.position}칸</span>
+          </p>
         </div>
       </div>
 
-      <form onSubmit={onSaveScore} className="space-y-3">
+      <form onSubmit={onSavePending} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-slate-600">점수</span>
+            <span className="text-xs font-medium text-slate-600">이번 주 추가 점수</span>
             <Input
               type="number"
-              min={0}
               inputMode="numeric"
-              value={score}
-              onChange={(e) => setScore(e.target.value)}
-              required
+              value={pendingScore}
+              onChange={(e) => setPendingScore(e.target.value)}
+              placeholder="예: 50 / -10"
             />
           </label>
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-slate-600">
-              위치 (0~{MARBLE_BOARD_SIZE - 1}칸)
-            </span>
+            <span className="text-xs font-medium text-slate-600">이번 주 이동 칸 수</span>
             <Input
               type="number"
-              min={0}
-              max={MARBLE_BOARD_SIZE - 1}
               inputMode="numeric"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-              required
+              value={pendingMove}
+              onChange={(e) => setPendingMove(e.target.value)}
+              placeholder="예: 3 / -1"
             />
           </label>
         </div>
-        <Button type="submit" size="sm" disabled={savingScore} className="w-full">
-          {savingScore ? (
+
+        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          반영 시 예상:{" "}
+          <span className="font-semibold text-sky-600">{previewScore}점</span> ·{" "}
+          <span className="font-semibold text-sky-600">{previewPosition}칸</span>
+        </p>
+
+        <Button type="submit" size="sm" disabled={savingPending} className="w-full">
+          {savingPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
-          점수·위치 저장
+          대기 값 저장
         </Button>
       </form>
 
