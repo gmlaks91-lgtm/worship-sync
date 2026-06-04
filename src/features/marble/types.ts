@@ -1,23 +1,13 @@
 import type { Database } from "@/types/database";
 
 export type BlueMarbleRow = Database["public"]["Tables"]["blue_marble"]["Row"];
+export type BlueMarbleMissionRow = Database["public"]["Tables"]["blue_marble_missions"]["Row"];
 
 /** 보드판 한 바퀴 칸 수 (모노폴리 스타일 7x7 그리드 둘레 = 24칸) */
 export const MARBLE_BOARD_SIZE = 24;
 
 /** 50점마다 1칸 이동 */
 export const MARBLE_POINTS_PER_TILE = 50;
-
-/** 모서리(0,6,12,18)를 제외한 미션(별) 타일 칸 번호 */
-export const STAR_TILES = [4, 10, 16, 22] as const;
-
-/** 별 칸 도착 시 표시할 미션 문구 (STAR_TILES 순서와 1:1 매칭) */
-export const MARBLE_MISSIONS = [
-  "다 함께 모여 단체 셀카 찍기!",
-  "옆 목장과 하이파이브 퀸즈 교환하기!",
-  "오늘의 QT 한 구절을 크게 외치기!",
-  "목장원 전원 일어나 30초 치어리더 하기!",
-] as const;
 
 const MEDAL_EMOJIS = ["🥇", "🥈", "🥉"] as const;
 
@@ -37,14 +27,13 @@ export function pendingMoveFromScore(pendingScore: number): number {
   return Math.floor(pendingScore / MARBLE_POINTS_PER_TILE);
 }
 
-export function isStarTile(index: number): boolean {
-  return (STAR_TILES as readonly number[]).includes(index);
+/** DB 미션 목록 → tile_index 빠른 조회용 Map */
+export function missionsByTile(missions: BlueMarbleMissionRow[]): Map<number, string> {
+  return new Map(missions.map((m) => [m.tile_index, m.mission_text]));
 }
 
-export function missionForStarTile(tileIndex: number): string {
-  const idx = (STAR_TILES as readonly number[]).indexOf(tileIndex);
-  if (idx < 0) return MARBLE_MISSIONS[0];
-  return MARBLE_MISSIONS[idx] ?? MARBLE_MISSIONS[0];
+export function isMissionTile(tileIndex: number, missions: BlueMarbleMissionRow[]): boolean {
+  return missions.some((m) => m.tile_index === tileIndex);
 }
 
 /** 이미지가 없는 목장에 사용할 기본 토큰 색상(목장 순서대로) */

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Flag, Star, UserRound } from "lucide-react";
+import { Flag, UserRound } from "lucide-react";
 
 import {
   MARBLE_GRID_SIDE,
@@ -10,12 +10,12 @@ import {
   indexForCell,
 } from "@/features/marble/lib/board-layout";
 import {
-  isStarTile,
+  isMissionTile,
   medalEmojiForRank,
-  missionForStarTile,
+  missionsByTile,
   positionFromScore,
-  STAR_TILES,
   tokenColorForIndex,
+  type BlueMarbleMissionRow,
   type BlueMarbleRow,
 } from "@/features/marble/types";
 import { RemoteImage } from "@/components/ui/remote-image";
@@ -38,7 +38,6 @@ type StarArrival = {
   mission: string;
 };
 
-/** 보드 길 타일 테마 */
 const TILE_THEMES = [
   { face: "from-emerald-200 to-emerald-50", edge: "border-emerald-400/70", text: "text-emerald-600" },
   { face: "from-sky-200 to-sky-50", edge: "border-sky-400/70", text: "text-sky-600" },
@@ -49,12 +48,23 @@ const TILE_THEMES = [
 
 const CORNER_INDICES = new Set([0, 6, 12, 18]);
 
-export function MarbleBoard({ teams }: { teams: BlueMarbleRow[] }) {
+export function MarbleBoard({
+  teams,
+  missions: initialMissions,
+}: {
+  teams: BlueMarbleRow[];
+  missions: BlueMarbleMissionRow[];
+}) {
   const [liveTeams, setLiveTeams] = useState<BlueMarbleRow[]>(teams);
+  const [liveMissions, setLiveMissions] = useState<BlueMarbleMissionRow[]>(initialMissions);
 
   useEffect(() => {
     setLiveTeams(teams);
   }, [teams]);
+
+  useEffect(() => {
+    setLiveMissions(initialMissions);
+  }, [initialMissions]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -82,12 +92,32 @@ export function MarbleBoard({ teams }: { teams: BlueMarbleRow[] }) {
           );
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "blue_marble_missions" },
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            const old = payload.old as { tile_index?: number };
+            if (old.tile_index === undefined) return;
+            setLiveMissions((current) => current.filter((m) => m.tile_index !== old.tile_index));
+            return;
+          }
+          const row = payload.new as BlueMarbleMissionRow;
+          if (!row?.tile_index) return;
+          setLiveMissions((current) => {
+            const rest = current.filter((m) => m.tile_index !== row.tile_index);
+            return [...rest, row].sort((a, b) => a.tile_index - b.tile_index);
+          });
+        },
+      )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
   }, []);
+
+  const missionMap = useMemo(() => missionsByTile(liveMissions), [liveMissions]);
 
   const colorOrder = useMemo(
     () =>
@@ -147,17 +177,16 @@ export function MarbleBoard({ teams }: { teams: BlueMarbleRow[] }) {
     const arrivals: StarArrival[] = [];
     liveTeams.forEach((team) => {
       const tileIndex = positionFromScore(team.score);
-      if (!isStarTile(tileIndex)) return;
-      arrivals.push({
-        team,
-        tileIndex,
-        mission: missionForStarTile(tileIndex),
-      });
+      const mission = missionMap.get(tileIndex);
+      if (!mission) return;
+      arrivals.push({ team, tileIndex, mission });
     });
     return arrivals;
-  }, [liveTeams]);
+  }, [liveTeams, missionMap]);
 
   const cells = useMemo(() => buildCells(), []);
+
+  const hasStarArrival = starArrivals.length > 0;
 
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[600px] select-none">
@@ -166,17 +195,29 @@ export function MarbleBoard({ teams }: { teams: BlueMarbleRow[] }) {
           if (!cell.perimeter) {
             return <div key={cell.key} aria-hidden />;
           }
-          return <BoardTile key={cell.key} index={cell.index} />;
+          return (
+            <BoardTile
+              key={cell.key}
+              index={cell.index}
+              isMission={isMissionTile(cell.index, liveMissions)}
+            />
+          );
         })}
       </div>
 
-      {/* 중앙 캔버스: 미션 알림판(상) + 명예의 전당(하) */}
+      {/* 중앙 전광판: 별 칸 도착 시 미션만 / 없으면 명예의 전당만 */}
       <div
-        className="pointer-events-none absolute flex flex-col justify-between overflow-hidden rounded-3xl border border-white/50 bg-gradient-to-b from-rose-50 via-amber-50 to-orange-100 px-3 py-3 shadow-[inset_0_2px_16px_rgba(255,255,255,0.6),0_8px_24px_rgba(251,146,60,0.25)]"
+        className={cn(
+          "pointer-events-none absolute flex flex-col overflow-hidden rounded-3xl border border-white/50 bg-gradient-to-b from-rose-50 via-amber-50 to-orange-100 px-3 py-3 shadow-[inset_0_2px_16px_rgba(255,255,255,0.6),0_8px_24px_rgba(251,146,60,0.25)]",
+          hasStarArrival ? "justify-start gap-2" : "justify-center",
+        )}
         style={{ inset: `${100 / MARBLE_GRID_SIDE}%` }}
       >
-        <CenterMissionPanel arrivals={starArrivals} />
-        <CenterHallOfFame ranking={ranking} />
+        {hasStarArrival ? (
+          <CenterMissionAlert arrivals={starArrivals} />
+        ) : (
+          <CenterHallOfFame ranking={ranking} expanded />
+        )}
       </div>
 
       {tokens.map((token) => (
@@ -200,33 +241,19 @@ export function MarbleBoard({ teams }: { teams: BlueMarbleRow[] }) {
   );
 }
 
-function CenterMissionPanel({ arrivals }: { arrivals: StarArrival[] }) {
-  if (arrivals.length === 0) {
-    return (
-      <div className="rounded-2xl border border-amber-200/80 bg-white/70 px-3 py-2.5 text-center shadow-sm backdrop-blur-sm">
-        <p className="text-[11px] font-bold text-amber-800">⭐ 미션 알림판</p>
-        <p className="mt-1 text-[10px] leading-relaxed text-amber-700/90">
-          다음 미션 칸을 향해 달려보세요!
-        </p>
-        <p className="mt-1 text-[9px] text-amber-600/70">
-          별 칸: {STAR_TILES.join(" · ")}번
-        </p>
-      </div>
-    );
-  }
-
+function CenterMissionAlert({ arrivals }: { arrivals: StarArrival[] }) {
   return (
-    <div className="flex max-h-[46%] flex-col gap-1.5 overflow-y-auto">
-      {arrivals.map(({ team, tileIndex, mission }) => (
+    <div className="flex max-h-full flex-col gap-2 overflow-y-auto">
+      {arrivals.map(({ team, mission }) => (
         <div
           key={team.id}
-          className="rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-100 to-yellow-50 px-3 py-2 shadow-sm"
+          className="rounded-2xl border-2 border-amber-400 bg-gradient-to-r from-amber-100 to-yellow-50 px-3 py-3 shadow-md"
         >
-          <p className="text-[10px] font-bold leading-snug text-amber-900">
-            🎉 [{team.team_name}] 별 칸({tileIndex}번) 도착!
+          <p className="text-[11px] font-black leading-snug text-amber-900 sm:text-xs">
+            🎉 [{team.team_name}] 미션 도착!
           </p>
-          <p className="mt-0.5 text-[10px] leading-relaxed text-amber-800">
-            미션: {mission}
+          <p className="mt-1 text-[11px] font-semibold leading-relaxed text-amber-800 sm:text-xs">
+            : {mission}
           </p>
         </div>
       ))}
@@ -234,26 +261,40 @@ function CenterMissionPanel({ arrivals }: { arrivals: StarArrival[] }) {
   );
 }
 
-function CenterHallOfFame({ ranking }: { ranking: BlueMarbleRow[] }) {
+function CenterHallOfFame({
+  ranking,
+  expanded = false,
+}: {
+  ranking: BlueMarbleRow[];
+  expanded?: boolean;
+}) {
   if (ranking.length === 0) {
     return (
-      <p className="text-center text-[10px] text-slate-500">아직 순위가 없어요</p>
+      <p className="text-center text-[11px] text-slate-500">아직 순위가 없어요</p>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-white/80 bg-white/75 px-3 py-2 shadow-sm backdrop-blur-sm">
-      <p className="mb-1.5 text-center text-[10px] font-bold text-slate-600">🏆 실시간 명예의 전당</p>
-      <ol className="flex flex-col gap-1">
+    <div
+      className={cn(
+        "rounded-2xl border border-white/80 bg-white/80 shadow-sm backdrop-blur-sm",
+        expanded ? "w-full px-4 py-4" : "px-3 py-2",
+      )}
+    >
+      <p className={cn("mb-2 text-center font-bold text-slate-600", expanded ? "text-sm" : "text-[10px]")}>
+        🏆 실시간 명예의 전당
+      </p>
+      <ol className="flex flex-col gap-1.5">
         {ranking.map((team, rank) => (
           <li
             key={team.id}
             className={cn(
-              "flex items-center gap-2 rounded-xl px-2 py-1 text-[11px] font-semibold",
+              "flex items-center gap-2 rounded-xl px-3 py-2 font-semibold",
+              expanded ? "text-sm" : "text-[11px]",
               rank === 0 ? "bg-amber-100/90 text-amber-900" : "bg-slate-50/90 text-slate-700",
             )}
           >
-            <span className="w-5 shrink-0 text-center text-sm">{medalEmojiForRank(rank)}</span>
+            <span className="w-6 shrink-0 text-center text-base">{medalEmojiForRank(rank)}</span>
             <span className="min-w-0 flex-1 truncate">{team.team_name}</span>
             <span className="shrink-0 tabular-nums text-sky-600">
               {team.score.toLocaleString()}점
@@ -265,10 +306,9 @@ function CenterHallOfFame({ ranking }: { ranking: BlueMarbleRow[] }) {
   );
 }
 
-function BoardTile({ index }: { index: number }) {
+function BoardTile({ index, isMission }: { index: number; isMission: boolean }) {
   const isStart = index === 0;
   const isCorner = CORNER_INDICES.has(index);
-  const isMission = isStarTile(index);
 
   if (isStart) {
     return (
@@ -281,18 +321,19 @@ function BoardTile({ index }: { index: number }) {
 
   if (isMission) {
     return (
-      <div className="relative flex items-center justify-center overflow-hidden rounded-xl border-b-4 border-amber-500/90 bg-gradient-to-b from-yellow-200 via-amber-100 to-amber-50 shadow-[0_4px_0_0_rgba(180,83,9,0.25),0_0_12px_rgba(251,191,36,0.45)]">
+      <div className="relative flex items-center justify-center overflow-hidden rounded-xl border-b-4 border-amber-500/90 bg-gradient-to-b from-yellow-200 via-amber-100 to-amber-50 shadow-[0_4px_0_0_rgba(180,83,9,0.25),0_0_14px_rgba(251,191,36,0.55)]">
         <motion.div
-          className="absolute inset-0 bg-gradient-to-tr from-amber-300/40 to-transparent"
-          animate={{ opacity: [0.4, 0.8, 0.4] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+          className="absolute inset-0 bg-gradient-to-tr from-amber-300/50 to-transparent"
+          animate={{ opacity: [0.35, 0.85, 0.35] }}
+          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
         />
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 6, ease: "linear" }}
+        <motion.span
+          className="text-xl drop-shadow-md"
+          animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.12, 1] }}
+          transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
         >
-          <Star className="h-5 w-5 text-amber-500 drop-shadow" fill="currentColor" />
-        </motion.div>
+          ⭐
+        </motion.span>
         <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-amber-700/80">
           {index}
         </span>

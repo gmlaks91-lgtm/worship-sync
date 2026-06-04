@@ -589,6 +589,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      blue_marble_missions: {
+        Row: {
+          tile_index: number;
+          mission_text: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          tile_index: number;
+          mission_text: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          tile_index?: number;
+          mission_text?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       inventory_marketplace_listings: {
         Row: {
           id: string;

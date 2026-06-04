@@ -7,7 +7,11 @@ export function parsePendingScoreInput(
   }
 
   const s = String(raw).trim();
-  if (s === "" || s === "-" || s === "+" || s === "undefined" || s === "null") {
+  // 비어 있으면 0으로 처리 → 다른 목장은 입력하지 않아도 저장 가능
+  if (s === "" || s === "undefined" || s === "null") {
+    return { ok: true, value: 0 };
+  }
+  if (s === "-" || s === "+") {
     return { ok: false, message: "올바른 점수를 입력해 주세요. (예: 50, -10, 100)" };
   }
 

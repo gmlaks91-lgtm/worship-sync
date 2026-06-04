@@ -10,11 +10,13 @@ import {
   updateMarblePending,
 } from "@/features/marble/actions/adminMarbleActions";
 import { parsePendingScoreInput, previewPendingScore } from "@/features/marble/lib/parse-pending-score";
+import { AdminMissionSettings } from "@/features/marble/components/AdminMissionSettings";
 import {
   MARBLE_POINTS_PER_TILE,
   pendingMoveFromScore,
   positionFromScore,
   tokenColorForIndex,
+  type BlueMarbleMissionRow,
   type BlueMarbleRow,
 } from "@/features/marble/types";
 import { toastError, toastSuccess } from "@/lib/app-toast";
@@ -22,7 +24,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RemoteImage } from "@/components/ui/remote-image";
 
-export function AdminMarbleManager({ teams }: { teams: BlueMarbleRow[] }) {
+export function AdminMarbleManager({
+  teams,
+  missions,
+}: {
+  teams: BlueMarbleRow[];
+  missions: BlueMarbleMissionRow[];
+}) {
   const router = useRouter();
   const [applying, startApply] = useTransition();
 
@@ -91,12 +99,16 @@ export function AdminMarbleManager({ teams }: { teams: BlueMarbleRow[] }) {
           <MarbleTeamCard key={team.id} team={team} colorIndex={index} />
         ))}
       </div>
+
+      <AdminMissionSettings missions={missions} />
     </div>
   );
 }
 
 function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex: number }) {
-  const [pendingScore, setPendingScore] = useState(String(team.pending_score ?? 0));
+  const [pendingScore, setPendingScore] = useState(
+    team.pending_score ? String(team.pending_score) : "",
+  );
   const [savingPending, startPendingSave] = useTransition();
   const [uploading, startUpload] = useTransition();
 
@@ -105,7 +117,7 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    setPendingScore(String(team.pending_score ?? 0));
+    setPendingScore(team.pending_score ? String(team.pending_score) : "");
   }, [team.pending_score]);
 
   useEffect(() => {
@@ -132,6 +144,11 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
     const scoreCheck = parsePendingScoreInput(pendingScore);
     if (!scoreCheck.ok) {
       toastError(scoreCheck.message);
+      return;
+    }
+    // 비어 있으면 저장하지 않음 (다른 목장만 입력·저장 가능)
+    if (!pendingScore.trim()) {
+      toastError("추가할 점수를 입력해 주세요.");
       return;
     }
     startPendingSave(async () => {
@@ -200,7 +217,7 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
             inputMode="numeric"
             value={pendingScore}
             onChange={(e) => setPendingScore(e.target.value)}
-            placeholder="예: 50, 100, -10"
+            placeholder="비워두면 0 (다른 목장만 입력해도 OK)"
           />
           <p className="text-[10px] text-slate-400">마이너스(-) 입력으로 점수 차감도 가능합니다.</p>
         </label>

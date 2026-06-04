@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AdminMarbleManager } from "@/features/marble/components/AdminMarbleManager";
+import { getBlueMarbleMissions } from "@/features/marble/queries/getBlueMarbleMissions";
 import { getBlueMarbleTeams } from "@/features/marble/queries/getBlueMarbleTeams";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
@@ -43,7 +44,12 @@ export default async function AdminMarblePage() {
     );
   }
 
-  const { teams, error } = await getBlueMarbleTeams();
+  const [{ teams, error: teamsError }, { missions, error: missionsError }] = await Promise.all([
+    getBlueMarbleTeams(),
+    getBlueMarbleMissions(),
+  ]);
+
+  const error = teamsError ?? missionsError;
 
   return (
     <div className="flex flex-1 flex-col gap-7">
@@ -73,7 +79,7 @@ export default async function AdminMarblePage() {
           목장 정보를 불러오지 못했습니다: {error}
         </div>
       ) : (
-        <AdminMarbleManager teams={teams} />
+        <AdminMarbleManager teams={teams} missions={missions} />
       )}
     </div>
   );

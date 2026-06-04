@@ -3,6 +3,7 @@ import { Crown, Settings } from "lucide-react";
 
 import { PageIntro } from "@/components/layout/page-intro";
 import { MarbleBoard } from "@/features/marble/components/MarbleBoard";
+import { getBlueMarbleMissions } from "@/features/marble/queries/getBlueMarbleMissions";
 import { getBlueMarbleTeams } from "@/features/marble/queries/getBlueMarbleTeams";
 import { positionFromScore, tokenColorForIndex } from "@/features/marble/types";
 import { buttonVariants } from "@/components/ui/button";
@@ -28,7 +29,12 @@ export default async function MarblePage() {
     canManage = me?.role === "leader" || me?.role === "admin";
   }
 
-  const { teams, error } = await getBlueMarbleTeams();
+  const [{ teams, error: teamsError }, { missions, error: missionsError }] = await Promise.all([
+    getBlueMarbleTeams(),
+    getBlueMarbleMissions(),
+  ]);
+
+  const error = teamsError ?? missionsError;
 
   // 색상은 보드판과 동일하게 id 정렬 기준으로 고정
   const colorByTeamId = [...teams]
@@ -74,7 +80,7 @@ export default async function MarblePage() {
             <div className="pointer-events-none absolute -bottom-12 -right-8 h-48 w-48 rounded-full bg-emerald-300/40 blur-3xl" />
             <div className="pointer-events-none absolute right-6 top-6 h-24 w-24 rounded-full bg-amber-200/50 blur-2xl" />
             <div className="relative">
-              <MarbleBoard teams={teams} />
+              <MarbleBoard teams={teams} missions={missions} />
             </div>
           </div>
 
