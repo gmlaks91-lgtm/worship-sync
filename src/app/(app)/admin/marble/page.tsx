@@ -52,7 +52,7 @@ export default async function AdminMarblePage() {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Admin</p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">부루마블 목장 관리</h1>
           <p className="text-sm text-muted-foreground">
-            각 목장의 점수·위치(칸 수)를 수정하고 목자 얼굴 이미지를 업로드하세요.
+            목장별 추가 점수를 입력해 두었다가, 주일에 일괄 반영하면 50점 = 1칸 룰에 따라 말이 자동 이동합니다.
           </p>
         </div>
         <Link href="/marble" className={buttonVariants({ variant: "outline", size: "sm" })}>

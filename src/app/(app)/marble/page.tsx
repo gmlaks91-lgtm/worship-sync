@@ -4,7 +4,7 @@ import { Crown, Settings } from "lucide-react";
 import { PageIntro } from "@/components/layout/page-intro";
 import { MarbleBoard } from "@/features/marble/components/MarbleBoard";
 import { getBlueMarbleTeams } from "@/features/marble/queries/getBlueMarbleTeams";
-import { tokenColorForIndex } from "@/features/marble/types";
+import { positionFromScore, tokenColorForIndex } from "@/features/marble/types";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,7 @@ export default async function MarblePage() {
         <PageIntro
           eyebrow="목장 대항전"
           title="디지털 부루마블"
-          description="7개 목장이 점수를 모아 보드판을 완주하는 경쟁! 우리 목장의 위치를 확인해 보세요."
+          description="50점마다 1칸! 7개 목장이 점수를 모아 별 미션 칸을 향해 달리는 목장 대항전입니다."
         />
 
         {canManage ? (
@@ -106,7 +106,7 @@ export default async function MarblePage() {
                   <span className="min-w-0 flex-1 truncate font-medium text-slate-700">
                     {team.team_name}
                   </span>
-                  <span className="text-xs text-slate-400">{team.position}칸</span>
+                  <span className="text-xs text-slate-400">{positionFromScore(team.score)}칸</span>
                   <span className="w-16 text-right text-sm font-semibold text-sky-600">
                     {team.score.toLocaleString()}점
                   </span>

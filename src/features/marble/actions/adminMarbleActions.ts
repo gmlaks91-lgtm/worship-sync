@@ -4,24 +4,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { uploadMarbleFace } from "@/features/marble/lib/storage";
+import { parsePendingScoreInput } from "@/features/marble/lib/parse-pending-score";
 import { requireLeader } from "@/lib/require-leader";
 import { createClient } from "@/utils/supabase/server";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
-/** 라이브 이벤트: 주중에 모아두는 대기 점수/이동 칸수 */
-const pendingSchema = z.object({
+/** 라이브 이벤트: 주중에 모아두는 대기 점수 (칸 이동은 50점 룰로 자동 계산) */
+const pendingIdSchema = z.object({
   id: z.string().uuid({ message: "잘못된 목장 식별자입니다." }),
-  pendingScore: z.coerce
-    .number()
-    .int("추가 점수는 정수여야 합니다.")
-    .min(-1_000_000, "추가 점수 범위를 벗어났습니다.")
-    .max(1_000_000, "추가 점수 범위를 벗어났습니다."),
-  pendingMove: z.coerce
-    .number()
-    .int("이동 칸 수는 정수여야 합니다.")
-    .min(-100, "이동 칸 수 범위를 벗어났습니다.")
-    .max(100, "이동 칸 수 범위를 벗어났습니다."),
 });
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -32,16 +23,19 @@ function revalidateMarble() {
   revalidatePath("/marble");
 }
 
-/** 목장의 '이번 주 대기 점수/이동 칸수'만 업데이트 (본 값 score/position은 건드리지 않음) */
+/** 목장의 '이번 주 대기 점수'만 업데이트 (position은 일괄 반영 시 점수로 자동 계산) */
 export async function updateMarblePending(formData: FormData): Promise<ActionResult> {
-  const parsed = pendingSchema.safeParse({
+  const idParsed = pendingIdSchema.safeParse({
     id: formData.get("id")?.toString(),
-    pendingScore: formData.get("pendingScore")?.toString(),
-    pendingMove: formData.get("pendingMove")?.toString(),
   });
 
-  if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "입력값을 확인해 주세요." };
+  if (!idParsed.success) {
+    return { ok: false, message: idParsed.error.issues[0]?.message ?? "입력값을 확인해 주세요." };
+  }
+
+  const scoreParsed = parsePendingScoreInput(formData.get("pendingScore"));
+  if (!scoreParsed.ok) {
+    return { ok: false, message: scoreParsed.message };
   }
 
   try {
@@ -52,10 +46,10 @@ export async function updateMarblePending(formData: FormData): Promise<ActionRes
     const { error } = await supabase
       .from("blue_marble")
       .update({
-        pending_score: parsed.data.pendingScore,
-        pending_move: parsed.data.pendingMove,
+        pending_score: scoreParsed.value,
+        pending_move: 0,
       })
-      .eq("id", parsed.data.id);
+      .eq("id", idParsed.data.id);
 
     if (error) return { ok: false, message: error.message };
 
@@ -68,8 +62,8 @@ export async function updateMarblePending(formData: FormData): Promise<ActionRes
 
 /**
  * 주간 결과 일괄 반영:
- *  모든 목장의 score += pending_score, position += pending_move (mod 24) 후 pending을 0으로 초기화.
- *  실제 합산/초기화는 원자적으로 처리되도록 DB RPC에서 수행한다.
+ *  score += pending_score 후 position = floor(score / 50) % 24 로 자동 갱신.
+ *  DB RPC(apply_all_pending_marble_moves)에서 원자적으로 처리한다.
  */
 export async function applyAllPendingMoves(): Promise<ActionResult> {
   try {
