@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Flag, UserRound } from "lucide-react";
 
 import {
@@ -9,6 +9,7 @@ import {
   cellCenterPercent,
   indexForCell,
 } from "@/features/marble/lib/board-layout";
+import { detectMarbleCaptures } from "@/features/marble/lib/detect-marble-capture";
 import {
   isMissionTile,
   medalEmojiForRank,
@@ -38,6 +39,15 @@ type StarArrival = {
   mission: string;
 };
 
+type TokenFx = "shake" | "slam";
+
+type CapturePopup = {
+  id: string;
+  left: number;
+  top: number;
+  message: string;
+};
+
 const TILE_THEMES = [
   { face: "from-emerald-200 to-emerald-50", edge: "border-emerald-400/70", text: "text-emerald-600" },
   { face: "from-sky-200 to-sky-50", edge: "border-sky-400/70", text: "text-sky-600" },
@@ -48,6 +58,9 @@ const TILE_THEMES = [
 
 const CORNER_INDICES = new Set([0, 6, 12, 18]);
 
+const CAPTURE_FX_MS = 520;
+const POPUP_VISIBLE_MS = 1100;
+
 export function MarbleBoard({
   teams,
   missions: initialMissions,
@@ -57,6 +70,12 @@ export function MarbleBoard({
 }) {
   const [liveTeams, setLiveTeams] = useState<BlueMarbleRow[]>(teams);
   const [liveMissions, setLiveMissions] = useState<BlueMarbleMissionRow[]>(initialMissions);
+  const [tokenFx, setTokenFx] = useState<Record<string, TokenFx>>({});
+  const [capturePopups, setCapturePopups] = useState<CapturePopup[]>([]);
+
+  const previousTeams = usePrevious(liveTeams);
+  const popupTimersRef = useRef<number[]>([]);
+  const fxTimersRef = useRef<number[]>([]);
 
   useEffect(() => {
     setLiveTeams(teams);
@@ -65,6 +84,60 @@ export function MarbleBoard({
   useEffect(() => {
     setLiveMissions(initialMissions);
   }, [initialMissions]);
+
+  useEffect(() => {
+    return () => {
+      popupTimersRef.current.forEach((id) => window.clearTimeout(id));
+      fxTimersRef.current.forEach((id) => window.clearTimeout(id));
+    };
+  }, []);
+
+  const scheduleFxClear = useCallback((teamIds: string[]) => {
+    const timerId = window.setTimeout(() => {
+      setTokenFx((current) => {
+        const next = { ...current };
+        for (const id of teamIds) delete next[id];
+        return next;
+      });
+    }, CAPTURE_FX_MS);
+    fxTimersRef.current.push(timerId);
+  }, []);
+
+  const schedulePopupRemove = useCallback((popupIds: string[]) => {
+    const timerId = window.setTimeout(() => {
+      setCapturePopups((current) => current.filter((p) => !popupIds.includes(p.id)));
+    }, POPUP_VISIBLE_MS);
+    popupTimersRef.current.push(timerId);
+  }, []);
+
+  useEffect(() => {
+    if (!previousTeams) return;
+
+    const captures = detectMarbleCaptures(previousTeams, liveTeams);
+    if (captures.length === 0) return;
+
+    const fxPatch: Record<string, TokenFx> = {};
+    const affectedIds: string[] = [];
+    for (const { capturerId, capturedId } of captures) {
+      fxPatch[capturedId] = "shake";
+      fxPatch[capturerId] = "slam";
+      affectedIds.push(capturerId, capturedId);
+    }
+    setTokenFx((current) => ({ ...current, ...fxPatch }));
+    scheduleFxClear(affectedIds);
+
+    const newPopups: CapturePopup[] = captures.map((event, index) => {
+      const { left, top } = cellCenterPercent(event.tileIndex);
+      return {
+        id: `capture-${event.capturerId}-${event.capturedId}-${Date.now()}-${index}`,
+        left,
+        top,
+        message: event.message,
+      };
+    });
+    setCapturePopups((current) => [...current, ...newPopups]);
+    schedulePopupRemove(newPopups.map((p) => p.id));
+  }, [liveTeams, previousTeams, scheduleFxClear, schedulePopupRemove]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -205,7 +278,6 @@ export function MarbleBoard({
         })}
       </div>
 
-      {/* 중앙 전광판: 별 칸 도착 시 미션만 / 없으면 명예의 전당만 */}
       <div
         className={cn(
           "pointer-events-none absolute flex flex-col overflow-hidden rounded-3xl border border-white/50 bg-gradient-to-b from-rose-50 via-amber-50 to-orange-100 px-3 py-3 shadow-[inset_0_2px_16px_rgba(255,255,255,0.6),0_8px_24px_rgba(251,146,60,0.25)]",
@@ -233,11 +305,43 @@ export function MarbleBoard({
               transform: `translate(calc(-50% + ${token.offsetX}px), calc(-50% + ${token.offsetY}px))`,
             }}
           >
-            <MarbleToken color={token.color} team={token.team} floatDelay={token.floatDelay} />
+            <MarbleToken
+              color={token.color}
+              team={token.team}
+              floatDelay={token.floatDelay}
+              fx={tokenFx[token.team.id] ?? null}
+            />
           </div>
         </motion.div>
       ))}
+
+      <AnimatePresence>
+        {capturePopups.map((popup) => (
+          <CaptureBubble key={popup.id} popup={popup} />
+        ))}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function CaptureBubble({ popup }: { popup: CapturePopup }) {
+  return (
+    <motion.div
+      className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-1/2"
+      style={{ left: `${popup.left}%`, top: `${popup.top}%` }}
+      initial={{ opacity: 0, y: 10, scale: 0.5 }}
+      animate={{ opacity: 1, y: -28, scale: 1 }}
+      exit={{ opacity: 0, y: -48, scale: 0.75 }}
+      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <span className="whitespace-nowrap rounded-full border-2 border-rose-400 bg-white px-3 py-1.5 text-sm font-black text-rose-600 shadow-[0_6px_20px_rgba(244,63,94,0.35)] sm:text-base">
+        {popup.message}
+      </span>
+      <span
+        className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b-2 border-r-2 border-rose-400 bg-white"
+        aria-hidden
+      />
+    </motion.div>
   );
 }
 
@@ -358,24 +462,51 @@ function BoardTile({ index, isMission }: { index: number; isMission: boolean }) 
   );
 }
 
+const SHAKE_VARIANT = {
+  x: [0, -11, 11, -8, 8, -4, 4, 0],
+  rotate: [0, -6, 6, -4, 4, 0],
+};
+
+const SLAM_VARIANT = {
+  scale: [1, 1.38, 1.1, 1],
+  y: [0, -10, 5, 0],
+};
+
 function MarbleToken({
   color,
   team,
   floatDelay,
+  fx,
 }: {
   color: string;
   team: BlueMarbleRow;
   floatDelay: number;
+  fx: TokenFx | null;
 }) {
+  const isCaptureFx = fx === "shake" || fx === "slam";
+
   return (
     <div className="flex flex-col items-center">
       <motion.div
         className="flex flex-col items-center gap-1"
-        animate={{ y: [0, -4, 0] }}
-        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: floatDelay }}
+        animate={
+          fx === "shake"
+            ? SHAKE_VARIANT
+            : fx === "slam"
+              ? SLAM_VARIANT
+              : { y: [0, -4, 0] }
+        }
+        transition={
+          isCaptureFx
+            ? { duration: 0.48, ease: "easeOut" }
+            : { repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: floatDelay }
+        }
       >
         <span
-          className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_4px_10px_rgba(0,0,0,0.25)] sm:h-11 sm:w-11"
+          className={cn(
+            "relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_4px_10px_rgba(0,0,0,0.25)] sm:h-11 sm:w-11",
+            fx === "slam" && "ring-2 ring-rose-400/80",
+          )}
           style={{ border: `3px solid ${color}` }}
           title={`${team.team_name} · ${team.score}점 · ${positionFromScore(team.score)}칸`}
         >
@@ -404,6 +535,14 @@ function MarbleToken({
 }
 
 type CellInfo = { key: string; perimeter: boolean; index: number };
+
+/** 렌더 직전 스냅샷 — liveTeams 변경 시 이동·말 잡기 판정에 사용 */
+function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T | undefined>(undefined);
+  const previous = ref.current;
+  ref.current = value;
+  return previous;
+}
 
 function buildCells(): CellInfo[] {
   const cells: CellInfo[] = [];

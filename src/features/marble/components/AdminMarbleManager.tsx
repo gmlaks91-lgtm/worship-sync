@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Loader2, Rocket, Save, UserRound } from "lucide-react";
+import { ImagePlus, Loader2, Rocket, UserRound } from "lucide-react";
 
 import {
   applyAllPendingMoves,
   updateMarbleFace,
-  updateMarblePending,
 } from "@/features/marble/actions/adminMarbleActions";
-import { parsePendingScoreInput, previewPendingScore } from "@/features/marble/lib/parse-pending-score";
+import { previewPendingScore } from "@/features/marble/lib/parse-pending-score";
 import { AdminMissionSettings } from "@/features/marble/components/AdminMissionSettings";
 import {
   MARBLE_POINTS_PER_TILE,
@@ -33,28 +32,24 @@ export function AdminMarbleManager({
 }) {
   const router = useRouter();
   const [applying, startApply] = useTransition();
+  const [formKey, setFormKey] = useState(0);
 
-  const pendingCount = useMemo(
-    () => teams.filter((t) => (t.pending_score ?? 0) !== 0).length,
-    [teams],
-  );
-
-  const onApplyAll = () => {
-    if (pendingCount === 0) {
-      toastError("반영할 대기 점수가 없습니다. 먼저 목장별 추가 점수를 입력해 주세요.");
-      return;
-    }
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (
       !window.confirm(
-        `대기 중인 ${pendingCount}개 목장의 점수를 반영합니다.\n50점 = 1칸 룰에 따라 말이 자동으로 이동합니다. 진행할까요?`,
+        "입력한 점수를 모든 목장에 즉시 반영합니다.\n50점 = 1칸 룰에 따라 말이 자동으로 이동합니다. 진행할까요?",
       )
     ) {
       return;
     }
+
+    const formData = new FormData(e.currentTarget);
     startApply(async () => {
-      const res = await applyAllPendingMoves();
+      const res = await applyAllPendingMoves(formData);
       if (!res.ok) return toastError(res.message);
       toastSuccess("주간 결과를 일괄 반영했습니다. 보드판이 움직입니다!");
+      setFormKey((k) => k + 1);
       router.refresh();
     });
   };
@@ -69,36 +64,35 @@ export function AdminMarbleManager({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-indigo-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-slate-800">주간 결과 일괄 반영</p>
-          <p className="mt-0.5 text-xs text-slate-500">
-            대기 중인 목장:{" "}
-            <span className="font-semibold text-sky-600">{pendingCount}개</span>
-            {" "}· {MARBLE_POINTS_PER_TILE}점 = 1칸 자동 이동
-          </p>
+      <form key={formKey} onSubmit={onSubmit} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-3 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-indigo-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-slate-800">주간 결과 일괄 반영</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              목장 {teams.length}개 · {MARBLE_POINTS_PER_TILE}점 = 1칸 자동 이동 · 빈칸은 0점
+            </p>
+          </div>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={applying}
+            className="h-12 shrink-0 bg-sky-600 px-6 text-base font-bold hover:bg-sky-700"
+          >
+            {applying ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <Rocket className="mr-2 h-5 w-5" />
+            )}
+            🚀 주간 결과 일괄 반영하기
+          </Button>
         </div>
-        <Button
-          type="button"
-          size="lg"
-          onClick={onApplyAll}
-          disabled={applying}
-          className="h-12 shrink-0 bg-sky-600 px-6 text-base font-bold hover:bg-sky-700"
-        >
-          {applying ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <Rocket className="mr-2 h-5 w-5" />
-          )}
-          🚀 주간 결과 일괄 반영하기
-        </Button>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {teams.map((team, index) => (
-          <MarbleTeamCard key={team.id} team={team} colorIndex={index} />
-        ))}
-      </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {teams.map((team, index) => (
+            <MarbleTeamCard key={team.id} team={team} colorIndex={index} />
+          ))}
+        </div>
+      </form>
 
       <AdminMissionSettings missions={missions} />
     </div>
@@ -106,19 +100,12 @@ export function AdminMarbleManager({
 }
 
 function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex: number }) {
-  const [pendingScore, setPendingScore] = useState(
-    team.pending_score ? String(team.pending_score) : "",
-  );
-  const [savingPending, startPendingSave] = useTransition();
+  const [addedScore, setAddedScore] = useState("");
   const [uploading, startUpload] = useTransition();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    setPendingScore(team.pending_score ? String(team.pending_score) : "");
-  }, [team.pending_score]);
 
   useEffect(() => {
     if (!pendingFile) {
@@ -133,34 +120,11 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
   const tokenColor = tokenColorForIndex(colorIndex);
   const displayImage = previewUrl ?? team.image_url;
 
-  const parsedPending = previewPendingScore(pendingScore);
+  const parsedAdded = previewPendingScore(addedScore);
   const currentPosition = positionFromScore(team.score);
-  const previewScore = Math.max(0, team.score + parsedPending);
+  const previewScore = Math.max(0, team.score + parsedAdded);
   const previewPosition = positionFromScore(previewScore);
-  const autoMoveTiles = pendingMoveFromScore(parsedPending);
-
-  const onSavePending = (e: React.FormEvent) => {
-    e.preventDefault();
-    const scoreCheck = parsePendingScoreInput(pendingScore);
-    if (!scoreCheck.ok) {
-      toastError(scoreCheck.message);
-      return;
-    }
-    // 비어 있으면 저장하지 않음 (다른 목장만 입력·저장 가능)
-    if (!pendingScore.trim()) {
-      toastError("추가할 점수를 입력해 주세요.");
-      return;
-    }
-    startPendingSave(async () => {
-      const fd = new FormData();
-      fd.set("id", team.id);
-      fd.set("pendingScore", String(scoreCheck.value));
-
-      const res = await updateMarblePending(fd);
-      if (!res.ok) return toastError(res.message);
-      toastSuccess(`${team.team_name} 대기 점수를 저장했습니다.`);
-    });
-  };
+  const autoMoveTiles = pendingMoveFromScore(parsedAdded);
 
   const onUpload = () => {
     if (!pendingFile) {
@@ -209,15 +173,16 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
         </div>
       </div>
 
-      <form onSubmit={onSavePending} className="space-y-3">
+      <div className="space-y-3">
         <label className="block space-y-1.5">
           <span className="text-xs font-medium text-slate-600">이번 주 추가 점수</span>
           <Input
             type="text"
             inputMode="numeric"
-            value={pendingScore}
-            onChange={(e) => setPendingScore(e.target.value)}
-            placeholder="비워두면 0 (다른 목장만 입력해도 OK)"
+            name={`score_${team.id}`}
+            value={addedScore}
+            onChange={(e) => setAddedScore(e.target.value)}
+            placeholder="비워두면 0점"
           />
           <p className="text-[10px] text-slate-400">마이너스(-) 입력으로 점수 차감도 가능합니다.</p>
         </label>
@@ -238,16 +203,7 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
           <span className="font-semibold text-sky-600">{previewScore}점</span> ·{" "}
           <span className="font-semibold text-sky-600">{previewPosition}칸</span>
         </p>
-
-        <Button type="submit" size="sm" disabled={savingPending} className="w-full">
-          {savingPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="mr-2 h-4 w-4" />
-          )}
-          대기 점수 저장
-        </Button>
-      </form>
+      </div>
 
       <div className="space-y-2 border-t border-slate-100 pt-3">
         <input

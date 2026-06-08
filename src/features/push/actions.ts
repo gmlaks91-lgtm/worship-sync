@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { toDbReminderTime } from "@/lib/push/kst-time";
 import { createClient } from "@/utils/supabase/server";
 
 const subscriptionSchema = z.object({
@@ -12,6 +13,15 @@ const subscriptionSchema = z.object({
     auth: z.string().min(1, "auth 키가 필요합니다."),
   }),
   userAgent: z.string().max(512).optional(),
+});
+
+const reminderTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "올바른 시간 형식이 아닙니다. (HH:mm)");
+
+const dailyReminderSchema = z.object({
+  wantsDailyReminder: z.boolean(),
+  dailyReminderTime: reminderTimeSchema.optional(),
 });
 
 export type PushActionResult = { ok: true } | { ok: false; message: string };
@@ -92,6 +102,53 @@ export async function removePushSubscription(endpoint: string): Promise<PushActi
     return {
       ok: false,
       message: e instanceof Error ? e.message : "구독 해제에 실패했습니다.",
+    };
+  }
+}
+
+export async function updateDailyReminderSettings(input: {
+  wantsDailyReminder: boolean;
+  dailyReminderTime?: string;
+}): Promise<PushActionResult> {
+  const parsed = dailyReminderSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "입력값을 확인해 주세요." };
+  }
+
+  if (parsed.data.wantsDailyReminder && !parsed.data.dailyReminderTime) {
+    return { ok: false, message: "알림 시간을 선택해 주세요." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { ok: false, message: "로그인이 필요합니다." };
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        wants_daily_reminder: parsed.data.wantsDailyReminder,
+        daily_reminder_time: parsed.data.wantsDailyReminder
+          ? toDbReminderTime(parsed.data.dailyReminderTime!)
+          : null,
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      return { ok: false, message: error.message };
+    }
+
+    revalidatePath("/more");
+    return { ok: true };
+  } catch (e) {
+    return {
+      ok: false,
+      message: e instanceof Error ? e.message : "알림 설정 저장에 실패했습니다.",
     };
   }
 }

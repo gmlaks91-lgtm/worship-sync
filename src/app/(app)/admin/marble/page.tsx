@@ -58,7 +58,7 @@ export default async function AdminMarblePage() {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Admin</p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">부루마블 목장 관리</h1>
           <p className="text-sm text-muted-foreground">
-            목장별 추가 점수를 입력해 두었다가, 주일에 일괄 반영하면 50점 = 1칸 룰에 따라 말이 자동 이동합니다.
+            목장별 추가 점수를 입력한 뒤 상단의 일괄 반영 버튼 한 번으로 즉시 반영됩니다. 50점 = 1칸 룰에 따라 말이 자동 이동합니다.
           </p>
         </div>
         <Link href="/marble" className={buttonVariants({ variant: "outline", size: "sm" })}>

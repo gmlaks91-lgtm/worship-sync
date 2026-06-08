@@ -21,6 +21,8 @@ export type MyProfileRow = {
   birthday: string | null;
   mbti: string | null;
   favorite_song: string | null;
+  wants_daily_reminder: boolean;
+  daily_reminder_time: string | null;
   updated_at: string;
 };
 
@@ -43,7 +45,7 @@ export async function getMyProfile(): Promise<{
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "id, username, role, avatar_url, role_priority_1, role_priority_2, role_priority_3, points, active_badge, active_border_color, active_background_color, birthday, mbti, favorite_song, updated_at",
+        "id, username, role, avatar_url, role_priority_1, role_priority_2, role_priority_3, points, active_badge, active_border_color, active_background_color, birthday, mbti, favorite_song, wants_daily_reminder, daily_reminder_time, updated_at",
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -73,6 +75,8 @@ export async function getMyProfile(): Promise<{
         birthday: data.birthday ?? null,
         mbti: data.mbti ?? null,
         favorite_song: data.favorite_song ?? null,
+        wants_daily_reminder: data.wants_daily_reminder ?? false,
+        daily_reminder_time: data.daily_reminder_time ?? null,
         updated_at: data.updated_at,
       },
       error: null,

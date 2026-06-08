@@ -3,29 +3,55 @@
 import { useEffect, useState, useTransition } from "react";
 import { Bell, BellOff, Loader2 } from "lucide-react";
 
-import { removePushSubscription } from "@/features/push/actions";
+import {
+  removePushSubscription,
+  updateDailyReminderSettings,
+} from "@/features/push/actions";
 import {
   isPushSupported,
   subscribeToPushNotifications,
 } from "@/features/push/lib/client-push";
+import { normalizeReminderTime } from "@/lib/push/kst-time";
 import { getVapidPublicKeyFromEnv } from "@/lib/push/vapid-env";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type PushNotificationSettingsProps = {
   vapidPublicKey: string | null;
+  wantsDailyReminder: boolean;
+  dailyReminderTime: string | null;
 };
 
 type PushStatus = "unsupported" | "denied" | "subscribed" | "available";
 
-export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSettingsProps) {
+const DEFAULT_REMINDER_TIME = "09:00";
+
+export function PushNotificationSettings({
+  vapidPublicKey,
+  wantsDailyReminder,
+  dailyReminderTime,
+}: PushNotificationSettingsProps) {
   const [status, setStatus] = useState<PushStatus>("available");
   const [pending, start] = useTransition();
-  // 서버에서 내려준 prop을 우선 사용. 클라이언트 env 참조는 useEffect 안에서만.
+  const [reminderPending, startReminder] = useTransition();
+
+  const [wantsReminder, setWantsReminder] = useState(wantsDailyReminder);
+  const [reminderTime, setReminderTime] = useState(
+    normalizeReminderTime(dailyReminderTime) ?? DEFAULT_REMINDER_TIME,
+  );
+
   const [effectivePublicKey, setEffectivePublicKey] = useState<string | null>(
     vapidPublicKey ?? null,
   );
+
+  useEffect(() => {
+    setWantsReminder(wantsDailyReminder);
+    setReminderTime(normalizeReminderTime(dailyReminderTime) ?? DEFAULT_REMINDER_TIME);
+  }, [wantsDailyReminder, dailyReminderTime]);
 
   useEffect(() => {
     const key = vapidPublicKey ?? getVapidPublicKeyFromEnv();
@@ -45,6 +71,37 @@ export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSet
       setStatus(subscription ? "subscribed" : "available");
     });
   }, [vapidPublicKey]);
+
+  const saveReminderSettings = (nextWants: boolean, nextTime: string) => {
+    startReminder(async () => {
+      const res = await updateDailyReminderSettings({
+        wantsDailyReminder: nextWants,
+        dailyReminderTime: nextWants ? nextTime : undefined,
+      });
+      if (!res.ok) {
+        toastError(res.message);
+        setWantsReminder(wantsDailyReminder);
+        setReminderTime(normalizeReminderTime(dailyReminderTime) ?? DEFAULT_REMINDER_TIME);
+        return;
+      }
+      toastSuccess(nextWants ? "경건일지 알림 시간을 저장했어요." : "경건일지 알림을 껐어요.");
+    });
+  };
+
+  const handleReminderToggle = () => {
+    const nextWants = !wantsReminder;
+    setWantsReminder(nextWants);
+    saveReminderSettings(nextWants, reminderTime);
+  };
+
+  const handleReminderTimeChange = (value: string) => {
+    setReminderTime(value);
+  };
+
+  const handleReminderTimeSave = () => {
+    if (!wantsReminder) return;
+    saveReminderSettings(true, reminderTime);
+  };
 
   const handleEnable = () => {
     if (!effectivePublicKey) return;
@@ -94,6 +151,10 @@ export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSet
     );
   }
 
+  const reminderTimeDirty =
+    wantsReminder &&
+    reminderTime !== (normalizeReminderTime(dailyReminderTime) ?? DEFAULT_REMINDER_TIME);
+
   return (
     <Card className="border-border/70">
       <CardHeader className="pb-3">
@@ -102,7 +163,7 @@ export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSet
           공지·중요 소식을 브라우저 알림으로 받을 수 있어요. PWA로 설치한 앱에서도 동일하게 작동합니다.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <StatusMessage status={status} />
 
         {status === "available" ? (
@@ -118,8 +179,90 @@ export function PushNotificationSettings({ vapidPublicKey }: PushNotificationSet
             알림 끄기
           </Button>
         ) : null}
+
+        <div className="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">매일 경건일지 알림 받기</p>
+              <p className="text-xs text-muted-foreground">
+                원하는 시간에 &quot;오늘의 경건일지를 작성해 볼까요?&quot; 알림을 보내드려요. (한국 시간 기준)
+              </p>
+            </div>
+            <ReminderSwitch
+              checked={wantsReminder}
+              disabled={reminderPending || status !== "subscribed"}
+              onChange={handleReminderToggle}
+            />
+          </div>
+
+          {status !== "subscribed" ? (
+            <p className="text-xs text-amber-700">
+              경건일지 알림을 받으려면 먼저 위에서 웹 푸시 알림을 켜 주세요.
+            </p>
+          ) : null}
+
+          {wantsReminder && status === "subscribed" ? (
+            <div className="space-y-2">
+              <Label htmlFor="daily-reminder-time" className="text-xs text-muted-foreground">
+                알림 받을 시간
+              </Label>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  id="daily-reminder-time"
+                  type="time"
+                  value={reminderTime}
+                  disabled={reminderPending}
+                  onChange={(e) => handleReminderTimeChange(e.target.value)}
+                  className="w-[9.5rem]"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={reminderPending || !reminderTimeDirty}
+                  onClick={handleReminderTimeSave}
+                >
+                  {reminderPending ? <Loader2 className="size-4 animate-spin" /> : "시간 저장"}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+function ReminderSwitch({
+  checked,
+  disabled,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onChange}
+      className={cn(
+        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
+        checked ? "border-sky-500 bg-sky-500" : "border-slate-300 bg-slate-200",
+        disabled && "cursor-not-allowed opacity-50",
+      )}
+    >
+      <span
+        className={cn(
+          "inline-block size-5 translate-x-1 rounded-full bg-white shadow transition-transform",
+          checked && "translate-x-6",
+        )}
+      />
+      <span className="sr-only">매일 경건일지 알림 받기</span>
+    </button>
   );
 }
 

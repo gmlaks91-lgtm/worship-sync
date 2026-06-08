@@ -48,6 +48,8 @@ export type Database = {
           birthday: string | null;
           mbti: string | null;
           favorite_song: string | null;
+          wants_daily_reminder: boolean;
+          daily_reminder_time: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -67,6 +69,8 @@ export type Database = {
           birthday?: string | null;
           mbti?: string | null;
           favorite_song?: string | null;
+          wants_daily_reminder?: boolean;
+          daily_reminder_time?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -86,6 +90,8 @@ export type Database = {
           birthday?: string | null;
           mbti?: string | null;
           favorite_song?: string | null;
+          wants_daily_reminder?: boolean;
+          daily_reminder_time?: string | null;
           created_at?: string;
           updated_at?: string;
         };

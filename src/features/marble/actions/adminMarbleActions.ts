@@ -5,25 +5,13 @@ import { z } from "zod";
 
 import { uploadMarbleFace } from "@/features/marble/lib/storage";
 import { parsePendingScoreInput } from "@/features/marble/lib/parse-pending-score";
-import { MARBLE_BOARD_SIZE } from "@/features/marble/types";
+import { MARBLE_BOARD_SIZE, positionFromScore } from "@/features/marble/types";
 import { requireLeader } from "@/lib/require-leader";
 import { createClient } from "@/utils/supabase/server";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
-/** 라이브 이벤트: 주중에 모아두는 대기 점수 (칸 이동은 50점 룰로 자동 계산) */
-const pendingIdSchema = z.object({
-  id: z.string().uuid({ message: "잘못된 목장 식별자입니다." }),
-});
-
-/** optional + default(0): 비어 있으면 0으로 처리 */
-const pendingScoreField = z.preprocess(
-  (val) => parsePendingScoreInput(val),
-  z.union([
-    z.object({ ok: z.literal(true), value: z.number().int() }),
-    z.object({ ok: z.literal(false), message: z.string() }),
-  ]),
-);
+const SCORE_FIELD_PREFIX = "score_";
 
 const missionUpsertSchema = z.object({
   tileIndex: z.coerce
@@ -46,59 +34,46 @@ function revalidateMarble() {
   revalidatePath("/marble");
 }
 
-/** 목장의 '이번 주 대기 점수'만 업데이트 (position은 일괄 반영 시 점수로 자동 계산) */
-export async function updateMarblePending(formData: FormData): Promise<ActionResult> {
-  const idParsed = pendingIdSchema.safeParse({
-    id: formData.get("id")?.toString(),
-  });
-
-  if (!idParsed.success) {
-    return { ok: false, message: idParsed.error.issues[0]?.message ?? "입력값을 확인해 주세요." };
-  }
-
-  const scoreParsed = pendingScoreField.safeParse(formData.get("pendingScore"));
-  if (!scoreParsed.success) {
-    return { ok: false, message: "입력값을 확인해 주세요." };
-  }
-  if (!scoreParsed.data.ok) {
-    return { ok: false, message: scoreParsed.data.message };
-  }
-
-  try {
-    const supabase = await createClient();
-    const leader = await requireLeader(supabase);
-    if (!leader.ok) return { ok: false, message: leader.message };
-
-    const { error } = await supabase
-      .from("blue_marble")
-      .update({
-        pending_score: scoreParsed.data.value,
-        pending_move: 0,
-      })
-      .eq("id", idParsed.data.id);
-
-    if (error) return { ok: false, message: error.message };
-
-    revalidateMarble();
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "알 수 없는 오류입니다." };
-  }
-}
-
 /**
  * 주간 결과 일괄 반영:
- *  score += pending_score 후 position = floor(score / 50) % 24 로 자동 갱신.
- *  DB RPC(apply_all_pending_marble_moves)에서 원자적으로 처리한다.
+ *  FormData의 score_{목장ID} 값을 읽어 기존 score에 더하고,
+ *  position = floor(score / 50) % 24 로 자동 갱신한다. 빈칸은 0점.
  */
-export async function applyAllPendingMoves(): Promise<ActionResult> {
+export async function applyAllPendingMoves(formData: FormData): Promise<ActionResult> {
   try {
     const supabase = await createClient();
     const leader = await requireLeader(supabase);
     if (!leader.ok) return { ok: false, message: leader.message };
 
-    const { error } = await supabase.rpc("apply_all_pending_marble_moves");
-    if (error) return { ok: false, message: error.message };
+    const { data: teams, error: fetchError } = await supabase
+      .from("blue_marble")
+      .select("id, score");
+
+    if (fetchError) return { ok: false, message: fetchError.message };
+    if (!teams?.length) return { ok: false, message: "반영할 목장이 없습니다." };
+
+    for (const team of teams) {
+      const raw = formData.get(`${SCORE_FIELD_PREFIX}${team.id}`);
+      const parsed = parsePendingScoreInput(raw);
+      if (!parsed.ok) {
+        return { ok: false, message: parsed.message };
+      }
+
+      const newScore = Math.max(0, team.score + parsed.value);
+      const newPosition = positionFromScore(newScore);
+
+      const { error } = await supabase
+        .from("blue_marble")
+        .update({
+          score: newScore,
+          position: newPosition,
+          pending_score: 0,
+          pending_move: 0,
+        })
+        .eq("id", team.id);
+
+      if (error) return { ok: false, message: error.message };
+    }
 
     revalidateMarble();
     return { ok: true };

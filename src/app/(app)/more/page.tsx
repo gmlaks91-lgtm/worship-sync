@@ -78,7 +78,11 @@ export default async function MorePage() {
             </CardContent>
           </Card>
 
-          <PushNotificationSettings vapidPublicKey={vapidPublicKey} />
+          <PushNotificationSettings
+            vapidPublicKey={vapidPublicKey}
+            wantsDailyReminder={profile.wants_daily_reminder}
+            dailyReminderTime={profile.daily_reminder_time}
+          />
 
           <ProfileSettings key={profile.updated_at} profile={profile} />
         </>
