@@ -993,6 +993,15 @@ export type Database = {
         Args: Record<string, never>;
         Returns: undefined;
       };
+      apply_marble_score_deltas: {
+        Args: {
+          p_deltas: Json;
+        };
+        Returns: {
+          updated_count: number;
+          message: string;
+        }[];
+      };
       calculate_weekly_checklist_points: {
         Args: {
           p_daily_records: Json;

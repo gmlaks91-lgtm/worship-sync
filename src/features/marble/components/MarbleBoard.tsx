@@ -150,7 +150,16 @@ export function MarbleBoard({
           const updated = payload.new as BlueMarbleRow;
           if (!updated?.id) return;
           setLiveTeams((current) =>
-            current.map((team) => (team.id === updated.id ? { ...team, ...updated } : team)),
+            current.map((team) =>
+              team.id === updated.id
+                ? {
+                    ...team,
+                    ...updated,
+                    score: Number(updated.score ?? team.score),
+                    position: Number(updated.position ?? team.position),
+                  }
+                : team,
+            ),
           );
         },
       )

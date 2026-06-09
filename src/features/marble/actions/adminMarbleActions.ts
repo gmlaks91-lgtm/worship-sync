@@ -5,13 +5,20 @@ import { z } from "zod";
 
 import { uploadMarbleFace } from "@/features/marble/lib/storage";
 import { parsePendingScoreInput } from "@/features/marble/lib/parse-pending-score";
-import { MARBLE_BOARD_SIZE, positionFromScore } from "@/features/marble/types";
+import { MARBLE_BOARD_SIZE } from "@/features/marble/types";
 import { requireLeader } from "@/lib/require-leader";
 import { createClient } from "@/utils/supabase/server";
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
-const SCORE_FIELD_PREFIX = "score_";
+const marbleScoreDeltaSchema = z.object({
+  id: z.string().uuid(),
+  delta: z.number().int().min(-1_000_000).max(1_000_000),
+});
+
+const applyMarbleScoreDeltasSchema = z.object({
+  deltas: z.array(marbleScoreDeltaSchema),
+});
 
 const missionUpsertSchema = z.object({
   tileIndex: z.coerce
@@ -34,11 +41,55 @@ function revalidateMarble() {
   revalidatePath("/marble");
 }
 
+export type ApplyMarbleScoreDeltasInput = z.infer<typeof applyMarbleScoreDeltasSchema>;
+
 /**
  * 주간 결과 일괄 반영:
- *  FormData의 score_{목장ID} 값을 읽어 기존 score에 더하고,
- *  position = floor(score / 50) % 24 로 자동 갱신한다. 빈칸은 0점.
+ *  목장별 delta를 DB RPC로 한 번에 반영한다 (50점 = 1칸 자동 이동).
  */
+export async function applyMarbleScoreDeltas(
+  raw: ApplyMarbleScoreDeltasInput,
+): Promise<ActionResult> {
+  const parsed = applyMarbleScoreDeltasSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, message: "입력값을 다시 확인해 주세요." };
+  }
+
+  const nonZeroDeltas = parsed.data.deltas.filter((item) => item.delta !== 0);
+  if (nonZeroDeltas.length === 0) {
+    return { ok: false, message: "반영할 점수 변경이 없습니다. 추가 점수를 입력해 주세요." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const leader = await requireLeader(supabase);
+    if (!leader.ok) return { ok: false, message: leader.message };
+
+    const { data, error } = await supabase.rpc("apply_marble_score_deltas", {
+      p_deltas: nonZeroDeltas,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    const row = Array.isArray(data) ? data[0] : null;
+    const updatedCount = Number(row?.updated_count ?? 0);
+    if (updatedCount === 0) {
+      return {
+        ok: false,
+        message:
+          row?.message ??
+          "점수가 반영되지 않았습니다. 리더/관리자 권한과 DB 마이그레이션 적용 여부를 확인해 주세요.",
+      };
+    }
+
+    revalidateMarble();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "일괄 반영 중 오류가 발생했습니다." };
+  }
+}
+
+/** @deprecated FormData 대신 applyMarbleScoreDeltas 사용 */
 export async function applyAllPendingMoves(formData: FormData): Promise<ActionResult> {
   try {
     const supabase = await createClient();
@@ -47,36 +98,22 @@ export async function applyAllPendingMoves(formData: FormData): Promise<ActionRe
 
     const { data: teams, error: fetchError } = await supabase
       .from("blue_marble")
-      .select("id, score");
+      .select("id");
 
     if (fetchError) return { ok: false, message: fetchError.message };
     if (!teams?.length) return { ok: false, message: "반영할 목장이 없습니다." };
 
+    const deltas: ApplyMarbleScoreDeltasInput["deltas"] = [];
     for (const team of teams) {
-      const raw = formData.get(`${SCORE_FIELD_PREFIX}${team.id}`);
+      const raw = formData.get(`score_${team.id}`);
       const parsed = parsePendingScoreInput(raw);
-      if (!parsed.ok) {
-        return { ok: false, message: parsed.message };
+      if (!parsed.ok) return { ok: false, message: parsed.message };
+      if (parsed.value !== 0) {
+        deltas.push({ id: team.id, delta: parsed.value });
       }
-
-      const newScore = Math.max(0, team.score + parsed.value);
-      const newPosition = positionFromScore(newScore);
-
-      const { error } = await supabase
-        .from("blue_marble")
-        .update({
-          score: newScore,
-          position: newPosition,
-          pending_score: 0,
-          pending_move: 0,
-        })
-        .eq("id", team.id);
-
-      if (error) return { ok: false, message: error.message };
     }
 
-    revalidateMarble();
-    return { ok: true };
+    return applyMarbleScoreDeltas({ deltas });
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "일괄 반영 중 오류가 발생했습니다." };
   }

@@ -82,7 +82,7 @@ export function WeeklyChecklistDayCard({
     <article className="surface-card-hover relative p-4">
       {readOnly ? (
         <p className="mb-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          과거 날짜는 조회만 가능합니다. 수정은 오늘 날짜에서만 할 수 있습니다.
+          아직 오지 않은 날짜는 조회만 가능합니다. 오늘과 지난 날짜는 수정할 수 있습니다.
         </p>
       ) : null}
       <div className="flex items-start justify-between gap-3">

@@ -14,6 +14,7 @@ import {
   calendarDateFromYmd,
   formatYmdKstLabel,
   getKstTodayYmd,
+  isKstPastOrTodayYmd,
   isKstTodayYmd,
   ymdFromCalendarDate,
   type WeeklyChecklistDailyRecord,
@@ -37,6 +38,7 @@ export function WeeklyChecklistDayPicker({
   const todayYmd = useMemo(() => getKstTodayYmd(), []);
   const weekDateSet = useMemo(() => new Set(dailyRecords.map((record) => record.date)), [dailyRecords]);
   const selectedIsToday = isKstTodayYmd(selectedDateYmd);
+  const selectedIsEditable = isKstPastOrTodayYmd(selectedDateYmd);
 
   const weekEndYmd = dailyRecords[dailyRecords.length - 1]?.date;
   const weekStartYmd = dailyRecords[0]?.date;
@@ -52,14 +54,14 @@ export function WeeklyChecklistDayPicker({
               <Badge variant="outline" className="border-sky-100 bg-sky-50 text-sky-700">
                 오늘
               </Badge>
-            ) : (
+            ) : selectedIsEditable ? null : (
               <Badge variant="outline" className="border-amber-100 bg-amber-50 text-amber-700">
                 조회 전용
               </Badge>
             )}
           </div>
-          {!selectedIsToday ? (
-            <p className="text-xs text-gray-500">오늘이 아닌 날짜는 일일 항목을 수정할 수 없습니다.</p>
+          {!selectedIsEditable ? (
+            <p className="text-xs text-gray-500">아직 오지 않은 날짜는 일일 항목을 수정할 수 없습니다.</p>
           ) : null}
         </div>
 

@@ -9,7 +9,7 @@ import { syncPointsAfterMutation } from "@/features/points/lib/sync-points-clien
 import {
   calculateWeeklyChecklistPoints,
   formatYmdKstLabel,
-  isKstTodayYmd,
+  isKstPastOrTodayYmd,
   resolveDefaultSelectedDateYmd,
   WEEKLY_CHECKLIST_MAX_POINTS,
   type WeeklyChecklistDailyRecord,
@@ -130,10 +130,10 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
   const selectedDailyRecord =
     selectedDailyIndex >= 0 ? dailyRecords[selectedDailyIndex] : dailyRecords[0];
   const selectedDailyIndexSafe = selectedDailyIndex >= 0 ? selectedDailyIndex : 0;
-  const isSelectedToday = selectedDailyRecord
-    ? isKstTodayYmd(selectedDailyRecord.date)
+  const isSelectedEditable = selectedDailyRecord
+    ? isKstPastOrTodayYmd(selectedDailyRecord.date)
     : false;
-  const isDailyEditable = isSelectedToday && !pending;
+  const isDailyEditable = isSelectedEditable && !pending;
   const isWorshipEditable = !pending;
 
   const onSubmit = () => {
@@ -300,7 +300,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
               record={selectedDailyRecord}
               label={formatYmdKstLabel(selectedDailyRecord.date)}
               disabled={!isDailyEditable}
-              readOnly={!isSelectedToday}
+              readOnly={!isSelectedEditable}
               points={score.dailyBreakdown[selectedDailyIndexSafe]?.points ?? 0}
               hasDoubleBonus={Boolean(score.dailyBreakdown[selectedDailyIndexSafe]?.hasDoubleBonus)}
               onDebouncedChange={(patch) =>

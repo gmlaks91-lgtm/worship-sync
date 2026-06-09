@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, Rocket, UserRound } from "lucide-react";
 
 import {
-  applyAllPendingMoves,
+  applyMarbleScoreDeltas,
   updateMarbleFace,
 } from "@/features/marble/actions/adminMarbleActions";
-import { previewPendingScore } from "@/features/marble/lib/parse-pending-score";
+import { parsePendingScoreInput, previewPendingScore } from "@/features/marble/lib/parse-pending-score";
 import { AdminMissionSettings } from "@/features/marble/components/AdminMissionSettings";
 import {
   MARBLE_POINTS_PER_TILE,
@@ -23,6 +23,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RemoteImage } from "@/components/ui/remote-image";
 
+function emptyScoresForTeams(teams: BlueMarbleRow[]) {
+  return Object.fromEntries(teams.map((team) => [team.id, ""]));
+}
+
 export function AdminMarbleManager({
   teams,
   missions,
@@ -32,10 +36,13 @@ export function AdminMarbleManager({
 }) {
   const router = useRouter();
   const [applying, startApply] = useTransition();
-  const [formKey, setFormKey] = useState(0);
+  const [addedScores, setAddedScores] = useState<Record<string, string>>(() => emptyScoresForTeams(teams));
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  useEffect(() => {
+    setAddedScores(emptyScoresForTeams(teams));
+  }, [teams]);
+
+  const onApplyScores = () => {
     if (
       !window.confirm(
         "입력한 점수를 모든 목장에 즉시 반영합니다.\n50점 = 1칸 룰에 따라 말이 자동으로 이동합니다. 진행할까요?",
@@ -44,12 +51,29 @@ export function AdminMarbleManager({
       return;
     }
 
-    const formData = new FormData(e.currentTarget);
+    const deltas: Array<{ id: string; delta: number }> = [];
+    for (const team of teams) {
+      const raw = addedScores[team.id] ?? "";
+      const parsed = parsePendingScoreInput(raw);
+      if (!parsed.ok) {
+        toastError(`${team.team_name}: ${parsed.message}`);
+        return;
+      }
+      if (parsed.value !== 0) {
+        deltas.push({ id: team.id, delta: parsed.value });
+      }
+    }
+
+    if (deltas.length === 0) {
+      toastError("반영할 점수 변경이 없습니다. 추가 점수를 입력해 주세요.");
+      return;
+    }
+
     startApply(async () => {
-      const res = await applyAllPendingMoves(formData);
+      const res = await applyMarbleScoreDeltas({ deltas });
       if (!res.ok) return toastError(res.message);
       toastSuccess("주간 결과를 일괄 반영했습니다. 보드판이 움직입니다!");
-      setFormKey((k) => k + 1);
+      setAddedScores(emptyScoresForTeams(teams));
       router.refresh();
     });
   };
@@ -64,7 +88,7 @@ export function AdminMarbleManager({
 
   return (
     <div className="flex flex-col gap-5">
-      <form key={formKey} onSubmit={onSubmit} className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-indigo-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-slate-800">주간 결과 일괄 반영</p>
@@ -73,10 +97,11 @@ export function AdminMarbleManager({
             </p>
           </div>
           <Button
-            type="submit"
+            type="button"
             size="lg"
             disabled={applying}
             className="h-12 shrink-0 bg-sky-600 px-6 text-base font-bold hover:bg-sky-700"
+            onClick={onApplyScores}
           >
             {applying ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -89,18 +114,35 @@ export function AdminMarbleManager({
 
         <div className="grid gap-4 sm:grid-cols-2">
           {teams.map((team, index) => (
-            <MarbleTeamCard key={team.id} team={team} colorIndex={index} />
+            <MarbleTeamCard
+              key={team.id}
+              team={team}
+              colorIndex={index}
+              addedScore={addedScores[team.id] ?? ""}
+              onAddedScoreChange={(value) =>
+                setAddedScores((current) => ({ ...current, [team.id]: value }))
+              }
+            />
           ))}
         </div>
-      </form>
+      </div>
 
       <AdminMissionSettings missions={missions} />
     </div>
   );
 }
 
-function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex: number }) {
-  const [addedScore, setAddedScore] = useState("");
+function MarbleTeamCard({
+  team,
+  colorIndex,
+  addedScore,
+  onAddedScoreChange,
+}: {
+  team: BlueMarbleRow;
+  colorIndex: number;
+  addedScore: string;
+  onAddedScoreChange: (value: string) => void;
+}) {
   const [uploading, startUpload] = useTransition();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -179,9 +221,8 @@ function MarbleTeamCard({ team, colorIndex }: { team: BlueMarbleRow; colorIndex:
           <Input
             type="text"
             inputMode="numeric"
-            name={`score_${team.id}`}
             value={addedScore}
-            onChange={(e) => setAddedScore(e.target.value)}
+            onChange={(e) => onAddedScoreChange(e.target.value)}
             placeholder="비워두면 0점"
           />
           <p className="text-[10px] text-slate-400">마이너스(-) 입력으로 점수 차감도 가능합니다.</p>

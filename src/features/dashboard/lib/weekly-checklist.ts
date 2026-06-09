@@ -129,6 +129,11 @@ export function isKstTodayYmd(ymd: string, now = new Date()) {
   return ymd === getKstTodayYmd(now);
 }
 
+/** KST 기준 오늘 이전·당일인지 (미래 날짜는 false) */
+export function isKstPastOrTodayYmd(ymd: string, now = new Date()) {
+  return ymd <= getKstTodayYmd(now);
+}
+
 export function formatYmdKstLabel(ymd: string) {
   const date = parseUtcDateFromYmd(ymd);
   const weekday = WEEKLY_CHECKLIST_DAY_DEFS[date.getUTCDay()]?.label ?? "";
