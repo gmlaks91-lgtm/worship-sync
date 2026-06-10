@@ -1,0 +1,20 @@
+/** UI용 MBTI 선택지 (자유 입력도 가능하도록 별도 필드와 병행 가능). */
+export const MBTI_OPTIONS = [
+  "",
+  "INTJ",
+  "INTP",
+  "ENTJ",
+  "ENTP",
+  "INFJ",
+  "INFP",
+  "ENFJ",
+  "ENFP",
+  "ISTJ",
+  "ISFJ",
+  "ESTJ",
+  "ESFJ",
+  "ISTP",
+  "ISFP",
+  "ESTP",
+  "ESFP",
+] as const;
