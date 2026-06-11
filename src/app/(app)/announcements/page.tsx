@@ -28,7 +28,7 @@ export default async function AnnouncementsPage() {
       <PageIntro
         eyebrow="소통"
         title="공지사항"
-        description="청년부와 찬양팀의 중요한 소식을 확인하세요."
+        description="청년부의 중요한 소식을 확인하세요."
       />
 
       {error ? (

@@ -13,16 +13,14 @@ import {
 
 import type { ProfileRole } from "@/types/database";
 
-import { isWorshipTeamRole } from "@/lib/roles";
-
 export type AppNavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
 };
 
-/** 일반 청년부원 사이드 메뉴 */
-export const GENERAL_NAV_ITEMS: AppNavItem[] = [
+export const APP_NAV_ITEMS: AppNavItem[] = [
+  { href: "/", label: "송리스트", icon: Home },
   { href: "/journal", label: "경건 일지", icon: BookOpen },
   { href: "/qt", label: "QT 나눔방", icon: Sun },
   { href: "/prayer", label: "기도 공유", icon: Sparkles },
@@ -30,15 +28,15 @@ export const GENERAL_NAV_ITEMS: AppNavItem[] = [
   { href: "/announcements", label: "공지사항", icon: Megaphone },
   { href: "/marble", label: "부루마블", icon: Dices },
   { href: "/shop", label: "포인트 상점", icon: ShoppingBag },
-];
-
-/** 찬양팀·관리자 전체 사이드 메뉴 */
-export const WORSHIP_TEAM_NAV_ITEMS: AppNavItem[] = [
-  { href: "/", label: "홈", icon: Home },
-  ...GENERAL_NAV_ITEMS,
   { href: "/more", label: "마이페이지", icon: MoreHorizontal },
 ];
 
-export function getNavItemsForRole(role: ProfileRole | null | undefined): AppNavItem[] {
-  return isWorshipTeamRole(role) ? WORSHIP_TEAM_NAV_ITEMS : GENERAL_NAV_ITEMS;
+/** @deprecated use APP_NAV_ITEMS */
+export const GENERAL_NAV_ITEMS = APP_NAV_ITEMS.filter((item) => item.href !== "/");
+
+/** @deprecated use APP_NAV_ITEMS */
+export const WORSHIP_TEAM_NAV_ITEMS = APP_NAV_ITEMS;
+
+export function getNavItemsForRole(_role: ProfileRole | null | undefined): AppNavItem[] {
+  return APP_NAV_ITEMS;
 }

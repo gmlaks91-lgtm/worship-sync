@@ -6,6 +6,5 @@ export function revalidatePointsRoutes() {
   revalidatePath("/profile");
   revalidatePath("/points");
   revalidatePath("/shop");
-  revalidatePath("/faith");
   revalidatePath("/", "layout");
 }

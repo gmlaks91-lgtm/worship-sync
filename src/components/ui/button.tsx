@@ -4,23 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all duration-200 outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-sky-200 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all duration-200 outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-primary/25 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          "bg-sky-500 text-white shadow-sm hover:bg-sky-600 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] focus-visible:ring-sky-200",
+          "bg-primary text-primary-foreground shadow-sm hover:brightness-110 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] focus-visible:ring-primary/25",
         accent:
-          "bg-rose-400 text-white shadow-sm hover:bg-rose-500 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
+          "bg-amber-500 text-white shadow-sm hover:bg-amber-600 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
         outline:
-          "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-sky-200 hover:bg-sky-50/60 hover:text-sky-700 active:scale-[0.98] aria-expanded:bg-sky-50 aria-expanded:text-sky-700",
+          "border-border bg-card text-foreground shadow-sm hover:border-primary/40 hover:bg-primary/5 hover:text-primary active:scale-[0.98] aria-expanded:bg-primary/5 aria-expanded:text-primary",
         secondary:
-          "bg-rose-50 text-rose-700 shadow-sm hover:bg-rose-100 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] aria-expanded:bg-rose-100",
+          "bg-amber-50 text-amber-900 shadow-sm hover:bg-amber-100 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] aria-expanded:bg-amber-100",
         ghost:
-          "text-slate-600 hover:bg-sky-50/80 hover:text-sky-700 active:scale-[0.98] aria-expanded:bg-sky-50",
+          "text-muted-foreground hover:bg-primary/8 hover:text-primary active:scale-[0.98] aria-expanded:bg-primary/8",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
-        link: "text-sky-600 underline-offset-4 hover:text-sky-700 hover:underline",
+        link: "text-primary underline-offset-4 hover:brightness-110 hover:underline",
       },
       size: {
         default:

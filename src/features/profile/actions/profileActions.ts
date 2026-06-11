@@ -69,7 +69,6 @@ export async function updateProfile(raw: {
 
     revalidatePath("/profile");
     revalidatePath("/more");
-    revalidatePath("/team");
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {

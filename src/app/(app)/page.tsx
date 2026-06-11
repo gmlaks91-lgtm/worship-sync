@@ -1,17 +1,16 @@
-﻿import { PersonalDashboard } from "@/features/dashboard/components/PersonalDashboard";
-import { QuickActionsHero } from "@/features/dashboard/components/QuickActionsHero";
+﻿import { WorldCupBanner } from "@/components/layout/WorldCupBanner";
 import { BoardWidget } from "@/features/dashboard/components/BoardWidget";
+import { QuickActionsHero } from "@/features/dashboard/components/QuickActionsHero";
 import { WeeklySetlistHero } from "@/features/setlist/components/WeeklySetlistHero";
-import { getPersonalDashboardData } from "@/features/dashboard/queries/getPersonalDashboardData";
+import { getLineupMembers } from "@/features/setlist/queries/getLineupMembers";
 import { fetchWeeklyPrepSetlist } from "@/features/setlist/weekly/fetch-weekly-prep-setlist";
 import { resolveDashboardWeekSunday } from "@/features/setlist/weekly/navigation";
-import { getTeamMembers } from "@/features/team/queries/getTeamMembers";
 import { getRecentSongWarningByVideoId } from "@/features/setlist/queries/getSongUsageStats";
 import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function AhavaDashboardPage({
+export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<{ sunday?: string }>;
@@ -24,34 +23,33 @@ export default async function AhavaDashboardPage({
 
   const weekSunday = resolveDashboardWeekSunday(sp.sunday);
 
-  const [dashboardData, weeklyData, teamMembersResult, recentSongWarningByVideoId] = await Promise.all([
-    getPersonalDashboardData(),
+  const [weeklyData, lineupMembersResult, recentSongWarningByVideoId] = await Promise.all([
     fetchWeeklyPrepSetlist(weekSunday),
-    getTeamMembers(),
+    getLineupMembers(),
     getRecentSongWarningByVideoId(),
   ]);
 
-  const canManageSetlists = user
-    ? teamMembersResult.members.some(
-        (member) => member.id === user.id && (member.role === "leader" || member.role === "admin"),
-      )
-    : false;
+  let canManageSetlists = false;
+  if (user) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+    canManageSetlists = profile?.role === "leader" || profile?.role === "admin";
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-12">
-      <QuickActionsHero />
-      <BoardWidget />
-
-      <PersonalDashboard data={dashboardData} />
+      <WorldCupBanner />
 
       <WeeklySetlistHero
         weekSundayYmd={weekSunday}
         setlist={weeklyData.setlist}
         error={weeklyData.error}
         canManageSetlists={canManageSetlists}
-        teamMembers={teamMembersResult.members}
+        teamMembers={lineupMembersResult.members}
         recentSongWarningByVideoId={recentSongWarningByVideoId}
       />
+
+      <QuickActionsHero />
+      <BoardWidget />
     </div>
   );
 }

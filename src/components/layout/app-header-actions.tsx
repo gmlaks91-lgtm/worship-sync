@@ -29,7 +29,10 @@ export function AppHeaderActions({
       {isLoggedIn ? (
         <Link
           href="/profile"
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground")}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "text-amber-100/90 hover:bg-white/10 hover:text-white",
+          )}
         >
           내 프로필
         </Link>
@@ -38,13 +41,18 @@ export function AppHeaderActions({
         <AddSetlistTriggerButton
           variant="outline"
           size="sm"
-          className="border-border/80"
+          className="border-amber-400/40 bg-emerald-900/40 text-amber-100 hover:bg-emerald-800"
           teamMembers={teamMembers}
           recentSongWarningByVideoId={recentSongWarningByVideoId}
         />
       ) : null}
       <form action={signOut}>
-        <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground">
+        <Button
+          type="submit"
+          variant="ghost"
+          size="sm"
+          className="text-amber-100/90 hover:bg-white/10 hover:text-white"
+        >
           로그아웃
         </Button>
       </form>

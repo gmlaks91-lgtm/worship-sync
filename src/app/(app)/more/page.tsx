@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function MorePage() {
-  const { profile, error } = await getMyProfile();
+  const { profile, error, dailyReminderAvailable } = await getMyProfile();
   const pointsData = await getPointLogsPageData();
   const vapidPublicKey = getVapidPublicKey();
 
@@ -82,6 +82,7 @@ export default async function MorePage() {
             vapidPublicKey={vapidPublicKey}
             wantsDailyReminder={profile.wants_daily_reminder}
             dailyReminderTime={profile.daily_reminder_time}
+            dailyReminderAvailable={dailyReminderAvailable}
           />
 
           <ProfileSettings key={profile.updated_at} profile={profile} />
@@ -106,9 +107,6 @@ export default async function MorePage() {
             <Link href="/admin/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
               상점 관리자
             </Link>
-            <Link href="/admin/auth-code" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-              인증 코드 설정
-            </Link>
             <Link
               href="/admin/announcements"
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
@@ -122,12 +120,6 @@ export default async function MorePage() {
               AI 주간 리포트
             </Link>
             <Link
-              href="/admin/schedule"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              일정 AI 등록
-            </Link>
-            <Link
               href="/admin/teams"
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
@@ -135,11 +127,8 @@ export default async function MorePage() {
             </Link>
           </>
         ) : null}
-        <Link href="/team" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>팀 라인업</Link>
         <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>포인트 상점</Link>
-        {/* 임시 숨김: 경건생활 */}
-        {/* <Link href="/faith" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>신앙 점검표</Link> */}
-        <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>홈으로</Link>
+        <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>송리스트</Link>
       </footer>
     </div>
   );

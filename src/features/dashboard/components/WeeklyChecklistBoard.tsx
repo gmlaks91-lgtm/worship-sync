@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Send } from "lucide-react";
 
@@ -63,9 +63,16 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
     resolveDefaultSelectedDateYmd(data.checklist.dailyRecords),
   );
 
+  const dailyRecordsRef = useRef(dailyRecords);
+  const worshipRecordsRef = useRef(worshipRecords);
+  dailyRecordsRef.current = dailyRecords;
+  worshipRecordsRef.current = worshipRecords;
+
   useEffect(() => {
     setDailyRecords(data.checklist.dailyRecords);
     setWorshipRecords(data.checklist.worshipRecords);
+    dailyRecordsRef.current = data.checklist.dailyRecords;
+    worshipRecordsRef.current = data.checklist.worshipRecords;
     setSelectedDateYmd(resolveDefaultSelectedDateYmd(data.checklist.dailyRecords));
   }, [
     data.checklist.id,
@@ -95,31 +102,36 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
       patch: Partial<WeeklyChecklistDailyRecord>,
       mode: "debounced" | "immediate",
     ) => {
-      setDailyRecords((current) => {
-        const nextDaily = current.map((item, itemIndex) =>
-          itemIndex === index ? { ...item, ...patch } : item,
-        );
-        const snapshot: WeeklyChecklistSaveSnapshot = {
-          dailyRecords: nextDaily,
-          worshipRecords,
-        };
-        if (mode === "immediate") saveImmediately(snapshot);
-        else scheduleDebouncedSave(snapshot);
-        return nextDaily;
-      });
+      const nextDaily = dailyRecordsRef.current.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...patch } : item,
+      );
+      dailyRecordsRef.current = nextDaily;
+
+      const snapshot: WeeklyChecklistSaveSnapshot = {
+        dailyRecords: nextDaily,
+        worshipRecords: worshipRecordsRef.current,
+      };
+
+      setDailyRecords(nextDaily);
+
+      if (mode === "immediate") saveImmediately(snapshot);
+      else scheduleDebouncedSave(snapshot);
     },
-    [saveImmediately, scheduleDebouncedSave, worshipRecords],
+    [saveImmediately, scheduleDebouncedSave],
   );
 
   const applyWorshipPatch = useCallback(
     (patch: Partial<WeeklyChecklistWorshipRecords>) => {
-      setWorshipRecords((current) => {
-        const nextWorship = { ...current, ...patch };
-        saveImmediately({ dailyRecords, worshipRecords: nextWorship });
-        return nextWorship;
+      const nextWorship = { ...worshipRecordsRef.current, ...patch };
+      worshipRecordsRef.current = nextWorship;
+
+      setWorshipRecords(nextWorship);
+      saveImmediately({
+        dailyRecords: dailyRecordsRef.current,
+        worshipRecords: nextWorship,
       });
     },
-    [dailyRecords, saveImmediately],
+    [saveImmediately],
   );
 
   const isSubmitted = data.checklist.isSubmitted;

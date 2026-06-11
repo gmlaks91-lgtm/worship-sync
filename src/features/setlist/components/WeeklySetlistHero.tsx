@@ -15,7 +15,7 @@ import { WeeklySongRow } from "@/features/setlist/components/WeeklySongRow";
 import { weekSetlistHeadingKst } from "@/features/setlist/lib/week-label-kst";
 import type { PrepSetlistRow } from "@/features/setlist/queries/getSetlists";
 import { shiftWeekSundayYmd, weeklyDashboardHref } from "@/features/setlist/weekly";
-import type { TeamMemberRow } from "@/features/team/queries/getTeamMembers";
+import type { LineupMemberRow } from "@/features/setlist/queries/getLineupMembers";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ type WeeklySetlistHeroProps = {
   setlist: PrepSetlistRow | null;
   error: string | null;
   canManageSetlists: boolean;
-  teamMembers: TeamMemberRow[];
+  teamMembers: LineupMemberRow[];
   recentSongWarningByVideoId?: Record<string, number>;
 };
 

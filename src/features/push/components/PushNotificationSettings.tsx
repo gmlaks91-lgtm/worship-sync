@@ -24,6 +24,7 @@ type PushNotificationSettingsProps = {
   vapidPublicKey: string | null;
   wantsDailyReminder: boolean;
   dailyReminderTime: string | null;
+  dailyReminderAvailable?: boolean;
 };
 
 type PushStatus = "unsupported" | "denied" | "subscribed" | "available";
@@ -34,6 +35,7 @@ export function PushNotificationSettings({
   vapidPublicKey,
   wantsDailyReminder,
   dailyReminderTime,
+  dailyReminderAvailable = true,
 }: PushNotificationSettingsProps) {
   const [status, setStatus] = useState<PushStatus>("available");
   const [pending, start] = useTransition();
@@ -180,54 +182,60 @@ export function PushNotificationSettings({
           </Button>
         ) : null}
 
-        <div className="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">매일 경건일지 알림 받기</p>
-              <p className="text-xs text-muted-foreground">
-                원하는 시간에 &quot;오늘의 경건일지를 작성해 볼까요?&quot; 알림을 보내드려요. (한국 시간 기준)
-              </p>
-            </div>
-            <ReminderSwitch
-              checked={wantsReminder}
-              disabled={reminderPending || status !== "subscribed"}
-              onChange={handleReminderToggle}
-            />
-          </div>
-
-          {status !== "subscribed" ? (
-            <p className="text-xs text-amber-700">
-              경건일지 알림을 받으려면 먼저 위에서 웹 푸시 알림을 켜 주세요.
-            </p>
-          ) : null}
-
-          {wantsReminder && status === "subscribed" ? (
-            <div className="space-y-2">
-              <Label htmlFor="daily-reminder-time" className="text-xs text-muted-foreground">
-                알림 받을 시간
-              </Label>
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  id="daily-reminder-time"
-                  type="time"
-                  value={reminderTime}
-                  disabled={reminderPending}
-                  onChange={(e) => handleReminderTimeChange(e.target.value)}
-                  className="w-[9.5rem]"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  disabled={reminderPending || !reminderTimeDirty}
-                  onClick={handleReminderTimeSave}
-                >
-                  {reminderPending ? <Loader2 className="size-4 animate-spin" /> : "시간 저장"}
-                </Button>
+        {dailyReminderAvailable ? (
+          <div className="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">매일 경건일지 알림 받기</p>
+                <p className="text-xs text-muted-foreground">
+                  원하는 시간에 &quot;오늘의 경건일지를 작성해 볼까요?&quot; 알림을 보내드려요. (한국 시간 기준)
+                </p>
               </div>
+              <ReminderSwitch
+                checked={wantsReminder}
+                disabled={reminderPending || status !== "subscribed"}
+                onChange={handleReminderToggle}
+              />
             </div>
-          ) : null}
-        </div>
+
+            {status !== "subscribed" ? (
+              <p className="text-xs text-amber-700">
+                경건일지 알림을 받으려면 먼저 위에서 웹 푸시 알림을 켜 주세요.
+              </p>
+            ) : null}
+
+            {wantsReminder && status === "subscribed" ? (
+              <div className="space-y-2">
+                <Label htmlFor="daily-reminder-time" className="text-xs text-muted-foreground">
+                  알림 받을 시간
+                </Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    id="daily-reminder-time"
+                    type="time"
+                    value={reminderTime}
+                    disabled={reminderPending}
+                    onChange={(e) => handleReminderTimeChange(e.target.value)}
+                    className="w-[9.5rem]"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={reminderPending || !reminderTimeDirty}
+                    onClick={handleReminderTimeSave}
+                  >
+                    {reminderPending ? <Loader2 className="size-4 animate-spin" /> : "시간 저장"}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            매일 경건일지 알림 설정은 DB 마이그레이션 적용 후 사용할 수 있어요.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -251,7 +259,7 @@ function ReminderSwitch({
       onClick={onChange}
       className={cn(
         "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
-        checked ? "border-sky-500 bg-sky-500" : "border-slate-300 bg-slate-200",
+        checked ? "border-primary bg-primary" : "border-border bg-muted",
         disabled && "cursor-not-allowed opacity-50",
       )}
     >

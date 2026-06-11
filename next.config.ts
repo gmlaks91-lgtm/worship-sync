@@ -23,6 +23,7 @@ function supabaseImageHost(): string | null {
 const supabaseHost = supabaseImageHost();
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["192.168.219.44"],
   typescript: {
     ignoreBuildErrors: true,
   },

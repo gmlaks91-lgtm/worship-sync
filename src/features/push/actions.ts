@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { isMissingReminderColumnsError } from "@/features/profile/queries/profileSelect";
 import { toDbReminderTime } from "@/lib/push/kst-time";
 import { createClient } from "@/utils/supabase/server";
 
@@ -140,6 +141,12 @@ export async function updateDailyReminderSettings(input: {
       .eq("id", user.id);
 
     if (error) {
+      if (isMissingReminderColumnsError(error.message)) {
+        return {
+          ok: false,
+          message: "알림 설정 컬럼이 DB에 없습니다. Supabase에 최신 마이그레이션을 적용해 주세요.",
+        };
+      }
       return { ok: false, message: error.message };
     }
 

@@ -3,6 +3,7 @@
 import { unstable_noStore } from "next/cache";
 
 import { getFreshUserPoints } from "@/features/points/queries/getFreshUserPoints";
+import { fetchMyProfileRow } from "@/features/profile/queries/profileSelect";
 import type { ProfileRole, TeamRoleCode } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 
@@ -29,6 +30,7 @@ export type MyProfileRow = {
 export async function getMyProfile(): Promise<{
   profile: MyProfileRow | null;
   error: string | null;
+  dailyReminderAvailable: boolean;
 }> {
   unstable_noStore();
 
@@ -39,22 +41,16 @@ export async function getMyProfile(): Promise<{
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return { profile: null, error: null };
+      return { profile: null, error: null, dailyReminderAvailable: false };
     }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(
-        "id, username, role, avatar_url, role_priority_1, role_priority_2, role_priority_3, points, active_badge, active_border_color, active_background_color, birthday, mbti, favorite_song, wants_daily_reminder, daily_reminder_time, updated_at",
-      )
-      .eq("id", user.id)
-      .maybeSingle();
+    const { data, error, dailyReminderAvailable } = await fetchMyProfileRow(supabase, user.id);
 
     if (error) {
-      return { profile: null, error: error.message };
+      return { profile: null, error, dailyReminderAvailable: false };
     }
     if (!data) {
-      return { profile: null, error: "프로필을 찾을 수 없습니다." };
+      return { profile: null, error: "프로필을 찾을 수 없습니다.", dailyReminderAvailable: false };
     }
 
     const freshPoints = await getFreshUserPoints(user.id);
@@ -80,10 +76,11 @@ export async function getMyProfile(): Promise<{
         updated_at: data.updated_at,
       },
       error: null,
+      dailyReminderAvailable,
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류";
-    return { profile: null, error: message };
+    return { profile: null, error: message, dailyReminderAvailable: false };
   }
 }
 
