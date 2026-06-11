@@ -26,7 +26,7 @@ const TEAM_CARD_PALETTES = [
 const ROLE_LABELS: Record<ProfileRole, string> = {
   leader: "리더",
   admin: "관리자",
-  member: "찬양팀",
+  member: "멤버",
   general: "청년부",
 };
 
@@ -182,7 +182,7 @@ export function AdminTeamsManager({ initialTeams, profiles }: AdminTeamsManagerP
                 id="team-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="예: 찬양팀, 희만목장"
+                placeholder="예: 희망목장, 1조"
                 className="rounded-xl border-sky-100 bg-white"
                 required
                 maxLength={60}

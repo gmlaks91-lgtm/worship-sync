@@ -44,7 +44,7 @@ export type BoardActionResult =
 
 /** 게시글/댓글 변경 시 공지가 노출되는 모든 화면(홈 위젯 포함)을 갱신한다. */
 function revalidateBoardSurfaces() {
-  for (const path of ["/", "/journal", "/announcements", "/free-board", "/board"]) {
+  for (const path of ["/", "/journal", "/announcements", "/free-board"]) {
     revalidatePath(path);
   }
 }

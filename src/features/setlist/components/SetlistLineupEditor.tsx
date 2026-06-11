@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 
 import { upsertSetlistLineup } from "@/features/setlist/actions/setlistActions";
-import type { TeamMemberRow } from "@/features/team/queries/getTeamMembers";
+import type { LineupMemberRow } from "@/features/setlist/queries/getLineupMembers";
 import { isMultiMemberRole, TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastPromise } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
 type SetlistLineupEditorProps = {
   setlistId: string;
   current: Array<{ role_code: string; member_id: string }>;
-  members: TeamMemberRow[];
+  members: LineupMemberRow[];
   triggerClassName?: string;
 };
 

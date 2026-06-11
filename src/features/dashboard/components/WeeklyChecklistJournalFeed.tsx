@@ -174,7 +174,7 @@ export function WeeklyChecklistJournalFeed({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500">
-            찬양팀·목장 등 팀에 배정되면 같은 팀원의 경건 일지가 여기에 표시됩니다. 일지를 제출하면 별도 선택 없이
+            목장 등 팀에 배정되면 같은 팀원의 경건 일지가 여기에 표시됩니다. 일지를 제출하면 별도 선택 없이
             내가 속한 모든 팀 피드에 자동으로 공유됩니다.
           </p>
         </CardContent>

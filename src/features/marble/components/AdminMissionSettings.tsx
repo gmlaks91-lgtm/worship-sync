@@ -96,7 +96,7 @@ export function AdminMissionSettings({ missions }: { missions: BlueMarbleMission
       </form>
 
       {missions.length === 0 ? (
-        <p className="text-center text-xs text-slate-500">등록된 미션 칸이 ��습니다.</p>
+        <p className="text-center text-xs text-slate-500">등록된 미션 칸이 없습니다.</p>
       ) : (
         <ul className="space-y-2">
           {missions.map((mission) => (

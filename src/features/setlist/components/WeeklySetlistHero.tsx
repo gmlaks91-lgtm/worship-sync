@@ -15,7 +15,7 @@ import { WeeklySongRow } from "@/features/setlist/components/WeeklySongRow";
 import { weekSetlistHeadingKst } from "@/features/setlist/lib/week-label-kst";
 import type { PrepSetlistRow } from "@/features/setlist/queries/getSetlists";
 import { shiftWeekSundayYmd, weeklyDashboardHref } from "@/features/setlist/weekly";
-import type { TeamMemberRow } from "@/features/team/queries/getTeamMembers";
+import type { LineupMemberRow } from "@/features/setlist/queries/getLineupMembers";
 import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ type WeeklySetlistHeroProps = {
   setlist: PrepSetlistRow | null;
   error: string | null;
   canManageSetlists: boolean;
-  teamMembers: TeamMemberRow[];
+  teamMembers: LineupMemberRow[];
   recentSongWarningByVideoId?: Record<string, number>;
 };
 
@@ -279,7 +279,7 @@ export function WeeklySetlistHero({
               <div className="rounded-2xl border border-gray-100 bg-slate-50/30 px-4 py-5 sm:px-6">
                 <p className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-800">
                   <Plus className="size-4" aria-hidden />
-                  곡 추���
+                  곡 추가
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
                   <Input

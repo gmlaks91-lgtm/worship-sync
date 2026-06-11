@@ -106,7 +106,6 @@ export async function unequipShopCategory(raw: z.infer<typeof unequipCategorySch
     revalidatePath("/shop");
     revalidatePath("/more");
     revalidatePath("/profile");
-    revalidatePath("/team");
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
@@ -155,7 +154,6 @@ export async function unequipShopItem(raw: z.infer<typeof applySchema>): Promise
     revalidatePath("/shop");
     revalidatePath("/more");
     revalidatePath("/profile");
-    revalidatePath("/team");
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";

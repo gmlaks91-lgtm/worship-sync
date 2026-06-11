@@ -3,14 +3,76 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { AUTH_CODE_INVALID_MESSAGE, validateAuthCode } from "@/features/auth/auth-codes";
-import { loginIdToSupabaseEmail } from "@/features/auth/login-id-email";
+import { loginIdToSupabaseEmail, sanitizeLoginIdRawInput } from "@/features/auth/login-id-email";
 import { awardPointsForEvent } from "@/features/points/server/awardPoints";
-import type { ProfileRole } from "@/types/database";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
-export type SignupMembershipType = "worship_team" | "youth";
+function safeInternalPath(next: string | null | undefined) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/";
+  return next;
+}
+
+function loginRedirectWithError(message: string, next: string) {
+  const params = new URLSearchParams({
+    error: message,
+    next,
+  });
+  redirect(`/login?${params.toString()}`);
+}
+
+export async function signInWithFormAction(formData: FormData) {
+  const loginId = sanitizeLoginIdRawInput(String(formData.get("loginId") ?? ""));
+  const password = String(formData.get("password") ?? "");
+  const next = safeInternalPath(String(formData.get("next") ?? "/"));
+
+  if (!loginId) {
+    loginRedirectWithError("아이디를 입력해 주세요.", next);
+  }
+  if (password.length < 6) {
+    loginRedirectWithError("비밀번호는 6자 이상이어야 합니다.", next);
+  }
+
+  const { error, awardedPoints } = await signInWithIdAction({ loginId, password });
+  if (error) {
+    loginRedirectWithError(error, next);
+  }
+
+  if (awardedPoints > 0) {
+    const url = new URL(next, "http://local");
+    url.searchParams.set("login_reward", String(awardedPoints));
+    redirect(`${url.pathname}${url.search}`);
+  }
+
+  redirect(next);
+}
+
+export async function signUpWithFormAction(formData: FormData) {
+  const username = String(formData.get("username") ?? "").trim();
+  const loginId = sanitizeLoginIdRawInput(String(formData.get("loginId") ?? ""));
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  if (!username) {
+    loginRedirectWithError("이름을 입력해 주세요.", "/");
+  }
+  if (!loginId) {
+    loginRedirectWithError("아이디를 입력해 주세요.", "/");
+  }
+  if (password.length < 6) {
+    loginRedirectWithError("비밀번호는 6자 이상이어야 합니다.", "/");
+  }
+  if (password !== confirm) {
+    loginRedirectWithError("비밀번호가 일치하지 않습니다.", "/");
+  }
+
+  const { error } = await signUpWithIdAction({ loginId, password, username });
+  if (error) {
+    loginRedirectWithError(error, "/");
+  }
+
+  redirect("/login?signup=1");
+}
 
 export async function signInWithIdAction(input: { loginId: string; password: string }) {
   const supabase = await createClient();
@@ -37,31 +99,9 @@ export async function signUpWithIdAction(input: {
   loginId: string;
   password: string;
   username: string;
-  membershipType: SignupMembershipType;
-  authCode?: string;
-  rolePriority1?: string;
-  rolePriority2?: string;
-  rolePriority3?: string;
 }) {
   const supabase = await createClient();
   const email = loginIdToSupabaseEmail(input.loginId);
-
-  let profileRole: ProfileRole = "general";
-
-  if (input.membershipType === "worship_team") {
-    const code = input.authCode?.trim() ?? "";
-    if (!code) {
-      return { error: "인증 코드를 입력해 주세요." };
-    }
-    const valid = await validateAuthCode(code);
-    if (!valid) {
-      return { error: AUTH_CODE_INVALID_MESSAGE };
-    }
-    if (!input.rolePriority1?.trim()) {
-      return { error: "역할 1순위를 선택해 주세요." };
-    }
-    profileRole = "member";
-  }
 
   const { data: signUpData, error } = await supabase.auth.signUp({
     email,
@@ -69,12 +109,7 @@ export async function signUpWithIdAction(input: {
     options: {
       data: {
         username: input.username.trim(),
-        profile_role: profileRole,
-        role_priority_1: input.membershipType === "worship_team" ? input.rolePriority1?.trim() : null,
-        role_priority_2:
-          input.membershipType === "worship_team" ? input.rolePriority2?.trim() || null : null,
-        role_priority_3:
-          input.membershipType === "worship_team" ? input.rolePriority3?.trim() || null : null,
+        profile_role: "general",
       },
     },
   });
@@ -83,7 +118,7 @@ export async function signUpWithIdAction(input: {
     if (error.message.toLowerCase().includes("database error")) {
       return {
         error:
-          "회원가입 처리 중 DB 오류가 발생했습니다. Supabase에 최신 마이그레이션(20260519140000_fix_signup_profile_trigger)이 적용되었는지 확인해 주세요.",
+          "회원가입 처리 중 DB 오류가 발생했습니다. Supabase에 최신 마이그레이션이 적용되었는지 확인해 주세요.",
       };
     }
     return { error: error.message };
@@ -97,13 +132,7 @@ export async function signUpWithIdAction(input: {
         {
           id: userId,
           username: input.username.trim().slice(0, 80),
-          role: profileRole,
-          role_priority_1:
-            input.membershipType === "worship_team" ? input.rolePriority1?.trim() || null : null,
-          role_priority_2:
-            input.membershipType === "worship_team" ? input.rolePriority2?.trim() || null : null,
-          role_priority_3:
-            input.membershipType === "worship_team" ? input.rolePriority3?.trim() || null : null,
+          role: "general",
         },
         { onConflict: "id" },
       );
@@ -118,34 +147,39 @@ export async function signUpWithIdAction(input: {
 export type PasswordActionResult = { ok: true; message: string } | { ok: false; message: string };
 
 export async function changePasswordAction(input: {
-  password: string;
+  currentPassword: string;
+  newPassword: string;
 }): Promise<PasswordActionResult> {
-  const password = input.password?.trim() ?? "";
-  if (password.length < 6) {
-    return { ok: false, message: "비밀번호는 6자 이상이어야 합니다." };
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user?.email) {
     return { ok: false, message: "로그인이 필요합니다." };
   }
 
-  const { error } = await supabase.auth.updateUser({ password });
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: input.currentPassword,
+  });
 
+  if (signInError) {
+    return { ok: false, message: "현재 비밀번호가 올바르지 않습니다." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: input.newPassword });
   if (error) {
     return { ok: false, message: error.message };
   }
 
-  return { ok: true, message: "비밀번호가 성공적으로 변경되었습니다." };
+  revalidatePath("/more");
+  revalidatePath("/profile");
+  return { ok: true, message: "비밀번호가 변경되었습니다." };
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  revalidatePath("/", "layout");
   redirect("/login");
 }

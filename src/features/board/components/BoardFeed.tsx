@@ -19,14 +19,12 @@ type BoardFeedProps = {
 
 const tabs: { value: PostCategory; label: string; emoji: string; short: string }[] = [
   { value: "prayer", label: "공지사항", emoji: "📢", short: "공지" },
-  { value: "feedback", label: "합주 피드백", emoji: "🎸", short: "피드백" },
   { value: "general", label: "자유 게시판", emoji: "💬", short: "자유" },
 ];
 
 function categoryPath(category: PostCategory) {
   if (category === "prayer") return "/announcements";
-  if (category === "general") return "/free-board";
-  return `/board?category=${category}`;
+  return "/free-board";
 }
 
 function BoardPostList({

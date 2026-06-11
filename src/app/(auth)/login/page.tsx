@@ -1,10 +1,11 @@
 ﻿import { Suspense } from "react";
 
+import { WorldCupAtmosphere } from "@/components/layout/WorldCupAtmosphere";
 import { LoginForm } from "@/features/auth/components/login-form";
 
 function LoginFallback() {
   return (
-    <div className="surface-card p-8 text-center text-sm text-gray-500 sm:p-10">
+    <div className="surface-card p-8 text-center text-sm text-muted-foreground sm:p-10">
       Ahaba 로그인 화면으로 이동 중입니다...
     </div>
   );
@@ -12,10 +13,13 @@ function LoginFallback() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-slate-50 py-10">
-      <Suspense fallback={<LoginFallback />}>
-        <LoginForm />
-      </Suspense>
+    <div className="wc-login-stage relative flex min-h-screen items-center justify-center px-6 py-10">
+      <WorldCupAtmosphere />
+      <div className="relative z-[1] w-full max-w-xl">
+        <Suspense fallback={<LoginFallback />}>
+          <LoginForm />
+        </Suspense>
+      </div>
     </div>
   );
 }
