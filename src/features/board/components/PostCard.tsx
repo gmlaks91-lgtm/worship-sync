@@ -3,16 +3,23 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { ChevronDown, Loader2, MessageCircle, Pin, PinOff } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { CommentSection } from "@/features/board/components/CommentSection";
+import {
+  MentionPicker,
+  MentionText,
+  type MentionMember,
+} from "@/features/board/components/MentionText";
 import { PostActions } from "@/features/board/components/PostActions";
 import { togglePinPost, updatePost } from "@/features/board/actions";
-import { splitTitleBody } from "@/features/board/lib/announcement";
+import { resolvePostTitleBody } from "@/features/board/lib/announcement";
+import { getTopicsForCategory, topicLabel, type BoardTopic } from "@/features/board/lib/topics";
 import type { BoardPost } from "@/features/board/queries/getBoardFeed";
 import { toastPromise, toastError } from "@/lib/app-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 function initials(name: string) {
@@ -25,47 +32,76 @@ type PostCardProps = {
   post: BoardPost;
   currentUserId: string | null;
   canManage?: boolean;
+  members?: MentionMember[];
 };
 
-export function PostCard({ post, currentUserId, canManage = false }: PostCardProps) {
+export function PostCard({
+  post,
+  currentUserId,
+  canManage = false,
+  members = [],
+}: PostCardProps) {
+  const topics = useMemo(() => getTopicsForCategory(post.category), [post.category]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftBody, setDraftBody] = useState("");
+  const [draftTopic, setDraftTopic] = useState<BoardTopic | null>(null);
+  const [draftMentions, setDraftMentions] = useState<string[]>([]);
   const [pending, startTransition] = useTransition();
   const [pinPending, startPinTransition] = useTransition();
   const count = post.comments.length;
   const isOwner = Boolean(currentUserId && post.user_id === currentUserId);
-  const isAnnouncement = post.category === "prayer";
-  const { title, body } = isAnnouncement
-    ? splitTitleBody(post.content)
-    : { title: null, body: post.content };
+  const { title, body } = resolvePostTitleBody(post.title, post.content);
+  const label = topicLabel(post.topic);
 
   const startEdit = () => {
-    setDraft(post.content);
+    const resolved = resolvePostTitleBody(post.title, post.content);
+    setDraftTitle(resolved.title ?? "");
+    setDraftBody(resolved.body);
+    setDraftTopic((post.topic as BoardTopic | null) ?? topics[0]?.value ?? null);
+    setDraftMentions([...post.mentioned_user_ids]);
     setEditing(true);
   };
 
   const cancelEdit = () => {
     setEditing(false);
-    setDraft("");
+    setDraftTitle("");
+    setDraftBody("");
+    setDraftTopic(null);
+    setDraftMentions([]);
   };
 
   const saveEdit = () => {
-    const value = draft.trim();
-    if (!value) {
+    const nextTitle = draftTitle.trim();
+    const nextBody = draftBody.trim();
+    if (topics.length > 0 && !draftTopic) {
+      toastError("말머리를 선택해 주세요.");
+      return;
+    }
+    if (!nextTitle) {
+      toastError("제목을 입력해 주세요.");
+      return;
+    }
+    if (!nextBody) {
       toastError("내용을 입력해 주세요.");
       return;
     }
     startTransition(async () => {
       try {
         await toastPromise(
-          updatePost(post.id, value).then((res) => {
+          updatePost({
+            postId: post.id,
+            title: nextTitle,
+            content: nextBody,
+            topic: draftTopic,
+            mentionedUserIds: draftMentions,
+          }).then((res) => {
             if (!res.ok) throw new Error(res.message);
           }),
           "저장하는 중이에요…",
         ).unwrap();
-        setEditing(false);
-        setDraft("");
+        cancelEdit();
       } catch {
         /* handled */
       }
@@ -145,18 +181,52 @@ export function PostCard({ post, currentUserId, canManage = false }: PostCardPro
             </div>
           </div>
 
-          {post.is_pinned && !editing ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700">
-              <Pin className="size-3" aria-hidden />
-              고정된 공지
-            </span>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {post.is_pinned && !editing ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700">
+                <Pin className="size-3" aria-hidden />
+                고정
+              </span>
+            ) : null}
+            {label && !editing ? (
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                {label}
+              </span>
+            ) : null}
+          </div>
 
           {editing ? (
             <div className="space-y-3 rounded-lg border border-border/60 bg-muted/15 p-4 sm:p-5">
+              {topics.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {topics.map((t) => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      disabled={pending}
+                      onClick={() => setDraftTopic(t.value)}
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+                        draftTopic === t.value
+                          ? "border-sky-500 bg-sky-500 text-white"
+                          : "border-border/70 text-muted-foreground hover:border-sky-300",
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <Input
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+                disabled={pending}
+                maxLength={80}
+                placeholder="제목"
+              />
               <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                value={draftBody}
+                onChange={(e) => setDraftBody(e.target.value)}
                 disabled={pending}
                 rows={6}
                 className={cn(
@@ -164,6 +234,16 @@ export function PostCard({ post, currentUserId, canManage = false }: PostCardPro
                   "ring-1 ring-border/60 focus-visible:ring-ring",
                   "disabled:opacity-50",
                 )}
+              />
+              <MentionPicker
+                members={members}
+                selectedIds={draftMentions}
+                body={draftBody}
+                disabled={pending}
+                onChange={(ids, nextBody) => {
+                  setDraftMentions(ids);
+                  setDraftBody(nextBody);
+                }}
               />
               <div className="flex justify-end gap-3">
                 <Button type="button" variant="outline" size="sm" disabled={pending} onClick={cancelEdit}>
@@ -173,7 +253,7 @@ export function PostCard({ post, currentUserId, canManage = false }: PostCardPro
                   type="button"
                   size="sm"
                   className="gap-1.5"
-                  disabled={pending || !draft.trim()}
+                  disabled={pending || !draftTitle.trim() || !draftBody.trim()}
                   onClick={saveEdit}
                 >
                   {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
@@ -188,9 +268,7 @@ export function PostCard({ post, currentUserId, canManage = false }: PostCardPro
                   {title}
                 </h3>
               ) : null}
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/95">
-                {body}
-              </p>
+              <MentionText text={body} members={members} />
             </div>
           )}
 

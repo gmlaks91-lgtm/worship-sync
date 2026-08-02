@@ -160,10 +160,18 @@ export async function updateDailyReminderSettings(input: {
   }
 }
 
-export async function createAnnouncementPost(content: string): Promise<PushActionResult> {
-  const parsed = z.string().trim().min(1).max(8000).safeParse(content);
+export async function createAnnouncementPost(input: {
+  title: string;
+  content: string;
+}): Promise<PushActionResult> {
+  const parsed = z
+    .object({
+      title: z.string().trim().min(1).max(80),
+      content: z.string().trim().min(1).max(8000),
+    })
+    .safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: "공지 내용을 입력하세요." };
+    return { ok: false, message: "공지 제목과 내용을 입력하세요." };
   }
 
   try {
@@ -189,7 +197,10 @@ export async function createAnnouncementPost(content: string): Promise<PushActio
     const { error } = await supabase.from("posts").insert({
       user_id: user.id,
       category: "prayer",
-      content: parsed.data,
+      title: parsed.data.title,
+      topic: "notice",
+      content: parsed.data.content,
+      mentioned_user_ids: [],
     });
 
     if (error) {

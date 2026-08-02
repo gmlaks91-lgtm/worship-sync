@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { CreatePostForm } from "@/features/board/components/CreatePostForm";
 import { PostCard } from "@/features/board/components/PostCard";
+import type { MentionMember } from "@/features/board/components/MentionText";
 import type { BoardPost } from "@/features/board/queries/getBoardFeed";
 import type { PostCategory } from "@/types/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +14,7 @@ type BoardFeedProps = {
   category: PostCategory;
   posts: BoardPost[];
   currentUserId: string | null;
+  members?: MentionMember[];
   showTabs?: boolean;
   canManage?: boolean;
 };
@@ -32,10 +34,11 @@ function BoardPostList({
   posts,
   currentUserId,
   canManage,
-}: Pick<BoardFeedProps, "category" | "posts" | "currentUserId" | "canManage">) {
+  members,
+}: Pick<BoardFeedProps, "category" | "posts" | "currentUserId" | "canManage" | "members">) {
   return (
     <div className="flex flex-col gap-6">
-      <CreatePostForm category={category} />
+      <CreatePostForm category={category} members={members} />
       {posts.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border/80 bg-muted/25 px-5 py-12 text-center text-sm text-muted-foreground">
           아직 글이 없습니다. 첫 글을 남겨 보세요.
@@ -43,7 +46,13 @@ function BoardPostList({
       ) : null}
       <div className="flex flex-col gap-6">
         {posts.map((p) => (
-          <PostCard key={p.id} post={p} currentUserId={currentUserId} canManage={canManage} />
+          <PostCard
+            key={p.id}
+            post={p}
+            currentUserId={currentUserId}
+            canManage={canManage}
+            members={members}
+          />
         ))}
       </div>
     </div>
@@ -54,6 +63,7 @@ export function BoardFeed({
   category,
   posts,
   currentUserId,
+  members = [],
   showTabs = true,
   canManage = false,
 }: BoardFeedProps) {
@@ -67,6 +77,7 @@ export function BoardFeed({
           posts={posts}
           currentUserId={currentUserId}
           canManage={canManage}
+          members={members}
         />
       </div>
     );
@@ -109,6 +120,7 @@ export function BoardFeed({
                 posts={posts}
                 currentUserId={currentUserId}
                 canManage={canManage}
+                members={members}
               />
             ) : null}
           </TabsContent>

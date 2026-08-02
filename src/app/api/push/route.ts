@@ -61,8 +61,9 @@ export async function POST(request: Request) {
   const { title, body, url, publishToBoard, boardContent } = parsed.data;
 
   if (publishToBoard) {
-    const content = (boardContent?.trim() || `${title}\n\n${body}`).slice(0, 8000);
-    const postResult = await createAnnouncementPost(content);
+    const boardTitle = title.slice(0, 80);
+    const content = (boardContent?.trim() || body).slice(0, 8000);
+    const postResult = await createAnnouncementPost({ title: boardTitle, content });
     if (!postResult.ok) {
       return NextResponse.json({ ok: false, message: postResult.message }, { status: 500 });
     }

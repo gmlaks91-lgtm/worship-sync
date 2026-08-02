@@ -1,4 +1,4 @@
-﻿import { WorldCupBanner } from "@/components/layout/WorldCupBanner";
+﻿import { SummerBanner } from "@/components/layout/SummerBanner";
 import { BoardWidget } from "@/features/dashboard/components/BoardWidget";
 import { QuickActionsHero } from "@/features/dashboard/components/QuickActionsHero";
 import { WeeklySetlistHero } from "@/features/setlist/components/WeeklySetlistHero";
@@ -37,7 +37,7 @@ export default async function HomePage({
 
   return (
     <div className="flex flex-1 flex-col gap-12">
-      <WorldCupBanner />
+      <SummerBanner />
 
       <WeeklySetlistHero
         weekSundayYmd={weekSunday}

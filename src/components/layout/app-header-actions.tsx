@@ -31,7 +31,7 @@ export function AppHeaderActions({
           href="/profile"
           className={cn(
             buttonVariants({ variant: "ghost", size: "sm" }),
-            "text-amber-100/90 hover:bg-white/10 hover:text-white",
+            "text-sky-50/90 hover:bg-white/10 hover:text-white",
           )}
         >
           내 프로필
@@ -41,7 +41,7 @@ export function AppHeaderActions({
         <AddSetlistTriggerButton
           variant="outline"
           size="sm"
-          className="border-amber-400/40 bg-emerald-900/40 text-amber-100 hover:bg-emerald-800"
+          className="border-sky-300/40 bg-sky-950/35 text-sky-50 hover:bg-sky-900/55"
           teamMembers={teamMembers}
           recentSongWarningByVideoId={recentSongWarningByVideoId}
         />
@@ -51,7 +51,7 @@ export function AppHeaderActions({
           type="submit"
           variant="ghost"
           size="sm"
-          className="text-amber-100/90 hover:bg-white/10 hover:text-white"
+          className="text-sky-50/90 hover:bg-white/10 hover:text-white"
         >
           로그아웃
         </Button>

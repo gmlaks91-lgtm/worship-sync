@@ -999,7 +999,10 @@ export type Database = {
           id: string;
           user_id: string;
           category: PostCategory;
+          title: string;
+          topic: string | null;
           content: string;
+          mentioned_user_ids: string[];
           is_pinned: boolean;
           created_at: string;
         };
@@ -1007,7 +1010,10 @@ export type Database = {
           id?: string;
           user_id: string;
           category: PostCategory;
+          title?: string;
+          topic?: string | null;
           content: string;
+          mentioned_user_ids?: string[];
           is_pinned?: boolean;
           created_at?: string;
         };
@@ -1015,7 +1021,10 @@ export type Database = {
           id?: string;
           user_id?: string;
           category?: PostCategory;
+          title?: string;
+          topic?: string | null;
           content?: string;
+          mentioned_user_ids?: string[];
           is_pinned?: boolean;
           created_at?: string;
         };

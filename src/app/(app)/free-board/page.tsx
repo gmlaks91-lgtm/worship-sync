@@ -10,7 +10,14 @@ export default async function FreeBoardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { posts, error } = await getBoardFeed("general");
+  const [{ posts, error }, { data: memberRows }] = await Promise.all([
+    getBoardFeed("general"),
+    supabase.from("profiles").select("id, username").order("username", { ascending: true }),
+  ]);
+
+  const members = (memberRows ?? [])
+    .filter((m) => m.id !== user?.id)
+    .map((m) => ({ id: m.id, username: m.username }));
 
   return (
     <div className="flex flex-1 flex-col gap-8">
@@ -26,7 +33,13 @@ export default async function FreeBoardPage() {
         </div>
       ) : null}
 
-      <BoardFeed category="general" posts={posts} currentUserId={user?.id ?? null} showTabs={false} />
+      <BoardFeed
+        category="general"
+        posts={posts}
+        currentUserId={user?.id ?? null}
+        members={members}
+        showTabs={false}
+      />
     </div>
   );
 }

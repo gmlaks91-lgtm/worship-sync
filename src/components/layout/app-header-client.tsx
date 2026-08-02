@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, Trophy, X } from "lucide-react";
+import { Menu, Sun, X } from "lucide-react";
 
 import { AppHeaderActions } from "@/components/layout/app-header-actions";
-import { WorldCupHostStrip } from "@/components/layout/WorldCupBanner";
 import { getHomePathForRole } from "@/lib/roles";
 import { getNavItemsForRole } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
@@ -47,14 +46,13 @@ export function AppHeaderClient({
           className,
         )}
       >
-        <WorldCupHostStrip />
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 px-5 sm:h-16 sm:px-7">
           <div className="flex items-center gap-3">
             <button
               type="button"
               aria-label="메뉴 열기"
               onClick={() => setIsOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-400/40 bg-emerald-900/50 text-amber-200 shadow-sm transition-all duration-200 hover:border-amber-300 hover:bg-emerald-800 active:scale-95"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-300/40 bg-sky-950/40 text-sky-100 shadow-sm transition-all duration-200 hover:border-sky-200 hover:bg-sky-900/60 active:scale-95"
             >
               <Menu className="h-5 w-5" aria-hidden />
             </button>
@@ -62,8 +60,8 @@ export function AppHeaderClient({
               href={homeHref}
               className="group flex items-center gap-2 transition-all duration-200 hover:opacity-90"
             >
-              <span className="inline-flex size-8 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/15">
-                <Trophy className="size-4 text-amber-300" aria-hidden />
+              <span className="inline-flex size-8 items-center justify-center rounded-xl border border-amber-200/35 bg-amber-200/15">
+                <Sun className="size-4 text-amber-200" aria-hidden />
               </span>
               <span className="text-base font-black tracking-tight text-white sm:text-lg">Ahava</span>
             </Link>
@@ -80,7 +78,7 @@ export function AppHeaderClient({
 
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-emerald-950/20 transition-opacity duration-200 md:backdrop-blur-[2px]",
+          "fixed inset-0 z-40 bg-sky-950/25 transition-opacity duration-200 md:backdrop-blur-[2px]",
           isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         aria-hidden={!isOpen}

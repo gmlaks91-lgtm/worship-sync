@@ -64,8 +64,13 @@ export async function BoardWidget() {
                           고정
                         </span>
                       ) : null}
+                      {post.topic === "urgent" ? (
+                        <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                          긴급
+                        </span>
+                      ) : null}
                       <span className="truncate text-sm font-medium text-foreground">
-                        {announcementHeadline(post.content)}
+                        {announcementHeadline(post.content, post.title)}
                       </span>
                     </span>
                     <span className="block text-xs text-muted-foreground">

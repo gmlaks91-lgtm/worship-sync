@@ -1,6 +1,6 @@
 ﻿import { Suspense } from "react";
 
-import { WorldCupAtmosphere } from "@/components/layout/WorldCupAtmosphere";
+import { SummerAtmosphere } from "@/components/layout/SummerAtmosphere";
 import { LoginForm } from "@/features/auth/components/login-form";
 
 function LoginFallback() {
@@ -13,8 +13,8 @@ function LoginFallback() {
 
 export default function LoginPage() {
   return (
-    <div className="wc-login-stage relative flex min-h-screen items-center justify-center px-6 py-10">
-      <WorldCupAtmosphere />
+    <div className="summer-login-stage relative flex min-h-screen items-center justify-center px-6 py-10">
+      <SummerAtmosphere />
       <div className="relative z-[1] w-full max-w-xl">
         <Suspense fallback={<LoginFallback />}>
           <LoginForm />
