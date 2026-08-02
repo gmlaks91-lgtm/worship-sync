@@ -48,6 +48,7 @@ export type SetlistQueryRow = {
           id: string;
           title: string;
           youtube_url: string | null;
+          sheet_music_url: string | null;
           description: string | null;
         } | null;
       }[]

@@ -24,9 +24,6 @@ const supabaseHost = supabaseImageHost();
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.219.44"],
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     formats: ["image/webp"],
     remotePatterns: [

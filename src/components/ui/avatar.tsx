@@ -31,9 +31,11 @@ function AvatarImage({
   src,
   alt = "",
   ...props
-}: Omit<React.ComponentProps<typeof RemoteImage>, "variant" | "fill"> & {
+}: {
+  className?: string;
   src?: string | null;
-}) {
+  alt?: string;
+} & Omit<React.ComponentProps<typeof RemoteImage>, "variant" | "fill" | "src" | "alt">) {
   if (!src) return null;
 
   return (

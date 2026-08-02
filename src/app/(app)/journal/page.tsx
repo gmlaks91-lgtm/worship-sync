@@ -17,9 +17,16 @@ import { getUserTeamsForCurrentUser } from "@/features/teams/queries/getUserTeam
 
 export const dynamic = "force-dynamic";
 
-export default async function JournalPage() {
+export default async function JournalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ weekStart?: string }>;
+}) {
+  const sp = await searchParams;
+  const weekStart = sp.weekStart ?? null;
+
   const [weeklyChecklistData, journalFeed, userTeams, isGeneral, aiReport] = await Promise.all([
-    getWeeklyChecklistBoardData(),
+    getWeeklyChecklistBoardData(weekStart),
     getWeeklyChecklistJournalData("all"),
     getUserTeamsForCurrentUser(),
     getGeneralUserRole(),

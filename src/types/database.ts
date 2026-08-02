@@ -200,7 +200,22 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "setlist_songs_setlist_id_fkey",
+            columns: ["setlist_id"],
+            isOneToOne: false,
+            referencedRelation: "setlists",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "setlist_songs_song_id_fkey",
+            columns: ["song_id"],
+            isOneToOne: false,
+            referencedRelation: "songs",
+            referencedColumns: ["id"],
+          },
+        ];
       };
       setlist_lineups: {
         Row: {
@@ -227,7 +242,22 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "setlist_lineups_setlist_id_fkey",
+            columns: ["setlist_id"],
+            isOneToOne: false,
+            referencedRelation: "setlists",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "setlist_lineups_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ];
       };
       sheets: {
         Row: {
@@ -650,7 +680,36 @@ export type Database = {
           sold_at?: string | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "inventory_marketplace_listings_seller_id_fkey",
+            columns: ["seller_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "inventory_marketplace_listings_buyer_id_fkey",
+            columns: ["buyer_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "inventory_marketplace_listings_inventory_id_fkey",
+            columns: ["inventory_id"],
+            isOneToOne: false,
+            referencedRelation: "user_inventory",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "inventory_marketplace_listings_shop_item_id_fkey",
+            columns: ["shop_item_id"],
+            isOneToOne: false,
+            referencedRelation: "shop_items",
+            referencedColumns: ["id"],
+          },
+        ];
       };
       user_inventory: {
         Row: {
@@ -992,6 +1051,19 @@ export type Database = {
       apply_all_pending_marble_moves: {
         Args: Record<string, never>;
         Returns: undefined;
+      };
+      award_points: {
+        Args: {
+          p_user_id: string;
+          p_event_type: string;
+          p_points: number;
+          p_once_per_day?: boolean;
+          p_daily_activity_cap?: number;
+        };
+        Returns: {
+          granted_points: number;
+          message: string;
+        }[];
       };
       apply_marble_score_deltas: {
         Args: {

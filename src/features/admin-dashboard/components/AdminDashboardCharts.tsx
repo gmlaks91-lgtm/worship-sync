@@ -181,9 +181,9 @@ function JournalPieChart({
           </Pie>
           <Tooltip
             contentStyle={tooltipStyle}
-            formatter={(value: number, name: string) => [
-              `${value}명 (${total > 0 ? Math.round((value / total) * 100) : 0}%)`,
-              name,
+            formatter={(value, name) => [
+              `${Number(value ?? 0)}명 (${total > 0 ? Math.round((Number(value ?? 0) / total) * 100) : 0}%)`,
+              String(name ?? ""),
             ]}
           />
           <Legend

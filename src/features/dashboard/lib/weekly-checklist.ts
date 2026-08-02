@@ -124,6 +124,27 @@ export function getKstWeekStartDate(now = new Date()) {
   return formatUtcDateYmd(kst);
 }
 
+/** 직전 주 일요일 (KST) */
+export function getPreviousKstWeekStartDate(now = new Date()) {
+  return addDaysToYmd(getKstWeekStartDate(now), -7);
+}
+
+/** 이번 주 또는 직전 1주만 편집·제출 가능 */
+export function isEditableChecklistWeek(weekStartDate: string, now = new Date()) {
+  return (
+    weekStartDate === getKstWeekStartDate(now) ||
+    weekStartDate === getPreviousKstWeekStartDate(now)
+  );
+}
+
+/** 요청된 weekStart가 편집 가능하면 그대로, 아니면 이번 주로 폴백 */
+export function resolveEditableWeekStartDate(weekStartDate: string | null | undefined, now = new Date()) {
+  if (weekStartDate && isEditableChecklistWeek(weekStartDate, now)) {
+    return weekStartDate;
+  }
+  return getKstWeekStartDate(now);
+}
+
 /** KST 기준 오늘과 동일한 YMD인지 (문자열 YMD 비교, 타임존 일관) */
 export function isKstTodayYmd(ymd: string, now = new Date()) {
   return ymd === getKstTodayYmd(now);

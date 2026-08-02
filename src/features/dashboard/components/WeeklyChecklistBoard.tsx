@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Send } from "lucide-react";
+import { ArrowLeft, Loader2, Send } from "lucide-react";
 
 import { submitWeeklyChecklist } from "@/features/dashboard/actions/weeklyChecklistActions";
 import { syncPointsAfterMutation } from "@/features/points/lib/sync-points-client";
@@ -16,6 +17,7 @@ import {
   type WeeklyChecklistWorshipRecords,
 } from "@/features/dashboard/lib/weekly-checklist";
 import type { WeeklyChecklistBoardData } from "@/features/dashboard/queries/getWeeklyChecklistBoardData";
+import { PreviousWeekSubmitBanner } from "@/features/dashboard/components/PreviousWeekSubmitBanner";
 import { WeeklyChecklistDayCard } from "@/features/dashboard/components/WeeklyChecklistDayCard";
 import { WeeklyChecklistDayPicker } from "@/features/dashboard/components/WeeklyChecklistDayPicker";
 import { WeeklyChecklistTeamOverview } from "@/features/dashboard/components/WeeklyChecklistTeamOverview";
@@ -24,7 +26,7 @@ import { WeeklyChecklistWorshipCard } from "@/features/dashboard/components/Week
 import { useWeeklyChecklistAutosave } from "@/features/dashboard/hooks/useWeeklyChecklistAutosave";
 import type { WeeklyChecklistSaveSnapshot } from "@/features/dashboard/hooks/useWeeklyChecklistAutosave";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -67,6 +69,9 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
   const worshipRecordsRef = useRef(worshipRecords);
   dailyRecordsRef.current = dailyRecords;
   worshipRecordsRef.current = worshipRecords;
+
+  const isPreviousWeekView = data.isPreviousWeekView;
+  const weekLabel = isPreviousWeekView ? "지난주" : "이번 주";
 
   useEffect(() => {
     setDailyRecords(data.checklist.dailyRecords);
@@ -152,7 +157,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
     flushPending();
     const confirmMessage = isSubmitted
       ? "수정한 내용으로 다시 제출할까요? 변경된 점수로 다시 계산됩니다."
-      : "이번 주 체크리스트를 제출할까요? 제출 후에도 언제든 수정해 다시 제출할 수 있습니다.";
+      : `${weekLabel} 체크리스트를 제출할까요? 제출 후에도 언제든 수정해 다시 제출할 수 있습니다.`;
     if (!window.confirm(confirmMessage)) {
       return;
     }
@@ -187,13 +192,24 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
 
   return (
     <section className="space-y-6">
+      {!isPreviousWeekView && data.previousWeekSummary ? (
+        <PreviousWeekSubmitBanner summary={data.previousWeekSummary} />
+      ) : null}
+
       <Card className="overflow-hidden">
         <CardHeader className="border-b border-gray-100 pb-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="border-gray-100 bg-slate-50 text-gray-700">
-                  이번 주 체크리스트
+                <Badge
+                  variant="outline"
+                  className={
+                    isPreviousWeekView
+                      ? "border-amber-200 bg-amber-50 text-amber-800"
+                      : "border-gray-100 bg-slate-50 text-gray-700"
+                  }
+                >
+                  {weekLabel} 체크리스트
                 </Badge>
                 {isSubmitted ? (
                   <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
@@ -210,21 +226,28 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
                   주간 체크리스트 보드
                 </CardTitle>
                 <CardDescription className="mt-1 text-sm text-gray-500">
-                  {data.weekRangeLabel} · 오늘의 경건일지를 작성하고, 예배 참석은 주간 단위로 기록합니다.
+                  {data.weekRangeLabel} ·{" "}
+                  {isPreviousWeekView
+                    ? "지난주 기록을 확인하고 수정한 뒤 제출할 수 있습니다."
+                    : "오늘의 경건일지를 작성하고, 예배 참석은 주간 단위로 기록합니다."}
                 </CardDescription>
                 <WeeklyChecklistAutosaveStatusLabel status={autosaveStatus} className="mt-2" />
               </div>
             </div>
 
             <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-              <Button
-                type="button"
-                disabled={pending}
-                className="h-10"
-                onClick={onSubmit}
-              >
+              {isPreviousWeekView ? (
+                <Link
+                  href="/journal"
+                  className={cn(buttonVariants({ variant: "outline" }), "inline-flex h-10 items-center gap-2")}
+                >
+                  <ArrowLeft className="size-4" aria-hidden />
+                  이번 주로 돌아가기
+                </Link>
+              ) : null}
+              <Button type="button" disabled={pending} className="h-10" onClick={onSubmit}>
                 {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Send className="size-4" aria-hidden />}
-                {isSubmitted ? "수정 후 다시 제출" : "이번 주 제출"}
+                {isSubmitted ? "수정 후 다시 제출" : `${weekLabel} 제출`}
               </Button>
             </div>
           </div>
@@ -241,7 +264,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-gray-800">
-                  이번 주 획득 예상 포인트 <span className="text-gray-500">(최대 100점)</span>
+                  {weekLabel} 획득 예상 포인트 <span className="text-gray-500">(최대 100점)</span>
                 </p>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
                   <span>매일 기록 {score.dailyPoints}P</span>
@@ -265,7 +288,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
                   {isSubmitted
                     ? submittedLabel
                       ? `${submittedLabel}에 제출 완료`
-                      : "이번 주 제출 완료"
+                      : `${weekLabel} 제출 완료`
                     : lastSavedLabel
                       ? `최근 저장 ${lastSavedLabel}`
                       : "아직 제출 전입니다."}

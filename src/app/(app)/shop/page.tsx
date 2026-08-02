@@ -21,7 +21,7 @@ export default async function ShopPage() {
   return (
     <div className="flex flex-1 flex-col gap-8">
       <header className="space-y-2 rounded-[1.75rem] border border-white/80 bg-gradient-to-br from-sky-50/60 via-white to-rose-50/40 p-6 shadow-sm">
-        <p className="text-xs font-medium uppercase tracking-widest text-sky-600/80">Ahaba</p>
+        <p className="text-xs font-medium uppercase tracking-widest text-sky-600/80">Ahava</p>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-800 sm:text-3xl">포인트 상점</h1>
         <p className="max-w-prose text-sm leading-relaxed text-slate-600">
           모은 포인트로 아이템을 구매하고, 보관함에서 장착해 프로필을 꾸며 보세요.

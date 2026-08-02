@@ -9,8 +9,10 @@ import {
   createDefaultWorshipRecords,
   formatWeekRangeLabel,
   getKstWeekStartDate,
+  getPreviousKstWeekStartDate,
   normalizeDailyRecords,
   normalizeWorshipRecords,
+  resolveEditableWeekStartDate,
 } from "@/features/dashboard/lib/weekly-checklist";
 
 type WeeklyChecklistRow = Tables<"weekly_checklists">;
@@ -35,11 +37,22 @@ export type WeeklyChecklistTeamOverviewRow = {
   submittedAt: string | null;
 };
 
+export type PreviousWeekChecklistSummary = {
+  weekStartDate: string;
+  weekRangeLabel: string;
+  totalPoints: number;
+  isSubmitted: boolean;
+  hasStarted: boolean;
+};
+
 export type WeeklyChecklistBoardData = {
   weekStartDate: string;
   weekRangeLabel: string;
+  isPreviousWeekView: boolean;
+  currentWeekStartDate: string;
   canManageOverview: boolean;
   error: string | null;
+  previousWeekSummary: PreviousWeekChecklistSummary | null;
   checklist: {
     id: string | null;
     weekStartDate: string;
@@ -54,9 +67,11 @@ export type WeeklyChecklistBoardData = {
   teamOverview: WeeklyChecklistTeamOverviewRow[];
 };
 
-export async function getWeeklyChecklistBoardData(): Promise<WeeklyChecklistBoardData> {
-  const supabase = await createClient();
-  const weekStartDate = getKstWeekStartDate();
+function emptyBoard(
+  weekStartDate: string,
+  currentWeekStartDate: string,
+  extras?: Partial<WeeklyChecklistBoardData>,
+): WeeklyChecklistBoardData {
   const defaultDailyRecords = createDefaultDailyRecords(weekStartDate);
   const defaultWorshipRecords = createDefaultWorshipRecords();
   const defaultScore = calculateWeeklyChecklistPoints({
@@ -64,44 +79,77 @@ export async function getWeeklyChecklistBoardData(): Promise<WeeklyChecklistBoar
     worshipRecords: defaultWorshipRecords,
   });
 
+  return {
+    weekStartDate,
+    weekRangeLabel: formatWeekRangeLabel(weekStartDate),
+    isPreviousWeekView: weekStartDate !== currentWeekStartDate,
+    currentWeekStartDate,
+    canManageOverview: false,
+    error: null,
+    previousWeekSummary: null,
+    checklist: {
+      id: null,
+      weekStartDate,
+      dailyRecords: defaultDailyRecords,
+      worshipRecords: defaultWorshipRecords,
+      totalPoints: defaultScore.totalPoints,
+      awardedPoints: 0,
+      isSubmitted: false,
+      submittedAt: null,
+      updatedAt: null,
+    },
+    teamOverview: [],
+    ...extras,
+  };
+}
+
+export async function getWeeklyChecklistBoardData(
+  requestedWeekStart?: string | null,
+): Promise<WeeklyChecklistBoardData> {
+  const supabase = await createClient();
+  const currentWeekStartDate = getKstWeekStartDate();
+  const weekStartDate = resolveEditableWeekStartDate(requestedWeekStart);
+  const isPreviousWeekView = weekStartDate !== currentWeekStartDate;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return {
-      weekStartDate,
-      weekRangeLabel: formatWeekRangeLabel(weekStartDate),
-      canManageOverview: false,
-      error: null,
-      checklist: {
-        id: null,
-        weekStartDate,
-        dailyRecords: defaultDailyRecords,
-        worshipRecords: defaultWorshipRecords,
-        totalPoints: defaultScore.totalPoints,
-        awardedPoints: 0,
-        isSubmitted: false,
-        submittedAt: null,
-        updatedAt: null,
-      },
-      teamOverview: [],
-    };
+    return emptyBoard(weekStartDate, currentWeekStartDate);
   }
 
-  const [{ data: profile, error: profileError }, { data: checklistRow, error: checklistError }] =
-    await Promise.all([
-      supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
-      supabase
-        .from("weekly_checklists")
-        .select("id, week_start_date, daily_records, worship_records, total_points, awarded_points, is_submitted, submitted_at, updated_at")
-        .eq("user_id", user.id)
-        .eq("week_start_date", weekStartDate)
-        .maybeSingle(),
-    ]);
+  const previousWeekStartDate = getPreviousKstWeekStartDate();
+
+  const [
+    { data: profile, error: profileError },
+    { data: checklistRow, error: checklistError },
+    { data: previousRow, error: previousError },
+  ] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("weekly_checklists")
+      .select(
+        "id, week_start_date, daily_records, worship_records, total_points, awarded_points, is_submitted, submitted_at, updated_at",
+      )
+      .eq("user_id", user.id)
+      .eq("week_start_date", weekStartDate)
+      .maybeSingle(),
+    // 이번 주 보드일 때만 지난주 미제출 배너용 요약 조회
+    !isPreviousWeekView
+      ? supabase
+          .from("weekly_checklists")
+          .select("daily_records, worship_records, total_points, is_submitted")
+          .eq("user_id", user.id)
+          .eq("week_start_date", previousWeekStartDate)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
 
   const canManageOverview = profile?.role === "leader" || profile?.role === "admin";
-  const mergedError = [profileError?.message, checklistError?.message].filter(Boolean).join(" · ") || null;
+  const mergedError =
+    [profileError?.message, checklistError?.message, previousError?.message].filter(Boolean).join(" · ") ||
+    null;
 
   const normalizedDailyRecords = normalizeDailyRecords(
     (checklistRow as WeeklyChecklistRow | null)?.daily_records,
@@ -115,6 +163,32 @@ export async function getWeeklyChecklistBoardData(): Promise<WeeklyChecklistBoar
     worshipRecords: normalizedWorshipRecords,
   });
 
+  let previousWeekSummary: PreviousWeekChecklistSummary | null = null;
+  if (!isPreviousWeekView) {
+    const prevDaily = normalizeDailyRecords(
+      (previousRow as WeeklyChecklistRow | null)?.daily_records,
+      previousWeekStartDate,
+    );
+    const prevWorship = normalizeWorshipRecords(
+      (previousRow as WeeklyChecklistRow | null)?.worship_records,
+    );
+    const prevScore = calculateWeeklyChecklistPoints({
+      dailyRecords: prevDaily,
+      worshipRecords: prevWorship,
+    });
+    const prevSubmitted = previousRow?.is_submitted ?? false;
+    // 미제출일 때만 배너 표시 (기록 없어도 0점으로 안내 가능하도록 hasStarted 구분)
+    if (!prevSubmitted) {
+      previousWeekSummary = {
+        weekStartDate: previousWeekStartDate,
+        weekRangeLabel: formatWeekRangeLabel(previousWeekStartDate),
+        totalPoints: previousRow ? prevScore.totalPoints : 0,
+        isSubmitted: false,
+        hasStarted: Boolean(previousRow),
+      };
+    }
+  }
+
   let teamOverview: WeeklyChecklistTeamOverviewRow[] = [];
 
   if (canManageOverview) {
@@ -125,7 +199,9 @@ export async function getWeeklyChecklistBoardData(): Promise<WeeklyChecklistBoar
         .order("username", { ascending: true }),
       supabase
         .from("weekly_checklists")
-        .select("user_id, daily_records, worship_records, total_points, awarded_points, is_submitted, submitted_at, updated_at")
+        .select(
+          "user_id, daily_records, worship_records, total_points, awarded_points, is_submitted, submitted_at, updated_at",
+        )
         .eq("week_start_date", weekStartDate),
     ]);
 
@@ -134,7 +210,13 @@ export async function getWeeklyChecklistBoardData(): Promise<WeeklyChecklistBoar
       const row = byUserId.get(member.id) as
         | Pick<
             WeeklyChecklistRow,
-            "daily_records" | "worship_records" | "total_points" | "awarded_points" | "is_submitted" | "submitted_at" | "updated_at"
+            | "daily_records"
+            | "worship_records"
+            | "total_points"
+            | "awarded_points"
+            | "is_submitted"
+            | "submitted_at"
+            | "updated_at"
           >
         | undefined;
       const normalizedMemberDaily = normalizeDailyRecords(row?.daily_records, weekStartDate);
@@ -161,8 +243,11 @@ export async function getWeeklyChecklistBoardData(): Promise<WeeklyChecklistBoar
       return {
         weekStartDate,
         weekRangeLabel: formatWeekRangeLabel(weekStartDate),
+        isPreviousWeekView,
+        currentWeekStartDate,
         canManageOverview,
         error: [mergedError, membersError?.message, rowsError?.message].filter(Boolean).join(" · "),
+        previousWeekSummary,
         checklist: {
           id: checklistRow?.id ?? null,
           weekStartDate,
@@ -182,8 +267,11 @@ export async function getWeeklyChecklistBoardData(): Promise<WeeklyChecklistBoar
   return {
     weekStartDate,
     weekRangeLabel: formatWeekRangeLabel(weekStartDate),
+    isPreviousWeekView,
+    currentWeekStartDate,
     canManageOverview,
     error: mergedError,
+    previousWeekSummary,
     checklist: {
       id: checklistRow?.id ?? null,
       weekStartDate,

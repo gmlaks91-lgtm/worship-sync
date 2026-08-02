@@ -14,10 +14,27 @@ const purchaseSchema = z.object({ itemId: z.string().uuid() });
 const applySchema = z.object({ itemId: z.string().uuid() });
 const categorySchema = z.enum(["avatar", "frame", "badge"]);
 
-function profileFieldForItemType(type: ShopItemType) {
+function profileFieldForItemType(
+  type: ShopItemType,
+): "active_badge" | "active_border_color" | "avatar_url" {
   if (type === "badge") return "active_badge";
   if (type === "frame") return "active_border_color";
   return "avatar_url";
+}
+
+function profileClearUpdate(field: "active_badge" | "active_border_color" | "avatar_url") {
+  if (field === "active_badge") return { active_badge: null as string | null };
+  if (field === "active_border_color") return { active_border_color: null as string | null };
+  return { avatar_url: null as string | null };
+}
+
+function profileEquipUpdate(
+  field: "active_badge" | "active_border_color" | "avatar_url",
+  value: string,
+) {
+  if (field === "active_badge") return { active_badge: value };
+  if (field === "active_border_color") return { active_border_color: value };
+  return { avatar_url: value };
 }
 
 export async function purchaseShopItem(raw: z.infer<typeof purchaseSchema>): Promise<PurchaseResult> {
@@ -100,7 +117,10 @@ export async function unequipShopCategory(raw: z.infer<typeof unequipCategorySch
     if (invErr) return { ok: false, message: invErr.message };
 
     const field = profileFieldForItemType(parsed.data.category);
-    const { error: profileErr } = await supabase.from("profiles").update({ [field]: null }).eq("id", user.id);
+    const { error: profileErr } = await supabase
+      .from("profiles")
+      .update(profileClearUpdate(field))
+      .eq("id", user.id);
     if (profileErr) return { ok: false, message: profileErr.message };
 
     revalidatePath("/shop");
@@ -148,7 +168,10 @@ export async function unequipShopItem(raw: z.infer<typeof applySchema>): Promise
     if (invErr) return { ok: false, message: invErr.message };
 
     const field = profileFieldForItemType(item.category as ShopItemType);
-    const { error: profileErr } = await supabase.from("profiles").update({ [field]: null }).eq("id", user.id);
+    const { error: profileErr } = await supabase
+      .from("profiles")
+      .update(profileClearUpdate(field))
+      .eq("id", user.id);
     if (profileErr) return { ok: false, message: profileErr.message };
 
     revalidatePath("/shop");
@@ -208,7 +231,10 @@ export async function applyShopItem(raw: z.infer<typeof applySchema>): Promise<A
     if (applyErr) return { ok: false, message: applyErr.message };
 
     const field = profileFieldForItemType(item.category as ShopItemType);
-    const { error: profileErr } = await supabase.from("profiles").update({ [field]: item.effect_value }).eq("id", user.id);
+    const { error: profileErr } = await supabase
+      .from("profiles")
+      .update(profileEquipUpdate(field, item.effect_value ?? ""))
+      .eq("id", user.id);
     if (profileErr) return { ok: false, message: profileErr.message };
 
     revalidatePath("/shop");

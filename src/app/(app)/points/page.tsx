@@ -28,7 +28,7 @@ export default async function PointsPage() {
   return (
     <div className="flex flex-1 flex-col gap-7">
       <header className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ahaba</p>
+        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ahava</p>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">포인트 내역</h1>
         <p className="text-sm text-muted-foreground">적립/사용 이력을 최근 순서대로 확인할 수 있어요.</p>
       </header>

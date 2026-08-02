@@ -35,18 +35,15 @@ export async function awardPointsForEvent(params: {
 
   const row = Array.isArray(data) ? data[0] : null;
   const awardedPoints = Number(row?.granted_points ?? 0);
-  const totalPoints =
-    row?.total_points !== undefined && row?.total_points !== null
-      ? Number(row.total_points)
-      : null;
 
   if (awardedPoints > 0) {
     revalidatePointsRoutes();
   }
 
+  // RPC returns (granted_points, message) only — total is refreshed via revalidate
   return {
     awardedPoints,
-    totalPoints,
+    totalPoints: null,
     message: String(row?.message ?? "처리되었습니다."),
   };
 }

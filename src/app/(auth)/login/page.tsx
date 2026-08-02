@@ -6,7 +6,7 @@ import { LoginForm } from "@/features/auth/components/login-form";
 function LoginFallback() {
   return (
     <div className="surface-card p-8 text-center text-sm text-muted-foreground sm:p-10">
-      Ahaba 로그인 화면으로 이동 중입니다...
+      Ahava 로그인 화면으로 이동 중입니다...
     </div>
   );
 }

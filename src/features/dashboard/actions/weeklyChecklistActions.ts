@@ -9,6 +9,7 @@ import { createClient } from "@/utils/supabase/server";
 import {
   calculateWeeklyChecklistPoints,
   getKstWeekStartDate,
+  isEditableChecklistWeek,
   normalizeDailyRecords,
   normalizeWorshipRecords,
   weeklyChecklistDraftSchema,
@@ -50,8 +51,8 @@ async function saveWeeklyChecklistDraftInternal(
     return { ok: false, message: "입력값을 다시 확인해 주세요." };
   }
 
-  if (parsed.data.weekStartDate !== getKstWeekStartDate()) {
-    return { ok: false, message: "이번 주 체크리스트만 저장할 수 있습니다." };
+  if (!isEditableChecklistWeek(parsed.data.weekStartDate)) {
+    return { ok: false, message: "이번 주 또는 지난주 체크리스트만 저장할 수 있습니다." };
   }
 
   const supabase = await createClient();
@@ -99,7 +100,10 @@ async function saveWeeklyChecklistDraftInternal(
 
   return {
     ok: true,
-    message: "이번 주 체크리스트가 임시 저장되었습니다.",
+    message:
+      parsed.data.weekStartDate === getKstWeekStartDate()
+        ? "이번 주 체크리스트가 임시 저장되었습니다."
+        : "지난주 체크리스트가 임시 저장되었습니다.",
     totalPoints: score.totalPoints,
     isSubmitted: false,
   };
@@ -153,9 +157,45 @@ export async function submitWeeklyChecklist(raw: WeeklyChecklistDraftInput): Pro
 
   return {
     ok: true,
-    message: row?.message ?? "이번 주 체크리스트가 제출되었습니다.",
+    message: row?.message ?? "체크리스트가 제출되었습니다.",
     totalPoints: Number(row?.total_points ?? saved.totalPoints),
     awardedPoints: Number(row?.awarded_points ?? saved.totalPoints),
     isSubmitted: true,
   };
+}
+
+/** 배너에서 지난주 기록을 그대로 제출 */
+export async function submitPreviousWeekChecklist(): Promise<WeeklyChecklistActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, message: "로그인이 필요합니다." };
+  }
+
+  const { getPreviousKstWeekStartDate } = await import("@/features/dashboard/lib/weekly-checklist");
+  const weekStartDate = getPreviousKstWeekStartDate();
+
+  const { data: checklistRow, error } = await supabase
+    .from("weekly_checklists")
+    .select("daily_records, worship_records, is_submitted")
+    .eq("user_id", user.id)
+    .eq("week_start_date", weekStartDate)
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  if (checklistRow?.is_submitted) {
+    return { ok: false, message: "지난주 체크리스트는 이미 제출되었습니다." };
+  }
+
+  return submitWeeklyChecklist({
+    weekStartDate,
+    dailyRecords: normalizeDailyRecords(checklistRow?.daily_records, weekStartDate),
+    worshipRecords: normalizeWorshipRecords(checklistRow?.worship_records),
+  });
 }

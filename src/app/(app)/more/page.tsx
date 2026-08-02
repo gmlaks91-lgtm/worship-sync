@@ -20,7 +20,7 @@ export default async function MorePage() {
   return (
     <div className="flex flex-col gap-10">
       <header className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ahaba</p>
+        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ahava</p>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">마이페이지</h1>
         <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
           프로필 사진·이름·포지션과{" "}

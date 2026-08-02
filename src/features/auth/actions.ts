@@ -78,7 +78,6 @@ export async function signInWithIdAction(input: { loginId: string; password: str
   const supabase = await createClient();
 
   const email = loginIdToSupabaseEmail(input.loginId);
-  console.log("로그인 시도 이메일:", email);
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password: input.password,

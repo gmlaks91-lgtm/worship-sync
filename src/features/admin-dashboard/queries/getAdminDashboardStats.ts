@@ -6,6 +6,7 @@ import {
   normalizeDailyRecords,
 } from "@/features/dashboard/lib/weekly-checklist";
 import { CHART_COLORS } from "@/features/admin-dashboard/lib/chart-colors";
+import type { Json } from "@/types/database";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export type TopSongStat = {
@@ -40,7 +41,7 @@ function hasJournalActivity(
   isSubmitted: boolean,
 ): boolean {
   if (isSubmitted) return true;
-  const daily = normalizeDailyRecords(dailyRecords, weekStartDate);
+  const daily = normalizeDailyRecords(dailyRecords as Json, weekStartDate);
   return daily.some((record) => record.diary.trim().length > 0);
 }
 

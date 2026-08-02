@@ -53,7 +53,7 @@ function TeamJournalFeedEntry({ entry }: { entry: WeeklyChecklistJournalFeedEntr
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <Avatar size="sm">
-              <AvatarImage src={entry.avatarUrl ?? undefined} alt={entry.username} />
+              <AvatarImage src={entry.avatarUrl || undefined} alt={entry.username} />
               <AvatarFallback>{initials(entry.username)}</AvatarFallback>
             </Avatar>
             <div>

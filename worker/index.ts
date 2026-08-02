@@ -58,7 +58,7 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
       // 1) 이미 정확히 같은 경로를 열어둔 창이 있으면 그 창에 포커스
       for (const client of clientList) {
         if (client.url === targetUrl && "focus" in client) {
-          return client.focus();
+          return (client as WindowClient).focus();
         }
       }
 
@@ -69,7 +69,7 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
           const navigated = await (client as WindowClient).navigate(targetUrl);
           return navigated ? navigated.focus() : undefined;
         }
-        return client.focus();
+        return (client as WindowClient).focus();
       }
 
       // 3) 열린 창이 없으면 딥링크 경로로 새 창을 연다

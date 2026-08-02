@@ -71,7 +71,7 @@ export async function subscribeToPushNotifications(vapidPublicKey?: string | nul
     existing ??
     (await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey,
+      applicationServerKey: applicationServerKey as BufferSource,
     }));
 
   const json = subscription.toJSON();

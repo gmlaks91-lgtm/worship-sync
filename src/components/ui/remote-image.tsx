@@ -15,7 +15,9 @@ const VARIANT_DEFAULTS = {
 
 export type RemoteImageVariant = keyof typeof VARIANT_DEFAULTS;
 
-export type RemoteImageProps = Omit<ImageProps, "quality" | "loading"> & {
+export type RemoteImageProps = Omit<ImageProps, "src" | "alt"> & {
+  src: ImageProps["src"];
+  alt: string;
   variant?: RemoteImageVariant;
 };
 
