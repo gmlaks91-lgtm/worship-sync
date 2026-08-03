@@ -1,13 +1,7 @@
 ﻿"use client";
 
-import Link from "next/link";
-
 import { HeaderPointsBadge } from "@/features/points/components/HeaderPointsBadge";
-import { signOut } from "@/features/auth/actions";
 import { AddSetlistTriggerButton } from "@/features/setlist/components/AddSetlistDialog";
-import { PwaInstallButton } from "@/components/layout/PwaInstallButton";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 type AppHeaderActionsProps = {
   isLoggedIn: boolean;
@@ -16,47 +10,24 @@ type AppHeaderActionsProps = {
   recentSongWarningByVideoId: Record<string, number>;
 };
 
+/** 헤더에는 포인트(+ 데스크톱 셋리스트)만 두고, 프로필·로그아웃·설치는 메뉴로 */
 export function AppHeaderActions({
-  isLoggedIn,
   canManageSetlists,
   teamMembers,
   recentSongWarningByVideoId,
 }: AppHeaderActionsProps) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
-      <PwaInstallButton />
-      <HeaderPointsBadge />
-      {isLoggedIn ? (
-        <Link
-          href="/profile"
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "text-sky-50/90 hover:bg-white/10 hover:text-white",
-          )}
-        >
-          내 프로필
-        </Link>
-      ) : null}
+      <HeaderPointsBadge className="border-sky-300/35 bg-sky-950/40 text-sky-50 hover:border-sky-200/50 hover:bg-sky-900/55 hover:text-white [&_svg]:text-amber-200" />
       {canManageSetlists ? (
         <AddSetlistTriggerButton
           variant="outline"
           size="sm"
-          className="border-sky-300/40 bg-sky-950/35 text-sky-50 hover:bg-sky-900/55"
+          className="hidden border-sky-300/40 bg-sky-950/35 text-sky-50 hover:bg-sky-900/55 sm:inline-flex"
           teamMembers={teamMembers}
           recentSongWarningByVideoId={recentSongWarningByVideoId}
         />
       ) : null}
-      <form action={signOut}>
-        <Button
-          type="submit"
-          variant="ghost"
-          size="sm"
-          className="text-sky-50/90 hover:bg-white/10 hover:text-white"
-        >
-          로그아웃
-        </Button>
-      </form>
     </div>
   );
 }
-

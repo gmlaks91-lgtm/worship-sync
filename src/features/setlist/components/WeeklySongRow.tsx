@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { RemoteImage } from "@/components/ui/remote-image";
 import { useRouter } from "next/navigation";
@@ -84,16 +84,16 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
 
   return (
     <li
-      className={`rounded-2xl border border-gray-100 bg-white px-4 py-4 sm:px-5 sm:py-5 ${
+      className={`rounded-2xl border border-border bg-card px-4 py-4 sm:px-5 sm:py-5 ${
         isPlaying ? "ring-2 ring-neutral-900/10" : ""
       }`}
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl bg-slate-100 lg:h-[88px] lg:w-[140px] lg:aspect-auto">
+        <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl bg-muted lg:h-[88px] lg:w-[140px] lg:aspect-auto">
           {thumb ? (
             <RemoteImage src={thumb} alt="" fill variant="thumbnail" className="object-cover" />
           ) : (
-            <div className="flex h-full min-h-[120px] items-center justify-center text-xs text-gray-400 lg:min-h-0">
+            <div className="flex h-full min-h-[120px] items-center justify-center text-xs text-muted-foreground lg:min-h-0">
               미리보기 없음
             </div>
           )}
@@ -101,7 +101,7 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
 
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-slate-100 px-2 text-xs font-semibold text-gray-600">
+            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-muted px-2 text-xs font-semibold text-muted-foreground">
               {index + 1}
             </span>
             {canManage ? (
@@ -109,26 +109,26 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-10 border-gray-100 bg-white text-gray-800"
+                  className="h-10 border-border bg-card text-foreground"
                   placeholder="곡 제목"
                 />
                 <Input
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
-                  className="h-10 border-gray-100 bg-white text-gray-800"
+                  className="h-10 border-border bg-card text-foreground"
                   placeholder="YouTube URL"
                 />
                 <Input
                   value={sheetMusicUrl}
                   onChange={(e) => setSheetMusicUrl(e.target.value)}
-                  className="h-10 border-gray-100 bg-white text-gray-800 sm:col-span-2"
+                  className="h-10 border-border bg-card text-foreground sm:col-span-2"
                   placeholder="악보 URL (PNG, JPG, PDF)"
                 />
               </div>
             ) : (
               <div>
-                <p className="text-base font-semibold text-gray-800">{song.title}</p>
-                <p className="truncate text-xs text-gray-500">{song.youtube_url ?? ""}</p>
+                <p className="text-base font-semibold text-foreground">{song.title}</p>
+                <p className="truncate text-xs text-muted-foreground">{song.youtube_url ?? ""}</p>
               </div>
             )}
           </div>
@@ -172,7 +172,7 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-gray-100 px-2"
+                  className="flex-1 border-border px-2"
                   disabled={pending || index === 0}
                   onClick={() => onMove("up")}
                   aria-label="위로"
@@ -183,7 +183,7 @@ export function WeeklySongRow({ setlistId, song, index, total, canManage }: Week
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-gray-100 px-2"
+                  className="flex-1 border-border px-2"
                   disabled={pending || index >= total - 1}
                   onClick={() => onMove("down")}
                   aria-label="아래로"

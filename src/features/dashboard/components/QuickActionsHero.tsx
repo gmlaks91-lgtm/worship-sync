@@ -19,7 +19,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     description: "말씀을 읽고 오늘의 묵상을 나눠보세요.",
     icon: Sun,
     className:
-      "from-amber-100 to-yellow-50 border-amber-300 hover:border-amber-400 hover:shadow-amber-200/50",
+      "from-amber-50 to-sky-50/80 border-amber-200/80 hover:border-amber-300 hover:shadow-amber-100/60",
     iconWrapClassName: "bg-amber-400 text-white shadow-md",
   },
   {
@@ -28,8 +28,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     description: "한 주의 신앙 체크리스트를 채워보세요.",
     icon: BookOpenCheck,
     className:
-      "from-emerald-100 to-green-50 border-emerald-400 hover:border-emerald-500 hover:shadow-emerald-200/50",
-    iconWrapClassName: "bg-emerald-600 text-white shadow-md",
+      "from-sky-100 to-cyan-50 border-sky-300/80 hover:border-sky-400 hover:shadow-sky-200/50",
+    iconWrapClassName: "bg-sky-600 text-white shadow-md",
   },
 ];
 

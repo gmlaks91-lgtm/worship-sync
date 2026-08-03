@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, Sun, X } from "lucide-react";
+import { LogOut, Menu, Sun, UserRound, X } from "lucide-react";
 
 import { AppHeaderActions } from "@/components/layout/app-header-actions";
+import { PwaInstallButton } from "@/components/layout/PwaInstallButton";
+import { signOut } from "@/features/auth/actions";
+import { AddSetlistTriggerButton } from "@/features/setlist/components/AddSetlistDialog";
 import { getHomePathForRole } from "@/lib/roles";
 import { getNavItemsForRole } from "@/lib/navigation";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ProfileRole } from "@/types/database";
 
@@ -96,6 +100,7 @@ export function AppHeaderClient({
         <div className="flex items-center justify-between gap-4 border-b border-primary/10 pb-5">
           <div>
             <p className="text-lg font-semibold tracking-tight text-foreground">Ahava</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">청년대학부</p>
           </div>
           <button
             type="button"
@@ -107,7 +112,7 @@ export function AppHeaderClient({
           </button>
         </div>
 
-        <nav className="mt-4 flex flex-col gap-2">
+        <nav className="mt-4 flex flex-1 flex-col gap-2 overflow-y-auto">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
@@ -135,6 +140,45 @@ export function AppHeaderClient({
             );
           })}
         </nav>
+
+        <div className="mt-4 space-y-2 border-t border-primary/10 pt-4">
+          <div className="px-1">
+            <PwaInstallButton />
+          </div>
+          {canManageSetlists ? (
+            <div className="sm:hidden">
+              <AddSetlistTriggerButton
+                variant="outline"
+                size="sm"
+                className="w-full border-border"
+                teamMembers={teamMembers}
+                recentSongWarningByVideoId={recentSongWarningByVideoId}
+              />
+            </div>
+          ) : null}
+          {isLoggedIn ? (
+            <>
+              <Link
+                href="/profile"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/25 hover:bg-primary/5"
+              >
+                <UserRound className="size-4 text-muted-foreground" aria-hidden />
+                내 프로필
+              </Link>
+              <form action={signOut}>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  className="h-auto w-full justify-start gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
+                >
+                  <LogOut className="size-4" aria-hidden />
+                  로그아웃
+                </Button>
+              </form>
+            </>
+          ) : null}
+        </div>
       </aside>
     </>
   );

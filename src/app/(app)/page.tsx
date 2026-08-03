@@ -1,5 +1,4 @@
-﻿import { SummerBanner } from "@/components/layout/SummerBanner";
-import { BoardWidget } from "@/features/dashboard/components/BoardWidget";
+﻿import { BoardWidget } from "@/features/dashboard/components/BoardWidget";
 import { QuickActionsHero } from "@/features/dashboard/components/QuickActionsHero";
 import { WeeklySetlistHero } from "@/features/setlist/components/WeeklySetlistHero";
 import { getLineupMembers } from "@/features/setlist/queries/getLineupMembers";
@@ -36,9 +35,7 @@ export default async function HomePage({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-12">
-      <SummerBanner />
-
+    <div className="flex flex-1 flex-col gap-8 sm:gap-12">
       <WeeklySetlistHero
         weekSundayYmd={weekSunday}
         setlist={weeklyData.setlist}

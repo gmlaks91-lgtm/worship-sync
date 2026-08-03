@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -111,45 +111,45 @@ export function WeeklySetlistHero({
     <section id="weekly-setlist" className="scroll-mt-6 space-y-6">
       <div
         className={cn(
-          "rounded-2xl border border-gray-100 bg-white px-5 py-8 transition-opacity duration-200 sm:px-10 sm:py-10",
+          "rounded-2xl border border-border bg-card px-5 py-8 transition-opacity duration-200 sm:px-10 sm:py-10",
           navPending && "pointer-events-none opacity-60",
         )}
       >
-        <div className="flex flex-col gap-8 border-b border-gray-100 pb-8">
+        <div className="flex flex-col gap-8 border-b border-border pb-8">
           <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-6">
             <button
               type="button"
               aria-label="이전 주"
               disabled={navPending}
               onClick={() => goWeek(prevWeekHref)}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full border border-gray-100 bg-white text-gray-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted disabled:opacity-50"
             >
               <ChevronLeft className="size-5" aria-hidden />
             </button>
             <div className="min-w-0 flex-1 text-center sm:px-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400">주일</p>
-              <h1 className="mt-1 text-xl font-semibold tracking-tight text-gray-800 sm:text-2xl">{weekTitle}</h1>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">주일</p>
+              <h1 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{weekTitle}</h1>
             </div>
             <button
               type="button"
               aria-label="다음 주"
               disabled={navPending}
               onClick={() => goWeek(nextWeekHref)}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full border border-gray-100 bg-white text-gray-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted disabled:opacity-50"
             >
               <ChevronRight className="size-5" aria-hidden />
             </button>
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-xl text-center text-sm leading-relaxed text-gray-500 sm:text-left">
+            <p className="max-w-xl text-center text-sm leading-relaxed text-muted-foreground sm:text-left">
               주간 단위로 송리스트를 넘겨 보며, 곡 정보와 예배 준비 흐름을 이 화면에서 빠르게 확인할 수 있어요.
             </p>
             {canManageSetlists ? (
               <AddSetlistTriggerButton
                 variant="outline"
                 size="sm"
-                className="h-10 shrink-0 self-center border-gray-200 text-gray-800 sm:self-auto"
+                className="h-10 shrink-0 self-center border-border text-foreground sm:self-auto"
                 teamMembers={teamMembers.map((m) => ({ id: m.id, username: m.username }))}
                 recentSongWarningByVideoId={recentSongWarningByVideoId}
               />
@@ -164,9 +164,9 @@ export function WeeklySetlistHero({
         ) : null}
 
         {!setlist && !error ? (
-          <div className="mt-10 flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-100 bg-slate-50/50 px-6 py-14 text-center">
-            <p className="text-sm font-medium text-gray-700">이 주차에 등록된 송리스트가 없습니다.</p>
-            <p className="mt-2 max-w-md text-sm text-gray-500">
+          <div className="mt-10 flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 px-6 py-14 text-center">
+            <p className="text-sm font-medium text-foreground">이 주차에 등록된 송리스트가 없습니다.</p>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
               ({weekTitle}) 리더가 송리스트를 추가하면 이곳에 표시됩니다.
             </p>
           </div>
@@ -179,36 +179,36 @@ export function WeeklySetlistHero({
                 {canManageSetlists ? (
                   <div className="grid gap-3 sm:grid-cols-[1fr_160px_auto] sm:items-end">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-gray-500">제목</label>
+                      <label className="text-xs font-medium text-muted-foreground">제목</label>
                       <Input
                         value={listTitle}
                         onChange={(e) => setListTitle(e.target.value)}
-                        className="h-11 border-gray-100 bg-white text-gray-800"
+                        className="h-11 border-border bg-card text-foreground"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-gray-500">날짜</label>
+                      <label className="text-xs font-medium text-muted-foreground">날짜</label>
                       <Input
                         type="date"
                         value={eventDate}
                         onChange={(e) => setEventDate(e.target.value)}
-                        className="h-11 border-gray-100 bg-white text-gray-800"
+                        className="h-11 border-border bg-card text-foreground"
                       />
                     </div>
-                    <Button type="button" variant="outline" className="h-11 border-gray-200" disabled={pending} onClick={saveHeader}>
+                    <Button type="button" variant="outline" className="h-11 border-border" disabled={pending} onClick={saveHeader}>
                       {pending ? <Loader2 className="size-4 animate-spin" /> : "일정 저장"}
                     </Button>
                   </div>
                 ) : null}
                 {canManageSetlists && setlist ? (
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     일정 표시: {format(new Date(eventDate || setlist.event_date), "PPP", { locale: ko })}
                   </p>
                 ) : null}
                 {!canManageSetlists ? (
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-800">{setlist.title}</h2>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <h2 className="text-xl font-semibold text-foreground">{setlist.title}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {format(new Date(setlist.event_date), "PPP", { locale: ko })}
                     </p>
                   </div>
@@ -216,7 +216,7 @@ export function WeeklySetlistHero({
 
                 <Link
                   href={`/setlists/${setlist.id}`}
-                  className="inline-flex text-sm font-medium text-gray-700 underline-offset-4 hover:underline"
+                  className="inline-flex text-sm font-medium text-foreground underline-offset-4 hover:underline"
                 >
                   스텝 노트 · 상세 페이지 →
                 </Link>
@@ -228,16 +228,16 @@ export function WeeklySetlistHero({
                     setlistId={setlist.id}
                     current={setlist.lineup}
                     members={teamMembers}
-                    triggerClassName="border-gray-200 text-gray-800"
+                    triggerClassName="border-border text-foreground"
                   />
                 </div>
               ) : null}
             </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-slate-50/40 px-4 py-5 sm:px-6">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400">라인업</p>
+            <div className="rounded-2xl border border-border bg-muted/30 px-4 py-5 sm:px-6">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">라인업</p>
               {setlist.lineup.length === 0 ? (
-                <p className="text-sm text-gray-500">아직 배정된 멤버가 없습니다.</p>
+                <p className="text-sm text-muted-foreground">아직 배정된 멤버가 없습니다.</p>
               ) : (
                 <ul className="flex flex-wrap gap-2">
                   {groupedLineup
@@ -245,10 +245,10 @@ export function WeeklySetlistHero({
                     .map((item) => (
                       <li
                         key={`${setlist.id}-${item.roleCode}`}
-                        className="rounded-full border border-gray-100 bg-white px-3 py-1.5 text-sm text-gray-800"
+                        className="rounded-full border border-border bg-card px-3 py-1.5 text-sm text-foreground"
                       >
-                        <span className="text-gray-400">{teamRoleLabel(item.roleCode)}</span>
-                        <span className="mx-1.5 text-gray-300">·</span>
+                        <span className="text-muted-foreground">{teamRoleLabel(item.roleCode)}</span>
+                        <span className="mx-1.5 text-muted-foreground/40">·</span>
                         <span>{item.memberNames.join(", ")}</span>
                       </li>
                     ))}
@@ -258,8 +258,8 @@ export function WeeklySetlistHero({
 
             <div>
               <div className="mb-4 flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-gray-800">수록곡</h3>
-                <span className="text-xs text-gray-400">{setlist.songs.length}곡</span>
+                <h3 className="text-sm font-semibold text-foreground">수록곡</h3>
+                <span className="text-xs text-muted-foreground">{setlist.songs.length}곡</span>
               </div>
               <ul className="space-y-4">
                 {setlist.songs.map((song, idx) => (
@@ -276,8 +276,8 @@ export function WeeklySetlistHero({
             </div>
 
             {canManageSetlists ? (
-              <div className="rounded-2xl border border-gray-100 bg-slate-50/30 px-4 py-5 sm:px-6">
-                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-800">
+              <div className="rounded-2xl border border-border bg-slate-50/30 px-4 py-5 sm:px-6">
+                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
                   <Plus className="size-4" aria-hidden />
                   곡 추가
                 </p>
@@ -286,13 +286,13 @@ export function WeeklySetlistHero({
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="곡 제목"
-                    className="h-11 border-gray-100 bg-white"
+                    className="h-11 border-border bg-card"
                   />
                   <Input
                     value={newYoutube}
                     onChange={(e) => setNewYoutube(e.target.value)}
                     placeholder="YouTube URL"
-                    className="h-11 border-gray-100 bg-white"
+                    className="h-11 border-border bg-card"
                   />
                   <Button
                     type="button"

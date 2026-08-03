@@ -15,7 +15,7 @@ export async function BoardWidget() {
   const recentPosts = posts.slice(0, 4);
 
   return (
-    <Card className="surface-card-hover">
+    <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between gap-2 text-base">
           <span className="inline-flex items-center gap-2">

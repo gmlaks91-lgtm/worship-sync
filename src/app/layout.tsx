@@ -16,12 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Worship Sync",
-  description: "Worship Sync 모바일 앱으로 팀 일정, 악보, 일정, 포인트를 빠르게 관리하세요.",
+  title: "Ahava",
+  description: "Ahava 청년대학부 — 일정, 악보, 경건일지를 한곳에서.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    title: "Worship Sync",
+    title: "Ahava",
     statusBarStyle: "default",
   },
   formatDetection: {
