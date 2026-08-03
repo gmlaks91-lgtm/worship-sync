@@ -10,6 +10,17 @@ export default async function FreeBoardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  let canManage = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    canManage = profile?.role === "leader" || profile?.role === "admin";
+  }
+
   const [{ posts, error }, { data: memberRows }] = await Promise.all([
     getBoardFeed("general"),
     supabase.from("profiles").select("id, username").order("username", { ascending: true }),
@@ -39,6 +50,7 @@ export default async function FreeBoardPage() {
         currentUserId={user?.id ?? null}
         members={members}
         showTabs={false}
+        canManage={canManage}
       />
     </div>
   );

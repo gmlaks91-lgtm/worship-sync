@@ -16,11 +16,20 @@ import { cn } from "@/lib/utils";
 
 type PostActionsProps = {
   postId: string;
-  onEdit: () => void;
+  onEdit?: () => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 };
 
-export function PostActions({ postId, onEdit }: PostActionsProps) {
+export function PostActions({
+  postId,
+  onEdit,
+  canEdit = true,
+  canDelete = true,
+}: PostActionsProps) {
   const [pending, startTransition] = useTransition();
+
+  if (!canEdit && !canDelete) return null;
 
   const onDelete = () => {
     if (
@@ -56,17 +65,18 @@ export function PostActions({ postId, onEdit }: PostActionsProps) {
         <MoreHorizontal className="size-4" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[9rem]">
-        <DropdownMenuItem
-          onClick={() => onEdit()}
-          className="gap-2"
-        >
-          <Pencil className="size-4" aria-hidden />
-          수정
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={onDelete} className="gap-2">
-          <Trash2 className="size-4" aria-hidden />
-          삭제
-        </DropdownMenuItem>
+        {canEdit && onEdit ? (
+          <DropdownMenuItem onClick={() => onEdit()} className="gap-2">
+            <Pencil className="size-4" aria-hidden />
+            수정
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={onDelete} className="gap-2">
+            <Trash2 className="size-4" aria-hidden />
+            삭제
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );

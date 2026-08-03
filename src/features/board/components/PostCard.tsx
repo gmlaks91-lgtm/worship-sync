@@ -154,7 +154,7 @@ export function PostCard({
               </time>
             </div>
             <div className="flex shrink-0 items-center gap-1">
-              {canManage ? (
+              {canManage && post.category === "prayer" ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -177,7 +177,14 @@ export function PostCard({
                   )}
                 </Button>
               ) : null}
-              {isOwner && !editing ? <PostActions postId={post.id} onEdit={startEdit} /> : null}
+              {(isOwner || canManage) && !editing ? (
+                <PostActions
+                  postId={post.id}
+                  onEdit={isOwner ? startEdit : undefined}
+                  canEdit={isOwner}
+                  canDelete={isOwner || canManage}
+                />
+              ) : null}
             </div>
           </div>
 

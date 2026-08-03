@@ -375,7 +375,7 @@ export async function togglePinPost(postId: string, pinned: boolean): Promise<Bo
   }
 }
 
-/** 본인 글만 삭제 — 댓글은 DB ON DELETE CASCADE */
+/** 본인 글 또는 리더/관리자 삭제 — 댓글은 DB ON DELETE CASCADE */
 export async function deletePost(postId: string): Promise<BoardActionResult> {
   const parsed = postIdSchema.safeParse({ postId });
   if (!parsed.success) {
@@ -392,13 +392,20 @@ export async function deletePost(postId: string): Promise<BoardActionResult> {
       return { ok: false, message: "로그인이 필요합니다." };
     }
 
-    const { data, error } = await supabase
-      .from("posts")
-      .delete()
-      .eq("id", parsed.data.postId)
-      .eq("user_id", user.id)
-      .select("id")
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
       .maybeSingle();
+
+    const canModerate = profile?.role === "leader" || profile?.role === "admin";
+
+    let query = supabase.from("posts").delete().eq("id", parsed.data.postId);
+    if (!canModerate) {
+      query = query.eq("user_id", user.id);
+    }
+
+    const { data, error } = await query.select("id").maybeSingle();
 
     if (error) {
       return { ok: false, message: error.message };
