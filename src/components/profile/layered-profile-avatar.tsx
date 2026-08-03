@@ -10,12 +10,26 @@ type LayeredProfileAvatarProps = {
   avatarUrl: string | null;
   frameUrl?: string | null;
   badgeUrl?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "xxs" | "xs" | "sm" | "md" | "lg";
   className?: string;
   fallbackLabel?: string;
 };
 
 const SIZE_MAP = {
+  xxs: {
+    wrapper: "size-7",
+    frame: "size-[2rem]",
+    badge: "size-2.5",
+    icon: "size-3",
+    text: "text-[9px]",
+  },
+  xs: {
+    wrapper: "size-10",
+    frame: "size-[2.85rem]",
+    badge: "size-3.5",
+    icon: "size-4",
+    text: "text-xs",
+  },
   sm: {
     wrapper: "size-14",
     frame: "size-[3.9rem]",

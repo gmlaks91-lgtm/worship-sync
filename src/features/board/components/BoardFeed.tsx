@@ -2,9 +2,12 @@
 
 import { useRouter } from "next/navigation";
 
+import { BoardTopicFilter } from "@/features/board/components/BoardTopicFilter";
 import { CreatePostForm } from "@/features/board/components/CreatePostForm";
 import { PostCard } from "@/features/board/components/PostCard";
 import type { MentionMember } from "@/features/board/components/MentionText";
+import type { BoardTopic } from "@/features/board/lib/topics";
+import { topicLabel } from "@/features/board/lib/topics";
 import type { BoardPost } from "@/features/board/queries/getBoardFeed";
 import type { PostCategory } from "@/types/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +20,7 @@ type BoardFeedProps = {
   members?: MentionMember[];
   showTabs?: boolean;
   canManage?: boolean;
+  activeTopic?: BoardTopic | null;
 };
 
 const tabs: { value: PostCategory; label: string; emoji: string; short: string }[] = [
@@ -35,13 +39,22 @@ function BoardPostList({
   currentUserId,
   canManage,
   members,
-}: Pick<BoardFeedProps, "category" | "posts" | "currentUserId" | "canManage" | "members">) {
+  activeTopic = null,
+}: Pick<
+  BoardFeedProps,
+  "category" | "posts" | "currentUserId" | "canManage" | "members" | "activeTopic"
+>) {
+  const filteredLabel = activeTopic ? topicLabel(activeTopic) : null;
+
   return (
     <div className="flex flex-col gap-6">
+      <BoardTopicFilter category={category} activeTopic={activeTopic ?? null} />
       <CreatePostForm category={category} members={members} />
       {posts.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border/80 bg-muted/25 px-5 py-12 text-center text-sm text-muted-foreground">
-          아직 글이 없습니다. 첫 글을 남겨 보세요.
+          {filteredLabel
+            ? `「${filteredLabel}」 주제에 글이 없습니다.`
+            : "아직 글이 없습니다. 첫 글을 남겨 보세요."}
         </p>
       ) : null}
       <div className="flex flex-col gap-6">
@@ -66,6 +79,7 @@ export function BoardFeed({
   members = [],
   showTabs = true,
   canManage = false,
+  activeTopic = null,
 }: BoardFeedProps) {
   const router = useRouter();
 
@@ -78,6 +92,7 @@ export function BoardFeed({
           currentUserId={currentUserId}
           canManage={canManage}
           members={members}
+          activeTopic={activeTopic}
         />
       </div>
     );
@@ -121,6 +136,7 @@ export function BoardFeed({
                 currentUserId={currentUserId}
                 canManage={canManage}
                 members={members}
+                activeTopic={activeTopic}
               />
             ) : null}
           </TabsContent>

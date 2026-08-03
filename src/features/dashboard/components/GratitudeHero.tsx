@@ -16,7 +16,7 @@ export async function GratitudeHero() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">오늘의 나눔</p>
           <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">오늘에 감사</h1>
           <p className="text-sm text-muted-foreground">
-            {todayLabel} · 작은 감사도 함께 나누면 하루가 더 밝아져요.
+            {todayLabel} · 범사에 감사하라 — 오늘 받은 은혜를 함께 나눠요.
           </p>
         </div>
 

@@ -1,6 +1,11 @@
+"use client";
+
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+
 import {
-  appendMentionToken,
-  removeMentionToken,
+  extractMentionIdsFromBody,
+  filterMembersByQuery,
+  getActiveAtQuery,
   splitMentionSegments,
   type MentionMember,
 } from "@/features/board/lib/mentions";
@@ -34,62 +39,176 @@ export function MentionText({ text, members, className }: MentionTextProps) {
   );
 }
 
-type MentionPickerProps = {
+type MentionTextareaProps = {
+  id?: string;
+  value: string;
   members: MentionMember[];
-  selectedIds: string[];
-  onChange: (nextIds: string[], nextBody: string) => void;
-  body: string;
+  onChange: (nextBody: string, mentionedIds: string[]) => void;
   disabled?: boolean;
+  placeholder?: string;
+  rows?: number;
+  className?: string;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
-export function MentionPicker({
+export function MentionTextarea({
+  id,
+  value,
   members,
-  selectedIds,
   onChange,
-  body,
   disabled,
-}: MentionPickerProps) {
-  if (members.length === 0) return null;
+  placeholder,
+  rows = 4,
+  className,
+  onFocus,
+  onBlur,
+}: MentionTextareaProps) {
+  const listId = useId();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [cursor, setCursor] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const suppressBlurClose = useRef(false);
 
-  const selected = new Set(selectedIds);
+  const active = getActiveAtQuery(value, cursor);
+  const suggestions = active ? filterMembersByQuery(members, active.query) : [];
+  const showMenu = open && Boolean(active) && suggestions.length > 0 && members.length > 0;
 
-  const toggle = (member: MentionMember) => {
-    if (selected.has(member.id)) {
-      onChange(
-        selectedIds.filter((id) => id !== member.id),
-        removeMentionToken(body, member.username),
-      );
-      return;
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [active?.query, active?.start]);
+
+  useLayoutEffect(() => {
+    if (!showMenu) return;
+    setActiveIndex((i) => Math.min(i, Math.max(0, suggestions.length - 1)));
+  }, [showMenu, suggestions.length]);
+
+  const emit = (next: string, nextCursor?: number) => {
+    onChange(next, extractMentionIdsFromBody(next, members));
+    if (typeof nextCursor === "number") {
+      setCursor(nextCursor);
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.focus();
+        el.setSelectionRange(nextCursor, nextCursor);
+      });
     }
-    onChange([...selectedIds, member.id], appendMentionToken(body, member.username));
+  };
+
+  const pick = (member: MentionMember) => {
+    if (!active) return;
+    const before = value.slice(0, active.start);
+    const after = value.slice(cursor);
+    const insertion = `@${member.username} `;
+    const next = `${before}${insertion}${after}`;
+    const nextCursor = before.length + insertion.length;
+    setOpen(false);
+    emit(next, nextCursor);
+  };
+
+  const syncCursor = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    setCursor(el.selectionStart ?? 0);
   };
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">사람 태그</p>
-      <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
-        {members.map((m) => {
-          const active = selected.has(m.id);
-          return (
-            <button
-              key={m.id}
-              type="button"
-              disabled={disabled}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => toggle(m)}
-              className={cn(
-                "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                active
-                  ? "border-sky-400 bg-sky-100 text-sky-800"
-                  : "border-border/70 bg-background text-muted-foreground hover:border-sky-300 hover:text-foreground",
-                disabled && "opacity-50",
-              )}
-            >
-              @{m.username}
-            </button>
-          );
-        })}
-      </div>
+    <div className="relative">
+      <textarea
+        ref={textareaRef}
+        id={id}
+        value={value}
+        rows={rows}
+        disabled={disabled}
+        placeholder={placeholder}
+        aria-autocomplete="list"
+        aria-controls={showMenu ? listId : undefined}
+        aria-expanded={showMenu}
+        onChange={(e) => {
+          const next = e.target.value;
+          const nextCursor = e.target.selectionStart ?? next.length;
+          setCursor(nextCursor);
+          setOpen(true);
+          emit(next);
+        }}
+        onClick={syncCursor}
+        onKeyUp={syncCursor}
+        onSelect={syncCursor}
+        onFocus={() => {
+          setOpen(true);
+          onFocus?.();
+        }}
+        onBlur={() => {
+          window.setTimeout(() => {
+            if (suppressBlurClose.current) {
+              suppressBlurClose.current = false;
+              return;
+            }
+            setOpen(false);
+            onBlur?.();
+          }, 0);
+        }}
+        onKeyDown={(e) => {
+          if (!showMenu) return;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActiveIndex((i) => (i + 1) % suggestions.length);
+            return;
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActiveIndex((i) => (i - 1 + suggestions.length) % suggestions.length);
+            return;
+          }
+          if (e.key === "Enter" || e.key === "Tab") {
+            e.preventDefault();
+            const member = suggestions[activeIndex];
+            if (member) pick(member);
+            return;
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            setOpen(false);
+          }
+        }}
+        className={className}
+      />
+
+      {showMenu ? (
+        <ul
+          id={listId}
+          role="listbox"
+          className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card py-1 shadow-lg"
+        >
+          {suggestions.map((member, index) => (
+            <li key={member.id} role="option" aria-selected={index === activeIndex}>
+              <button
+                type="button"
+                className={cn(
+                  "flex w-full items-center px-3 py-2 text-left text-sm transition-colors",
+                  index === activeIndex ? "bg-sky-50 text-sky-900" : "text-foreground hover:bg-muted/60",
+                )}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  suppressBlurClose.current = true;
+                }}
+                onClick={() => {
+                  pick(member);
+                }}
+                onMouseEnter={() => setActiveIndex(index)}
+              >
+                <span className="font-medium">@{member.username}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {members.length > 0 ? (
+        <p className="mt-1.5 text-[11px] text-muted-foreground">@를 입력하면 사람을 태그할 수 있어요.</p>
+      ) : null}
     </div>
   );
 }

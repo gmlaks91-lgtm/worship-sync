@@ -5,6 +5,7 @@ import { ko } from "date-fns/locale";
 
 import { getBoardFeed } from "@/features/board/queries/getBoardFeed";
 import { announcementHeadline } from "@/features/board/lib/announcement";
+import { topicLabel } from "@/features/board/lib/topics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +37,13 @@ export async function BoardWidget() {
           <p className="text-sm text-muted-foreground">등록된 공지사항이 없습니다.</p>
         ) : (
           <ul className="divide-y divide-border/50">
-            {recentPosts.map((post) => (
+            {recentPosts.map((post) => {
+              const label = topicLabel(post.topic);
+              const topicHref = post.topic ? `/announcements?topic=${post.topic}` : "/announcements";
+              return (
               <li key={post.id}>
                 <Link
-                  href="/announcements"
+                  href={topicHref}
                   className="flex items-start gap-3 py-3 transition-colors hover:bg-muted/30 -mx-2 rounded-lg px-2"
                 >
                   <span
@@ -64,14 +68,18 @@ export async function BoardWidget() {
                           고정
                         </span>
                       ) : null}
-                      {post.topic === "urgent" ? (
-                        <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
-                          긴급
-                        </span>
-                      ) : null}
-                      {post.topic === "setlist" ? (
-                        <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
-                          콘티
+                      {label ? (
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                            post.topic === "urgent"
+                              ? "bg-rose-100 text-rose-700"
+                              : post.topic === "setlist"
+                                ? "bg-sky-100 text-sky-700"
+                                : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {label}
                         </span>
                       ) : null}
                       <span className="truncate text-sm font-medium text-foreground">
@@ -88,7 +96,8 @@ export async function BoardWidget() {
                   </span>
                 </Link>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
       </CardContent>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 
 import { createPost } from "@/features/board/actions";
-import { MentionPicker, type MentionMember } from "@/features/board/components/MentionText";
+import { MentionTextarea, type MentionMember } from "@/features/board/components/MentionText";
 import {
   defaultTopicForCategory,
   getTopicsForCategory,
@@ -146,10 +146,13 @@ export function CreatePostForm({ category, members = [] }: CreatePostFormProps) 
           <label className="sr-only" htmlFor={`create-post-${category}`}>
             본문
           </label>
-          <textarea
+          <MentionTextarea
             id={`create-post-${category}`}
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            members={members}
+            disabled={pending}
+            placeholder="내용을 입력하세요 (@로 사람 태그)"
+            rows={expanded ? 5 : 2}
             onFocus={() => {
               clearBlurTimer();
               setExpanded(true);
@@ -159,9 +162,10 @@ export function CreatePostForm({ category, members = [] }: CreatePostFormProps) 
                 if (!hasDraft) setExpanded(false);
               }, 160);
             }}
-            disabled={pending}
-            placeholder="내용을 입력하세요"
-            rows={expanded ? 5 : 2}
+            onChange={(nextBody, ids) => {
+              setBody(nextBody);
+              setMentionedIds(ids);
+            }}
             className={cn(
               "w-full resize-none bg-transparent text-[15px] leading-relaxed outline-none transition-[min-height] duration-300 ease-out",
               expanded ? "min-h-[132px]" : "min-h-[52px]",
@@ -170,19 +174,6 @@ export function CreatePostForm({ category, members = [] }: CreatePostFormProps) 
             )}
           />
         </div>
-
-        {expanded ? (
-          <MentionPicker
-            members={members}
-            selectedIds={mentionedIds}
-            body={body}
-            disabled={pending}
-            onChange={(ids, nextBody) => {
-              setMentionedIds(ids);
-              setBody(nextBody);
-            }}
-          />
-        ) : null}
 
         <div
           className={cn(
@@ -206,3 +197,4 @@ export function CreatePostForm({ category, members = [] }: CreatePostFormProps) 
     </div>
   );
 }
+

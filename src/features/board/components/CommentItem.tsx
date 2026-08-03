@@ -8,7 +8,7 @@ import { useState, useTransition } from "react";
 import { deleteComment, updateComment } from "@/features/board/actions";
 import type { BoardComment } from "@/features/board/queries/getBoardFeed";
 import { toastPromise, toastError } from "@/lib/app-toast";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LayeredProfileAvatar } from "@/components/profile/layered-profile-avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,12 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-
-function initials(name: string) {
-  const t = name.trim();
-  if (!t) return "?";
-  return t.slice(0, 2);
-}
 
 type CommentItemProps = {
   comment: BoardComment;
@@ -85,11 +79,14 @@ export function CommentItem({ comment, currentUserId }: CommentItemProps) {
 
   return (
     <li className="flex gap-2.5">
-      <Avatar className="mt-0.5 size-7 border border-border/60">
-        <AvatarFallback className="text-[9px] font-semibold">
-          {initials(comment.author_username)}
-        </AvatarFallback>
-      </Avatar>
+      <LayeredProfileAvatar
+        size="xxs"
+        className="mt-0.5 shrink-0"
+        avatarUrl={comment.author_avatar_url}
+        frameUrl={comment.author_frame_url}
+        badgeUrl={comment.author_badge_url}
+        fallbackLabel={comment.author_username}
+      />
       <div className="min-w-0 flex-1 space-y-1.5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0">

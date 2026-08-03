@@ -1,11 +1,20 @@
 import { PageIntro } from "@/components/layout/page-intro";
 import { BoardFeed } from "@/features/board/components/BoardFeed";
+import { isValidTopicForCategory, type BoardTopic } from "@/features/board/lib/topics";
 import { getBoardFeed } from "@/features/board/queries/getBoardFeed";
 import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function AnnouncementsPage() {
+export default async function AnnouncementsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ topic?: string }>;
+}) {
+  const sp = await searchParams;
+  const activeTopic: BoardTopic | null =
+    sp.topic && isValidTopicForCategory("prayer", sp.topic) ? sp.topic : null;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,7 +31,7 @@ export default async function AnnouncementsPage() {
   }
 
   const [{ posts, error }, { data: memberRows }] = await Promise.all([
-    getBoardFeed("prayer"),
+    getBoardFeed("prayer", activeTopic),
     supabase.from("profiles").select("id, username").order("username", { ascending: true }),
   ]);
 
@@ -51,6 +60,7 @@ export default async function AnnouncementsPage() {
         members={members}
         showTabs={false}
         canManage={canManage}
+        activeTopic={activeTopic}
       />
     </div>
   );
