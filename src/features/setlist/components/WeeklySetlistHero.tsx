@@ -4,41 +4,25 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react";
 
 import { appendTrackToPrepSetlist, updatePrepSetlistHeader } from "@/features/setlist/actions/weeklySetlistActions";
-import { AddSetlistTriggerButton } from "@/features/setlist/components/AddSetlistDialog";
-import { SetlistLineupEditor } from "@/features/setlist/components/SetlistLineupEditor";
 import { YouTubePlayer } from "@/features/setlist/components/YouTubePlayer";
 import { WeeklySongRow } from "@/features/setlist/components/WeeklySongRow";
 import { weekSetlistHeadingKst } from "@/features/setlist/lib/week-label-kst";
 import type { PrepSetlistRow } from "@/features/setlist/queries/getSetlists";
 import { shiftWeekSundayYmd, weeklyDashboardHref } from "@/features/setlist/weekly";
-import type { LineupMemberRow } from "@/features/setlist/queries/getLineupMembers";
-import { TEAM_ROLE_OPTIONS, teamRoleLabel } from "@/lib/team-roles";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-function groupLineupItems(items: Array<{ role_code: string; member_name: string }>) {
-  const map = new Map<string, string[]>();
-  for (const item of items) {
-    const existing = map.get(item.role_code) ?? [];
-    existing.push(item.member_name);
-    map.set(item.role_code, existing);
-  }
-  return TEAM_ROLE_OPTIONS.map((role) => ({ roleCode: role.code, memberNames: map.get(role.code) ?? [] }));
-}
 
 type WeeklySetlistHeroProps = {
   weekSundayYmd: string;
   setlist: PrepSetlistRow | null;
   error: string | null;
   canManageSetlists: boolean;
-  teamMembers: LineupMemberRow[];
-  recentSongWarningByVideoId?: Record<string, number>;
 };
 
 export function WeeklySetlistHero({
@@ -46,8 +30,6 @@ export function WeeklySetlistHero({
   setlist,
   error,
   canManageSetlists,
-  teamMembers,
-  recentSongWarningByVideoId = {},
 }: WeeklySetlistHeroProps) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -56,11 +38,6 @@ export function WeeklySetlistHero({
   const [eventDate, setEventDate] = useState(() => setlist?.event_date ?? "");
   const [newTitle, setNewTitle] = useState("");
   const [newYoutube, setNewYoutube] = useState("");
-
-  const groupedLineup = useMemo(
-    () => (setlist ? groupLineupItems(setlist.lineup) : []),
-    [setlist],
-  );
 
   const saveHeader = () => {
     if (!setlist) return;
@@ -141,20 +118,9 @@ export function WeeklySetlistHero({
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-xl text-center text-sm leading-relaxed text-muted-foreground sm:text-left">
-              주간 단위로 송리스트를 넘겨 보며, 곡 정보와 예배 준비 흐름을 이 화면에서 빠르게 확인할 수 있어요.
-            </p>
-            {canManageSetlists ? (
-              <AddSetlistTriggerButton
-                variant="outline"
-                size="sm"
-                className="h-10 shrink-0 self-center border-border text-foreground sm:self-auto"
-                teamMembers={teamMembers.map((m) => ({ id: m.id, username: m.username }))}
-                recentSongWarningByVideoId={recentSongWarningByVideoId}
-              />
-            ) : null}
-          </div>
+          <p className="max-w-xl text-center text-sm leading-relaxed text-muted-foreground sm:text-left">
+            주간 단위로 송리스트를 넘겨 보며, 곡 정보와 예배 준비 흐름을 이 화면에서 빠르게 확인할 수 있어요.
+          </p>
         </div>
 
         {error ? (
@@ -166,94 +132,57 @@ export function WeeklySetlistHero({
         {!setlist && !error ? (
           <div className="mt-10 flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 px-6 py-14 text-center">
             <p className="text-sm font-medium text-foreground">이 주차에 등록된 송리스트가 없습니다.</p>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              ({weekTitle}) 리더가 송리스트를 추가하면 이곳에 표시됩니다.
-            </p>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">({weekTitle})</p>
           </div>
         ) : null}
 
         {setlist ? (
           <div className="mt-10 space-y-10">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0 flex-1 space-y-4">
-                {canManageSetlists ? (
-                  <div className="grid gap-3 sm:grid-cols-[1fr_160px_auto] sm:items-end">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">제목</label>
-                      <Input
-                        value={listTitle}
-                        onChange={(e) => setListTitle(e.target.value)}
-                        className="h-11 border-border bg-card text-foreground"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">날짜</label>
-                      <Input
-                        type="date"
-                        value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
-                        className="h-11 border-border bg-card text-foreground"
-                      />
-                    </div>
-                    <Button type="button" variant="outline" className="h-11 border-border" disabled={pending} onClick={saveHeader}>
-                      {pending ? <Loader2 className="size-4 animate-spin" /> : "일정 저장"}
-                    </Button>
-                  </div>
-                ) : null}
-                {canManageSetlists && setlist ? (
-                  <p className="text-xs text-muted-foreground">
-                    일정 표시: {format(new Date(eventDate || setlist.event_date), "PPP", { locale: ko })}
-                  </p>
-                ) : null}
-                {!canManageSetlists ? (
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">{setlist.title}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {format(new Date(setlist.event_date), "PPP", { locale: ko })}
-                    </p>
-                  </div>
-                ) : null}
-
-                <Link
-                  href={`/setlists/${setlist.id}`}
-                  className="inline-flex text-sm font-medium text-foreground underline-offset-4 hover:underline"
-                >
-                  스텝 노트 · 상세 페이지 →
-                </Link>
-              </div>
-
+            <div className="min-w-0 space-y-4">
               {canManageSetlists ? (
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <SetlistLineupEditor
-                    setlistId={setlist.id}
-                    current={setlist.lineup}
-                    members={teamMembers}
-                    triggerClassName="border-border text-foreground"
-                  />
+                <div className="grid gap-3 sm:grid-cols-[1fr_160px_auto] sm:items-end">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">제목</label>
+                    <Input
+                      value={listTitle}
+                      onChange={(e) => setListTitle(e.target.value)}
+                      className="h-11 border-border bg-card text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">날짜</label>
+                    <Input
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      className="h-11 border-border bg-card text-foreground"
+                    />
+                  </div>
+                  <Button type="button" variant="outline" className="h-11 border-border" disabled={pending} onClick={saveHeader}>
+                    {pending ? <Loader2 className="size-4 animate-spin" /> : "일정 저장"}
+                  </Button>
                 </div>
               ) : null}
-            </div>
+              {canManageSetlists && setlist ? (
+                <p className="text-xs text-muted-foreground">
+                  일정 표시: {format(new Date(eventDate || setlist.event_date), "PPP", { locale: ko })}
+                </p>
+              ) : null}
+              {!canManageSetlists ? (
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">{setlist.title}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {format(new Date(setlist.event_date), "PPP", { locale: ko })}
+                  </p>
+                </div>
+              ) : null}
 
-            <div className="rounded-2xl border border-border bg-muted/30 px-4 py-5 sm:px-6">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">라인업</p>
-              {setlist.lineup.length === 0 ? (
-                <p className="text-sm text-muted-foreground">아직 배정된 멤버가 없습니다.</p>
-              ) : (
-                <ul className="flex flex-wrap gap-2">
-                  {groupedLineup
-                    .filter((item) => item.memberNames.length > 0)
-                    .map((item) => (
-                      <li
-                        key={`${setlist.id}-${item.roleCode}`}
-                        className="rounded-full border border-border bg-card px-3 py-1.5 text-sm text-foreground"
-                      >
-                        <span className="text-muted-foreground">{teamRoleLabel(item.roleCode)}</span>
-                        <span className="mx-1.5 text-muted-foreground/40">·</span>
-                        <span>{item.memberNames.join(", ")}</span>
-                      </li>
-                    ))}
-                </ul>
-              )}
+              <Link
+                href={`/setlists/${setlist.id}`}
+                className="inline-flex text-sm font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                스텝 노트 · 상세 페이지 →
+              </Link>
             </div>
 
             <div>

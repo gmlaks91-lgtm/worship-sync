@@ -8,7 +8,6 @@ import { LogOut, Menu, Sun, UserRound, X } from "lucide-react";
 import { AppHeaderActions } from "@/components/layout/app-header-actions";
 import { PwaInstallButton } from "@/components/layout/PwaInstallButton";
 import { signOut } from "@/features/auth/actions";
-import { AddSetlistTriggerButton } from "@/features/setlist/components/AddSetlistDialog";
 import { getHomePathForRole } from "@/lib/roles";
 import { getNavItemsForRole } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
@@ -18,9 +17,6 @@ import type { ProfileRole } from "@/types/database";
 type AppHeaderClientProps = {
   isLoggedIn: boolean;
   userRole: ProfileRole | null;
-  canManageSetlists: boolean;
-  teamMembers: Array<{ id: string; username: string }>;
-  recentSongWarningByVideoId: Record<string, number>;
   className?: string;
 };
 
@@ -29,14 +25,7 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppHeaderClient({
-  isLoggedIn,
-  userRole,
-  canManageSetlists,
-  teamMembers,
-  recentSongWarningByVideoId,
-  className,
-}: AppHeaderClientProps) {
+export function AppHeaderClient({ isLoggedIn, userRole, className }: AppHeaderClientProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const navItems = getNavItemsForRole(userRole);
@@ -71,12 +60,7 @@ export function AppHeaderClient({
             </Link>
           </div>
 
-          <AppHeaderActions
-            isLoggedIn={isLoggedIn}
-            canManageSetlists={canManageSetlists}
-            teamMembers={teamMembers}
-            recentSongWarningByVideoId={recentSongWarningByVideoId}
-          />
+          <AppHeaderActions />
         </div>
       </header>
 
@@ -145,17 +129,6 @@ export function AppHeaderClient({
           <div className="px-1">
             <PwaInstallButton />
           </div>
-          {canManageSetlists ? (
-            <div className="sm:hidden">
-              <AddSetlistTriggerButton
-                variant="outline"
-                size="sm"
-                className="w-full border-border"
-                teamMembers={teamMembers}
-                recentSongWarningByVideoId={recentSongWarningByVideoId}
-              />
-            </div>
-          ) : null}
           {isLoggedIn ? (
             <>
               <Link

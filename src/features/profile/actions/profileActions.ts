@@ -49,19 +49,22 @@ export async function updateProfile(raw: {
       return { ok: false, message: "로그인이 필요합니다." };
     }
 
-    const role1 = sanitizeRole(parsed.data.rolePriority1);
-    const role2 = sanitizeRole(parsed.data.rolePriority2);
-    const role3 = sanitizeRole(parsed.data.rolePriority3);
+    const patch: {
+      username: string;
+      role_priority_1?: TeamRoleCode | null;
+      role_priority_2?: TeamRoleCode | null;
+      role_priority_3?: TeamRoleCode | null;
+    } = {
+      username: parsed.data.username,
+    };
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        username: parsed.data.username,
-        role_priority_1: role1,
-        role_priority_2: role2,
-        role_priority_3: role3,
-      })
-      .eq("id", user.id);
+    if ("rolePriority1" in raw || "rolePriority2" in raw || "rolePriority3" in raw) {
+      patch.role_priority_1 = sanitizeRole(parsed.data.rolePriority1);
+      patch.role_priority_2 = sanitizeRole(parsed.data.rolePriority2);
+      patch.role_priority_3 = sanitizeRole(parsed.data.rolePriority3);
+    }
+
+    const { error } = await supabase.from("profiles").update(patch).eq("id", user.id);
 
     if (error) {
       return { ok: false, message: error.message };

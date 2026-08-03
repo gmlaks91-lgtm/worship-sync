@@ -61,7 +61,7 @@ export function PersonalDetailsForm({ profile }: PersonalDetailsFormProps) {
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">내 프로필</p>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">나를 소개해요</h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          팀 라인업 카드에 예쁘게 보여요. 언제든지 다시 수정할 수 있어요.
+          생일·MBTI·좋아하는 곡을 적어 두면 프로필에 표시돼요. 언제든지 다시 수정할 수 있어요.
         </p>
       </div>
 
@@ -79,7 +79,7 @@ export function PersonalDetailsForm({ profile }: PersonalDetailsFormProps) {
             disabled={pending}
             className="h-11"
           />
-          <p className="text-xs text-muted-foreground">비워 두면 팀원 카드에 &apos;미입력&apos;으로 표시돼요.</p>
+          <p className="text-xs text-muted-foreground">비워 두면 프로필에 &apos;미입력&apos;으로 표시돼요.</p>
         </div>
 
         <div className="space-y-3">
@@ -119,7 +119,7 @@ export function PersonalDetailsForm({ profile }: PersonalDetailsFormProps) {
             disabled={pending}
             className="h-11"
           />
-          <p className="text-xs text-muted-foreground">한 줄로 적어 주세요. 팀원들이 읽기 좋게요.</p>
+          <p className="text-xs text-muted-foreground">한 줄로 적어 주세요.</p>
         </div>
       </div>
 

@@ -20,7 +20,7 @@ export type AppNavItem = {
 };
 
 export const APP_NAV_ITEMS: AppNavItem[] = [
-  { href: "/", label: "송리스트", icon: Home },
+  { href: "/", label: "홈", icon: Home },
   { href: "/journal", label: "경건 일지", icon: BookOpen },
   { href: "/qt", label: "QT 나눔방", icon: Sun },
   { href: "/prayer", label: "기도 공유", icon: Sparkles },

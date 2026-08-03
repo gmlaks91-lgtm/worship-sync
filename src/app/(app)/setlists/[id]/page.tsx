@@ -40,12 +40,6 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
     canManageSetlist = profile?.role === "leader" || profile?.role === "admin";
   }
 
-  const { data: membersRaw } = await supabase
-    .from("profiles")
-    .select("id, username")
-    .order("username", { ascending: true });
-  const teamMembers = (membersRaw ?? []) as Array<{ id: string; username: string }>;
-
   const lineupMap = new Map<TeamRoleCode, string[]>();
   for (const role of TEAM_ROLE_OPTIONS) lineupMap.set(role.code, []);
   for (const row of data.setlist_lineups ?? []) {
@@ -124,7 +118,6 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
               initialEventDate={data.event_date}
               initialTracks={initialTracks}
               initialLineup={initialLineup}
-              members={teamMembers}
             />
           ) : null}
         </div>
@@ -147,17 +140,6 @@ export default async function SetlistDetailPage({ params }: { params: Promise<{ 
         songs={chordSongs}
         pdfSongs={pdfSongs}
       />
-
-      <section className="space-y-2 rounded-lg border border-border/60 bg-card/60 p-4 print:hidden">
-        <h2 className="text-sm font-semibold">라인업</h2>
-        <ul className="space-y-1 text-sm">
-          {(data.setlist_lineups ?? []).map((row, idx) => (
-            <li key={`${data.id}-${row.role_code}-${idx}`}>
-              {row.role_code} · {row.profiles?.username ?? "미배정"}
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <div className="print:hidden">
         <StaffNotesEditor setlistId={data.id} initialValue={data.staff_notes} />

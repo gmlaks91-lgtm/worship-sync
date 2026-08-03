@@ -69,6 +69,11 @@ export async function BoardWidget() {
                           긴급
                         </span>
                       ) : null}
+                      {post.topic === "setlist" ? (
+                        <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                          콘티
+                        </span>
+                      ) : null}
                       <span className="truncate text-sm font-medium text-foreground">
                         {announcementHeadline(post.content, post.title)}
                       </span>

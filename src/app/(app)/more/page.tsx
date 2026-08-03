@@ -23,7 +23,7 @@ export default async function MorePage() {
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Ahava</p>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">마이페이지</h1>
         <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-          프로필 사진·이름·포지션과{" "}
+          프로필 사진·이름과{" "}
           <Link href="/profile" className="font-medium text-primary underline-offset-4 hover:underline">
             생일·MBTI·좋아하는 곡
           </Link>
@@ -128,7 +128,7 @@ export default async function MorePage() {
           </>
         ) : null}
         <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>포인트 상점</Link>
-        <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>송리스트</Link>
+        <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>홈</Link>
       </footer>
     </div>
   );

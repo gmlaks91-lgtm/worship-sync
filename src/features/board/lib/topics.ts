@@ -4,11 +4,13 @@ export type BoardTopic =
   | "schedule"
   | "notice"
   | "urgent"
+  | "setlist"
   | "other"
   | "question"
   | "share"
   | "prayer"
-  | "review";
+  | "review"
+  | "gratitude";
 
 export type BoardTopicOption = {
   value: BoardTopic;
@@ -19,6 +21,7 @@ const ANNOUNCEMENT_TOPICS: BoardTopicOption[] = [
   { value: "schedule", label: "일정" },
   { value: "notice", label: "안내" },
   { value: "urgent", label: "긴급" },
+  { value: "setlist", label: "콘티" },
   { value: "other", label: "기타" },
 ];
 
@@ -27,6 +30,7 @@ const FREE_BOARD_TOPICS: BoardTopicOption[] = [
   { value: "share", label: "나눔" },
   { value: "prayer", label: "기도" },
   { value: "review", label: "후기" },
+  { value: "gratitude", label: "감사" },
   { value: "other", label: "기타" },
 ];
 
