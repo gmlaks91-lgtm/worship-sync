@@ -93,10 +93,12 @@
 
   html {
     @apply font-sans;
+    overscroll-behavior: none;
   }
 
   body {
     @apply text-foreground antialiased;
+    overscroll-behavior: none;
     background-color: oklch(0.72 0.08 210);
     background-image:
       /* sun glow */
@@ -116,7 +118,8 @@
       auto,
       10px 10px,
       auto;
-    background-attachment: fixed;
+    /* fixed는 모바일 스크롤 시 배경이 흔들려 scroll로 유지 */
+    background-attachment: scroll;
   }
 
   h1,
@@ -201,6 +204,24 @@
   }
 
   .surface-card-hover:hover {
+    transform: none;
+  }
+
+  /* 모바일: 배경 장식 애니메이션/이동 제거 */
+  .summer-float,
+  .summer-hero-glow,
+  .summer-sparkle,
+  .summer-sun {
+    animation: none !important;
+  }
+
+  .summer-sparkle-layer,
+  .summer-float {
+    display: none !important;
+  }
+
+  .summer-sun {
+    opacity: 0.28;
     transform: none;
   }
 }

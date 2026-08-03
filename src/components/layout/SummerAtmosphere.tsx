@@ -23,13 +23,16 @@ const SPARKLES: Sparkle[] = [
   { id: 11, left: 48, delay: 4.8, duration: 6.8, drift: -16, size: 6, color: "#ffffff" },
 ];
 
-/** 여름 시즌 배경 장식 — 햇살·거품·모래 반짝임 */
+/** 여름 시즌 배경 장식 — 햇살·거품·모래 반짝임 (모바일은 CSS로 정지/숨김) */
 export function SummerAtmosphere() {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+    <div
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden md:fixed"
+      aria-hidden
+    >
       <div className="summer-sun summer-sun-main" />
 
-      <div className="summer-sparkle-layer">
+      <div className="summer-sparkle-layer hidden md:block">
         {SPARKLES.map((piece) => (
           <span
             key={piece.id}
@@ -47,9 +50,9 @@ export function SummerAtmosphere() {
         ))}
       </div>
 
-      <span className="summer-float summer-float-1">🌊</span>
-      <span className="summer-float summer-float-2">🐚</span>
-      <span className="summer-float summer-float-3">☀️</span>
+      <span className="summer-float summer-float-1 hidden md:inline">🌊</span>
+      <span className="summer-float summer-float-2 hidden md:inline">🐚</span>
+      <span className="summer-float summer-float-3 hidden md:inline">☀️</span>
     </div>
   );
 }
