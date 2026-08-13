@@ -56,7 +56,7 @@ export function JournalTabs({ boardData, initialFeed, userTeams }: JournalTabsPr
       </TabsList>
       <div className="p-5">
         <TabsContent value="mine" className="mt-3">
-          <WeeklyChecklistBoard data={boardData} onAutosaveComplete={() => void refreshFeed(teamFilter)} />
+          <WeeklyChecklistBoard data={boardData} />
         </TabsContent>
         <TabsContent value="team" className="mt-3 space-y-4">
           <TeamJournalFilterTabs

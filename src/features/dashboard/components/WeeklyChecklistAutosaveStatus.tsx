@@ -14,10 +14,10 @@ export function WeeklyChecklistAutosaveStatusLabel({
 
   const label =
     status === "saved"
-      ? "?? ?? ??"
+      ? "저장됨"
       : status === "error"
-        ? "?? ??? ??????"
-        : "???? ?? ??";
+        ? "저장에 실패했습니다"
+        : "저장 중…";
 
   return (
     <p

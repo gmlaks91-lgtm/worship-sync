@@ -92,51 +92,45 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
     [dailyRecords, worshipRecords],
   );
 
-  const { status: autosaveStatus, scheduleDebouncedSave, saveImmediately, flushPending } =
-    useWeeklyChecklistAutosave({
-      weekStartDate: data.weekStartDate,
-      isSubmitted: data.checklist.isSubmitted,
-      dailyRecords,
-      worshipRecords,
-      onSaved: onAutosaveComplete,
-    });
+  const { status: autosaveStatus, scheduleSave, flushPending } = useWeeklyChecklistAutosave({
+    weekStartDate: data.weekStartDate,
+    isSubmitted: data.checklist.isSubmitted,
+    dailyRecords,
+    worshipRecords,
+    onSaved: onAutosaveComplete,
+  });
+
+  const snapshotOf = useCallback(
+    (
+      daily: WeeklyChecklistDailyRecord[],
+      worship: WeeklyChecklistWorshipRecords,
+    ): WeeklyChecklistSaveSnapshot => ({
+      dailyRecords: daily,
+      worshipRecords: worship,
+    }),
+    [],
+  );
 
   const applyDailyPatch = useCallback(
-    (
-      index: number,
-      patch: Partial<WeeklyChecklistDailyRecord>,
-      mode: "debounced" | "immediate",
-    ) => {
+    (index: number, patch: Partial<WeeklyChecklistDailyRecord>) => {
       const nextDaily = dailyRecordsRef.current.map((item, itemIndex) =>
         itemIndex === index ? { ...item, ...patch } : item,
       );
       dailyRecordsRef.current = nextDaily;
-
-      const snapshot: WeeklyChecklistSaveSnapshot = {
-        dailyRecords: nextDaily,
-        worshipRecords: worshipRecordsRef.current,
-      };
-
       setDailyRecords(nextDaily);
-
-      if (mode === "immediate") saveImmediately(snapshot);
-      else scheduleDebouncedSave(snapshot);
+      scheduleSave(snapshotOf(nextDaily, worshipRecordsRef.current));
     },
-    [saveImmediately, scheduleDebouncedSave],
+    [scheduleSave, snapshotOf],
   );
 
   const applyWorshipPatch = useCallback(
     (patch: Partial<WeeklyChecklistWorshipRecords>) => {
       const nextWorship = { ...worshipRecordsRef.current, ...patch };
       worshipRecordsRef.current = nextWorship;
-
       setWorshipRecords(nextWorship);
-      saveImmediately({
-        dailyRecords: dailyRecordsRef.current,
-        worshipRecords: nextWorship,
-      });
+      scheduleSave(snapshotOf(dailyRecordsRef.current, nextWorship));
     },
-    [saveImmediately],
+    [scheduleSave, snapshotOf],
   );
 
   const isSubmitted = data.checklist.isSubmitted;
@@ -154,7 +148,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
   const isWorshipEditable = !pending;
 
   const onSubmit = () => {
-    flushPending();
+    flushPending(snapshotOf(dailyRecordsRef.current, worshipRecordsRef.current));
     const confirmMessage = isSubmitted
       ? "수정한 내용으로 다시 제출할까요? 변경된 점수로 다시 계산됩니다."
       : `${weekLabel} 체크리스트를 제출할까요? 제출 후에도 언제든 수정해 다시 제출할 수 있습니다.`;
@@ -165,8 +159,8 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
     startTransition(async () => {
       const result = await submitWeeklyChecklist({
         weekStartDate: data.weekStartDate,
-        dailyRecords,
-        worshipRecords,
+        dailyRecords: dailyRecordsRef.current,
+        worshipRecords: worshipRecordsRef.current,
       });
       if (!result.ok) {
         toastError(result.message);
@@ -229,7 +223,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
                   {data.weekRangeLabel} ·{" "}
                   {isPreviousWeekView
                     ? "지난주 기록을 확인하고 수정한 뒤 제출할 수 있습니다."
-                    : "오늘의 경건일지를 작성하고, 예배 참석은 주간 단위로 기록합니다."}
+                    : "달력에서 하루를 골라 기록하고, 점수는 주 단위로 합산됩니다."}
                 </CardDescription>
                 <WeeklyChecklistAutosaveStatusLabel status={autosaveStatus} className="mt-2" />
               </div>
@@ -338,13 +332,10 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
               readOnly={!isSelectedEditable}
               points={score.dailyBreakdown[selectedDailyIndexSafe]?.points ?? 0}
               hasDoubleBonus={Boolean(score.dailyBreakdown[selectedDailyIndexSafe]?.hasDoubleBonus)}
-              onDebouncedChange={(patch) =>
-                applyDailyPatch(selectedDailyIndexSafe, patch, "debounced")
+              onChange={(patch) => applyDailyPatch(selectedDailyIndexSafe, patch)}
+              onDiaryBlur={() =>
+                flushPending(snapshotOf(dailyRecordsRef.current, worshipRecordsRef.current))
               }
-              onImmediateChange={(patch) =>
-                applyDailyPatch(selectedDailyIndexSafe, patch, "immediate")
-              }
-              onDiaryBlur={() => flushPending()}
             />
           ) : null}
 

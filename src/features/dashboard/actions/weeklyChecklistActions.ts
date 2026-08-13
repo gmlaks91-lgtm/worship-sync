@@ -119,13 +119,7 @@ export async function upsertWeeklyChecklistDraft(raw: WeeklyChecklistDraftInput)
     return { ok: false, message: "로그인이 필요합니다." };
   }
 
-  const result = await saveWeeklyChecklistDraftInternal(user.id, raw);
-  if (result.ok) {
-    // 자동 저장 시 /journal 을 revalidate 하면 편집 중 UI가 서버 데이터로 되돌아갈 수 있음
-    revalidatePath("/");
-    revalidatePointsRoutes();
-  }
-  return result;
+  return saveWeeklyChecklistDraftInternal(user.id, raw);
 }
 
 export async function submitWeeklyChecklist(raw: WeeklyChecklistDraftInput): Promise<WeeklyChecklistActionResult> {

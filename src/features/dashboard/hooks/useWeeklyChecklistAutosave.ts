@@ -10,7 +10,7 @@ import type {
 } from "@/features/dashboard/lib/weekly-checklist";
 import { toastError } from "@/lib/app-toast";
 
-const DEBOUNCE_MS = 1500;
+const DEBOUNCE_MS = 800;
 
 export type WeeklyChecklistAutosaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
 
@@ -29,26 +29,12 @@ type UseWeeklyChecklistAutosaveOptions = {
 
 export function useWeeklyChecklistAutosave({
   weekStartDate,
-  dailyRecords,
-  worshipRecords,
   onSaved,
 }: UseWeeklyChecklistAutosaveOptions) {
   const [status, setStatus] = useState<WeeklyChecklistAutosaveStatus>("idle");
   const isSavingRef = useRef(false);
+  const queuedSnapshotRef = useRef<WeeklyChecklistSaveSnapshot | null>(null);
   const hideSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const dailyRef = useRef(dailyRecords);
-  const worshipRef = useRef(worshipRecords);
-  dailyRef.current = dailyRecords;
-  worshipRef.current = worshipRecords;
-
-  const getSnapshot = useCallback(
-    (override?: WeeklyChecklistSaveSnapshot): WeeklyChecklistSaveSnapshot => ({
-      dailyRecords: override?.dailyRecords ?? dailyRef.current,
-      worshipRecords: override?.worshipRecords ?? worshipRef.current,
-    }),
-    [],
-  );
 
   const clearSavedTimer = useCallback(() => {
     if (hideSavedTimerRef.current) {
@@ -58,10 +44,11 @@ export function useWeeklyChecklistAutosave({
   }, []);
 
   const runSave = useCallback(
-    async (override?: WeeklyChecklistSaveSnapshot) => {
-      if (isSavingRef.current) return;
-
-      const snapshot = getSnapshot(override);
+    async (snapshot: WeeklyChecklistSaveSnapshot) => {
+      if (isSavingRef.current) {
+        queuedSnapshotRef.current = snapshot;
+        return;
+      }
 
       isSavingRef.current = true;
       setStatus("saving");
@@ -73,6 +60,13 @@ export function useWeeklyChecklistAutosave({
       });
 
       isSavingRef.current = false;
+
+      const queued = queuedSnapshotRef.current;
+      if (queued) {
+        queuedSnapshotRef.current = null;
+        await runSave(queued);
+        return;
+      }
 
       if (result.ok) {
         setStatus("saved");
@@ -87,38 +81,31 @@ export function useWeeklyChecklistAutosave({
       setStatus("error");
       toastError(result.message);
     },
-    [clearSavedTimer, getSnapshot, onSaved, weekStartDate],
+    [clearSavedTimer, onSaved, weekStartDate],
   );
 
-  const debouncedSave = useDebouncedCallback(
-    (override?: WeeklyChecklistSaveSnapshot) => {
-      void runSave(override);
-    },
-    DEBOUNCE_MS,
-  );
+  const debouncedSave = useDebouncedCallback((snapshot: WeeklyChecklistSaveSnapshot) => {
+    void runSave(snapshot);
+  }, DEBOUNCE_MS);
 
-  const scheduleDebouncedSave = useCallback(
-    (override?: WeeklyChecklistSaveSnapshot) => {
+  const scheduleSave = useCallback(
+    (snapshot: WeeklyChecklistSaveSnapshot) => {
       setStatus("pending");
-      debouncedSave(override);
+      debouncedSave(snapshot);
     },
     [debouncedSave],
   );
 
-  const saveImmediately = useCallback(
-    (override?: WeeklyChecklistSaveSnapshot) => {
+  const flushPending = useCallback(
+    (snapshot?: WeeklyChecklistSaveSnapshot) => {
       debouncedSave.cancel();
-      void runSave(override);
+      if (snapshot) {
+        void runSave(snapshot);
+      } else {
+        debouncedSave.flush();
+      }
     },
     [debouncedSave, runSave],
-  );
-
-  const flushPending = useCallback(
-    (override?: WeeklyChecklistSaveSnapshot) => {
-      debouncedSave.cancel();
-      void runSave(override ?? getSnapshot());
-    },
-    [debouncedSave, getSnapshot, runSave],
   );
 
   useEffect(() => {
@@ -127,7 +114,6 @@ export function useWeeklyChecklistAutosave({
         debouncedSave.flush();
       }
     };
-
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
@@ -138,8 +124,7 @@ export function useWeeklyChecklistAutosave({
 
   return {
     status,
-    scheduleDebouncedSave,
-    saveImmediately,
+    scheduleSave,
     flushPending,
   };
 }

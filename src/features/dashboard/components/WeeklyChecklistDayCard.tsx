@@ -12,8 +12,7 @@ type WeeklyChecklistDayCardProps = {
   readOnly?: boolean;
   points: number;
   hasDoubleBonus: boolean;
-  onDebouncedChange: (patch: Partial<WeeklyChecklistDailyRecord>) => void;
-  onImmediateChange: (patch: Partial<WeeklyChecklistDailyRecord>) => void;
+  onChange: (patch: Partial<WeeklyChecklistDailyRecord>) => void;
   onDiaryBlur?: () => void;
 };
 
@@ -74,8 +73,7 @@ export function WeeklyChecklistDayCard({
   readOnly,
   points,
   hasDoubleBonus,
-  onDebouncedChange,
-  onImmediateChange,
+  onChange,
   onDiaryBlur,
 }: WeeklyChecklistDayCardProps) {
   return (
@@ -106,7 +104,7 @@ export function WeeklyChecklistDayCard({
             disabled={disabled}
             rows={3}
             maxLength={400}
-            onChange={(event) => onDebouncedChange({ diary: event.target.value })}
+            onChange={(event) => onChange({ diary: event.target.value })}
             onBlur={onDiaryBlur}
             className="min-h-[86px] w-full resize-none rounded-xl border border-gray-100 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition-all duration-200 focus-visible:border-sky-300 focus-visible:ring-2 focus-visible:ring-sky-100"
             placeholder="오늘의 은혜나 다짐을 한 줄로 남겨 보세요."
@@ -126,7 +124,7 @@ export function WeeklyChecklistDayCard({
               disabled={disabled}
               value={record.bibleChapters}
               onChange={(event) =>
-                onDebouncedChange({
+                onChange({
                   bibleChapters: Math.max(0, Number(event.target.value || 0)),
                 })
               }
@@ -143,13 +141,13 @@ export function WeeklyChecklistDayCard({
             label="큐티"
             value={record.qtDone}
             disabled={disabled}
-            onChange={(qtDone) => onImmediateChange({ qtDone })}
+            onChange={(qtDone) => onChange({ qtDone })}
           />
           <BooleanChoice
             label="기도"
             value={record.prayerDone}
             disabled={disabled}
-            onChange={(prayerDone) => onImmediateChange({ prayerDone })}
+            onChange={(prayerDone) => onChange({ prayerDone })}
           />
         </div>
 
