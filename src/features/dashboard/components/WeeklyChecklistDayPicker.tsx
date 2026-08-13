@@ -8,26 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import {
   calendarDateFromYmd,
   formatYmdKstLabel,
+  getEditableChecklistDateSet,
   getKstTodayYmd,
   isKstPastOrTodayYmd,
   isKstTodayYmd,
   ymdFromCalendarDate,
-  type WeeklyChecklistDailyRecord,
 } from "@/features/dashboard/lib/weekly-checklist";
 
 type WeeklyChecklistDayPickerProps = {
-  dailyRecords: WeeklyChecklistDailyRecord[];
   selectedDateYmd: string;
   onSelectDateYmd: (ymd: string) => void;
 };
 
 export function WeeklyChecklistDayPicker({
-  dailyRecords,
   selectedDateYmd,
   onSelectDateYmd,
 }: WeeklyChecklistDayPickerProps) {
   const todayYmd = useMemo(() => getKstTodayYmd(), []);
-  const weekDateSet = useMemo(() => new Set(dailyRecords.map((record) => record.date)), [dailyRecords]);
+  const editableDates = useMemo(() => getEditableChecklistDateSet(), []);
   const selectedIsToday = isKstTodayYmd(selectedDateYmd);
   const selectedIsEditable = isKstPastOrTodayYmd(selectedDateYmd);
 
@@ -49,7 +47,7 @@ export function WeeklyChecklistDayPicker({
             )}
           </div>
         </div>
-        <p className="text-xs text-gray-400">달력에서 하루를 고르고 그날 점수를 입력하세요.</p>
+        <p className="text-xs text-gray-400">이번 주·지난주·지지난주 날짜를 골라 입력하세요.</p>
       </div>
 
       <Calendar
@@ -60,16 +58,16 @@ export function WeeklyChecklistDayPicker({
         onSelect={(date) => {
           if (!date) return;
           const ymd = ymdFromCalendarDate(date);
-          if (!weekDateSet.has(ymd)) return;
+          if (!editableDates.has(ymd)) return;
           onSelectDateYmd(ymd);
         }}
-        disabled={(date) => !weekDateSet.has(ymdFromCalendarDate(date))}
+        disabled={(date) => !editableDates.has(ymdFromCalendarDate(date))}
         className="mx-auto w-fit"
       />
 
       {!selectedIsEditable ? (
         <p className="text-xs text-gray-500">아직 오지 않은 날짜는 조회만 가능합니다.</p>
-      ) : todayYmd !== selectedDateYmd && weekDateSet.has(todayYmd) ? (
+      ) : todayYmd !== selectedDateYmd && editableDates.has(todayYmd) ? (
         <button
           type="button"
           className="text-xs font-medium text-sky-700 underline-offset-2 hover:underline"

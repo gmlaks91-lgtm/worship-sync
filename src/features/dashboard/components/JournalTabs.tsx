@@ -15,9 +15,10 @@ type JournalTabsProps = {
   boardData: WeeklyChecklistBoardData;
   initialFeed: WeeklyChecklistJournalFeedEntry[];
   userTeams: UserTeam[];
+  initialDayYmd?: string | null;
 };
 
-export function JournalTabs({ boardData, initialFeed, userTeams }: JournalTabsProps) {
+export function JournalTabs({ boardData, initialFeed, userTeams, initialDayYmd }: JournalTabsProps) {
   const [feedEntries, setFeedEntries] = useState(initialFeed);
   const [teamFilter, setTeamFilter] = useState<JournalTeamFilter>("all");
   const [feedLoading, setFeedLoading] = useState(false);
@@ -56,7 +57,7 @@ export function JournalTabs({ boardData, initialFeed, userTeams }: JournalTabsPr
       </TabsList>
       <div className="p-5">
         <TabsContent value="mine" className="mt-3">
-          <WeeklyChecklistBoard data={boardData} />
+          <WeeklyChecklistBoard data={boardData} initialDayYmd={initialDayYmd} />
         </TabsContent>
         <TabsContent value="team" className="mt-3 space-y-4">
           <TeamJournalFilterTabs

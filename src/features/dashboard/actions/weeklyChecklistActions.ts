@@ -8,7 +8,8 @@ import { createClient } from "@/utils/supabase/server";
 
 import {
   calculateWeeklyChecklistPoints,
-  getKstWeekStartDate,
+  getEditableChecklistWeeks,
+  getPreviousKstWeekStartDate,
   isEditableChecklistWeek,
   normalizeDailyRecords,
   normalizeWorshipRecords,
@@ -52,7 +53,7 @@ async function saveWeeklyChecklistDraftInternal(
   }
 
   if (!isEditableChecklistWeek(parsed.data.weekStartDate)) {
-    return { ok: false, message: "이번 주 또는 지난주 체크리스트만 저장할 수 있습니다." };
+    return { ok: false, message: "이번 주·지난주·지지난주 체크리스트만 저장할 수 있습니다." };
   }
 
   const supabase = await createClient();
@@ -100,10 +101,9 @@ async function saveWeeklyChecklistDraftInternal(
 
   return {
     ok: true,
-    message:
-      parsed.data.weekStartDate === getKstWeekStartDate()
-        ? "이번 주 체크리스트가 임시 저장되었습니다."
-        : "지난주 체크리스트가 임시 저장되었습니다.",
+    message: `${
+      getEditableChecklistWeeks().find((week) => week.weekStartDate === parsed.data.weekStartDate)?.label ?? "주간"
+    } 체크리스트가 임시 저장되었습니다.`,
     totalPoints: score.totalPoints,
     isSubmitted: false,
   };
@@ -169,7 +169,6 @@ export async function submitPreviousWeekChecklist(): Promise<WeeklyChecklistActi
     return { ok: false, message: "로그인이 필요합니다." };
   }
 
-  const { getPreviousKstWeekStartDate } = await import("@/features/dashboard/lib/weekly-checklist");
   const weekStartDate = getPreviousKstWeekStartDate();
 
   const { data: checklistRow, error } = await supabase

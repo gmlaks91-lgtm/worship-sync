@@ -129,12 +129,50 @@ export function getPreviousKstWeekStartDate(now = new Date()) {
   return addDaysToYmd(getKstWeekStartDate(now), -7);
 }
 
-/** 이번 주 또는 직전 1주만 편집·제출 가능 */
-export function isEditableChecklistWeek(weekStartDate: string, now = new Date()) {
-  return (
-    weekStartDate === getKstWeekStartDate(now) ||
-    weekStartDate === getPreviousKstWeekStartDate(now)
+/** 이번 주 + 지난주 + 지지난주 */
+export const EDITABLE_CHECKLIST_WEEK_COUNT = 3;
+
+const EDITABLE_WEEK_LABELS = ["이번 주", "지난주", "지지난주"] as const;
+
+export type EditableChecklistWeek = {
+  weekStartDate: string;
+  label: string;
+  weekRangeLabel: string;
+};
+
+export function weekStartFromYmd(ymd: string) {
+  const date = parseUtcDateFromYmd(ymd);
+  date.setUTCDate(date.getUTCDate() - date.getUTCDay());
+  return formatUtcDateYmd(date);
+}
+
+export function getEditableChecklistWeeks(now = new Date()): EditableChecklistWeek[] {
+  const current = getKstWeekStartDate(now);
+  return Array.from({ length: EDITABLE_CHECKLIST_WEEK_COUNT }, (_, index) => {
+    const weekStartDate = addDaysToYmd(current, -7 * index);
+    return {
+      weekStartDate,
+      label: EDITABLE_WEEK_LABELS[index] ?? `${index}주 전`,
+      weekRangeLabel: formatWeekRangeLabel(weekStartDate),
+    };
+  });
+}
+
+export function getEditableChecklistDateSet(now = new Date()) {
+  return new Set(
+    getEditableChecklistWeeks(now).flatMap((week) =>
+      WEEKLY_CHECKLIST_DAY_DEFS.map((_, dayIndex) => addDaysToYmd(week.weekStartDate, dayIndex)),
+    ),
   );
+}
+
+export function checklistWeekLabel(weekStartDate: string, now = new Date()) {
+  return getEditableChecklistWeeks(now).find((week) => week.weekStartDate === weekStartDate)?.label ?? "주간";
+}
+
+/** 이번 주·지난주·지지난주만 편집·제출 가능 */
+export function isEditableChecklistWeek(weekStartDate: string, now = new Date()) {
+  return getEditableChecklistWeeks(now).some((week) => week.weekStartDate === weekStartDate);
 }
 
 /** 요청된 weekStart가 편집 가능하면 그대로, 아니면 이번 주로 폴백 */
@@ -177,8 +215,12 @@ export function calendarDateFromYmd(ymd: string) {
 
 export function resolveDefaultSelectedDateYmd(
   dailyRecords: WeeklyChecklistDailyRecord[],
+  preferredYmd?: string | null,
   now = new Date(),
 ) {
+  if (preferredYmd && dailyRecords.some((record) => record.date === preferredYmd)) {
+    return preferredYmd;
+  }
   const today = getKstTodayYmd(now);
   if (dailyRecords.some((record) => record.date === today)) return today;
   return dailyRecords[0]?.date ?? today;

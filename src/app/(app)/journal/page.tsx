@@ -8,7 +8,11 @@ import {
   getLatestAiReportForCurrentWeek,
 } from "@/features/ai-report/queries/getLatestAiReport";
 import { JournalTabs } from "@/features/dashboard/components/JournalTabs";
-import { getKstWeekStartDate } from "@/features/dashboard/lib/weekly-checklist";
+import {
+  getKstWeekStartDate,
+  isEditableChecklistWeek,
+  weekStartFromYmd,
+} from "@/features/dashboard/lib/weekly-checklist";
 import { getWeeklyChecklistBoardData } from "@/features/dashboard/queries/getWeeklyChecklistBoardData";
 import { getWeeklyChecklistJournalData } from "@/features/dashboard/queries/getWeeklyChecklistJournalData";
 import { getUserTeamsForCurrentUser } from "@/features/teams/queries/getUserTeams";
@@ -18,10 +22,14 @@ export const dynamic = "force-dynamic";
 export default async function JournalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ weekStart?: string }>;
+  searchParams: Promise<{ weekStart?: string; day?: string }>;
 }) {
   const sp = await searchParams;
-  const weekStart = sp.weekStart ?? null;
+  const initialDayYmd = sp.day ?? null;
+  const weekStartFromDay = initialDayYmd ? weekStartFromYmd(initialDayYmd) : null;
+  const weekStart =
+    sp.weekStart ??
+    (weekStartFromDay && isEditableChecklistWeek(weekStartFromDay) ? weekStartFromDay : null);
 
   const [weeklyChecklistData, journalFeed, userTeams, isGeneral, aiReport] = await Promise.all([
     getWeeklyChecklistBoardData(weekStart),
@@ -51,7 +59,12 @@ export default async function JournalPage({
         />
 
         <div className="surface-card overflow-hidden rounded-[2rem]">
-          <JournalTabs boardData={weeklyChecklistData} initialFeed={journalFeed} userTeams={userTeams} />
+          <JournalTabs
+            boardData={weeklyChecklistData}
+            initialFeed={journalFeed}
+            userTeams={userTeams}
+            initialDayYmd={initialDayYmd}
+          />
         </div>
       </div>
     </div>

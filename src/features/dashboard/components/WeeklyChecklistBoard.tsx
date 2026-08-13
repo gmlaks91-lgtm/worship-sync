@@ -9,9 +9,12 @@ import { submitWeeklyChecklist } from "@/features/dashboard/actions/weeklyCheckl
 import { syncPointsAfterMutation } from "@/features/points/lib/sync-points-client";
 import {
   calculateWeeklyChecklistPoints,
+  checklistWeekLabel,
   formatYmdKstLabel,
+  getEditableChecklistWeeks,
   isKstPastOrTodayYmd,
   resolveDefaultSelectedDateYmd,
+  weekStartFromYmd,
   WEEKLY_CHECKLIST_MAX_POINTS,
   type WeeklyChecklistDailyRecord,
   type WeeklyChecklistWorshipRecords,
@@ -39,6 +42,7 @@ import { cn } from "@/lib/utils";
 
 type WeeklyChecklistBoardProps = {
   data: WeeklyChecklistBoardData;
+  initialDayYmd?: string | null;
   onAutosaveComplete?: () => void;
 };
 
@@ -56,13 +60,13 @@ function formatDateTime(value: string | null) {
   }
 }
 
-export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyChecklistBoardProps) {
+export function WeeklyChecklistBoard({ data, initialDayYmd, onAutosaveComplete }: WeeklyChecklistBoardProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [dailyRecords, setDailyRecords] = useState(data.checklist.dailyRecords);
   const [worshipRecords, setWorshipRecords] = useState(data.checklist.worshipRecords);
   const [selectedDateYmd, setSelectedDateYmd] = useState(() =>
-    resolveDefaultSelectedDateYmd(data.checklist.dailyRecords),
+    resolveDefaultSelectedDateYmd(data.checklist.dailyRecords, initialDayYmd),
   );
 
   const dailyRecordsRef = useRef(dailyRecords);
@@ -71,20 +75,22 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
   worshipRecordsRef.current = worshipRecords;
 
   const isPreviousWeekView = data.isPreviousWeekView;
-  const weekLabel = isPreviousWeekView ? "지난주" : "이번 주";
+  const weekLabel = checklistWeekLabel(data.weekStartDate);
+  const editableWeeks = useMemo(() => getEditableChecklistWeeks(), []);
 
   useEffect(() => {
     setDailyRecords(data.checklist.dailyRecords);
     setWorshipRecords(data.checklist.worshipRecords);
     dailyRecordsRef.current = data.checklist.dailyRecords;
     worshipRecordsRef.current = data.checklist.worshipRecords;
-    setSelectedDateYmd(resolveDefaultSelectedDateYmd(data.checklist.dailyRecords));
+    setSelectedDateYmd(resolveDefaultSelectedDateYmd(data.checklist.dailyRecords, initialDayYmd));
   }, [
     data.checklist.id,
     data.checklist.updatedAt,
     data.checklist.submittedAt,
     data.checklist.isSubmitted,
     data.weekStartDate,
+    initialDayYmd,
   ]);
 
   const score = useMemo(
@@ -220,10 +226,7 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
                   주간 체크리스트 보드
                 </CardTitle>
                 <CardDescription className="mt-1 text-sm text-gray-500">
-                  {data.weekRangeLabel} ·{" "}
-                  {isPreviousWeekView
-                    ? "지난주 기록을 확인하고 수정한 뒤 제출할 수 있습니다."
-                    : "달력에서 하루를 골라 기록하고, 점수는 주 단위로 합산됩니다."}
+                  {data.weekRangeLabel} · 달력에서 하루를 골라 기록하고, 점수는 주 단위로 합산됩니다.
                 </CardDescription>
                 <WeeklyChecklistAutosaveStatusLabel status={autosaveStatus} className="mt-2" />
               </div>
@@ -317,10 +320,41 @@ export function WeeklyChecklistBoard({ data, onAutosaveComplete }: WeeklyCheckli
             </div>
           </div>
 
+          <div className="flex flex-wrap gap-2">
+            {editableWeeks.map((week) => {
+              const active = week.weekStartDate === data.weekStartDate;
+              const href =
+                week.weekStartDate === data.currentWeekStartDate
+                  ? "/journal"
+                  : `/journal?weekStart=${week.weekStartDate}`;
+              return (
+                <Link
+                  key={week.weekStartDate}
+                  href={href}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                    active
+                      ? "border-sky-500 bg-sky-500 text-white"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-sky-200 hover:text-sky-700",
+                  )}
+                >
+                  {week.label}
+                </Link>
+              );
+            })}
+          </div>
+
           <WeeklyChecklistDayPicker
-            dailyRecords={dailyRecords}
             selectedDateYmd={selectedDailyRecord?.date ?? selectedDateYmd}
-            onSelectDateYmd={setSelectedDateYmd}
+            onSelectDateYmd={(ymd) => {
+              const weekStart = weekStartFromYmd(ymd);
+              if (weekStart !== data.weekStartDate) {
+                flushPending(snapshotOf(dailyRecordsRef.current, worshipRecordsRef.current));
+                router.push(`/journal?weekStart=${weekStart}&day=${ymd}`);
+                return;
+              }
+              setSelectedDateYmd(ymd);
+            }}
           />
 
           {selectedDailyRecord ? (
